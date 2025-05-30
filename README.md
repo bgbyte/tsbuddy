@@ -1,5 +1,3 @@
-Okay, this is a great start! Here's a README.md template for your `tsbuddy` Python package, incorporating the information and example you provided.
-
 ```markdown
 # Tech Support Buddy (`tsbuddy`)
 
