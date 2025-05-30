@@ -15,7 +15,6 @@ Tech Support Buddy is a versatile Python module built to empower developers and 
   - [Basic Example: Parsing Temperature Data](#basic-example-parsing-temperature-data)
 - [Future Enhancements (Examples)](#future-enhancements-examples)
 - [Contributing](#contributing)
-- [License](#license)
 
 ## Overview
 
