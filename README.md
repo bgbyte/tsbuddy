@@ -1,4 +1,3 @@
-```markdown
 # Tech Support Buddy (`tsbuddy`)
 
 [![PyPI version](https://badge.fury.io/py/tsbuddy.svg)](https://badge.fury.io/py/tsbuddy)
