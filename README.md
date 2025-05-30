@@ -1,7 +1,6 @@
 # Tech Support Buddy (`tsbuddy`)
 
 [![PyPI version](https://badge.fury.io/py/tsbuddy.svg)](https://badge.fury.io/py/tsbuddy)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 <!-- Add other badges as appropriate: build status, coverage, etc. -->
 <!-- e.g., [![Build Status](https://travis-ci.org/YOUR_USERNAME/tsbuddy.svg?branch=main)](https://travis-ci.org/YOUR_USERNAME/tsbuddy) -->
 
