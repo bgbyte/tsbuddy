@@ -209,4 +209,3 @@ Contributions are welcome! If you have ideas for improvements or new features, o
 6.  Open a Pull Request.
 
 Please ensure your code adheres to any existing style guidelines and includes tests where appropriate.
-```
