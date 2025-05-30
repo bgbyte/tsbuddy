@@ -1363,7 +1363,7 @@ def parse_ip_dos_statistics(section_text: str) -> list[dict[str, str]]:
     return [stats]
 
 
-'''def parse_ip_dos_statistics(section_text: str) -> list[dict]:
+r'''def parse_ip_dos_statistics(section_text: str) -> list[dict]:
     """
     Parses the 'show ip dos statistics' section into a list of dictionaries.
 
@@ -1990,7 +1990,7 @@ def parse_sections(full_text: str) -> Dict[str, List[Dict[str, str]]]:
 
 
 
-'''def parse_sections(full_text: str) -> Dict[str, List[Dict[str, str]]]:
+r'''def parse_sections(full_text: str) -> Dict[str, List[Dict[str, str]]]:
     parsed_output = {}
     for section_name, parser in PARSERS.items():
         raw_text = extract_section(full_text, section_name)
@@ -1999,7 +1999,7 @@ def parse_sections(full_text: str) -> Dict[str, List[Dict[str, str]]]:
     return parsed_output
 '''
 
-'''def export_to_csv(parsed_data: Dict[str, List[Dict[str, str]]]):
+r'''def export_to_csv(parsed_data: Dict[str, List[Dict[str, str]]]):
     timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
     filename = f"parsed_sections_{timestamp}.csv"
     with open(filename, mode='w', newline='', encoding='utf-8') as file:
@@ -2056,7 +2056,7 @@ def export_to_csv(parsed_data: Dict[str, List[Dict[str, str]]]):
     print(f"✅ CSV exported to {filename}")
 
 
-'''def export_to_csv(parsed_data: Dict[str, List[Dict[str, str]]]):
+r'''def export_to_csv(parsed_data: Dict[str, List[Dict[str, str]]]):
     timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
     filename = f"parsed_sections_{timestamp}.csv"
     
