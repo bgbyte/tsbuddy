@@ -1363,30 +1363,6 @@ def parse_ip_dos_statistics(section_text: str) -> list[dict[str, str]]:
     return [stats]
 
 
-r'''def parse_ip_dos_statistics(section_text: str) -> list[dict]:
-    """
-    Parses the 'show ip dos statistics' section into a list of dictionaries.
-
-    Example row:
-    {
-        "DoS type": "port scan",
-        "Attacks detected": "13574"
-    }
-    """
-    rows = []
-    for line in section_text.strip().splitlines():
-        line = line.strip()
-        if not line or line.startswith("DoS type") or line.startswith("-"):
-            continue
-        if match := re.match(r"(.+?)\s{2,}(\d+)$", line):
-            dos_type, attacks = match.groups()
-            rows.append({
-                "DoS type": dos_type.strip(),
-                "Attacks detected": attacks.strip()
-            })
-    return rows'''
-
-
 def parse_snmp_statistics(text: str) -> list[dict]:
     section_name = "show snmp statistics"
     columns = COLUMN_DEFINITIONS.get(section_name)
@@ -1987,37 +1963,6 @@ def parse_sections(full_text: str) -> Dict[str, List[Dict[str, str]]]:
     return parsed_output
 
 
-
-
-
-r'''def parse_sections(full_text: str) -> Dict[str, List[Dict[str, str]]]:
-    parsed_output = {}
-    for section_name, parser in PARSERS.items():
-        raw_text = extract_section(full_text, section_name)
-        if raw_text:
-            parsed_output[section_name] = parser(raw_text)
-    return parsed_output
-'''
-
-r'''def export_to_csv(parsed_data: Dict[str, List[Dict[str, str]]]):
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
-    filename = f"parsed_sections_{timestamp}.csv"
-    with open(filename, mode='w', newline='', encoding='utf-8') as file:
-        writer = csv.writer(file)
-        for idx, (section_name, rows) in enumerate(parsed_data.items()):
-            if not rows:
-                continue
-            writer.writerow([f"Parsed section: {section_name}"])
-            writer.writerow([])
-            headers = list(rows[0].keys())
-            writer.writerow(headers)
-            for row in rows:
-                writer.writerow([row.get(col, "") for col in headers])
-            if idx < len(parsed_data) - 1:
-                writer.writerows([[]] * 5)
-    print(f"✅ CSV exported to {filename}")
-'''
-
 def export_to_csv(parsed_data: Dict[str, List[Dict[str, str]]]):
     timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
     filename = f"parsed_sections_{timestamp}.csv"
@@ -2055,34 +2000,6 @@ def export_to_csv(parsed_data: Dict[str, List[Dict[str, str]]]):
 
     print(f"✅ CSV exported to {filename}")
 
-
-r'''def export_to_csv(parsed_data: Dict[str, List[Dict[str, str]]]):
-    timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S")
-    filename = f"parsed_sections_{timestamp}.csv"
-    
-    with open(filename, mode='w', newline='', encoding='utf-8') as file:
-        writer = csv.writer(file)
-        
-        for idx, (section_name, rows) in enumerate(parsed_data.items()):
-            if not rows:
-                continue
-
-            writer.writerow([f"Parsed section: {section_name}"])
-            #writer.writerow([])
-
-            # ✅ Use declared column order from the dictionary
-            headers = COLUMN_DEFINITIONS.get(section_name, list(rows[0].keys()))
-            writer.writerow(headers)
-
-            for row in rows:
-                writer.writerow([row.get(col, "") for col in headers])
-
-            # Add 2 blank lines between sections
-            if idx < len(parsed_data) - 1:
-                writer.writerows([[]] * 2)
-
-    print(f"✅ CSV exported to {filename}")
-'''
 
 def main():
     log_file = "tech_support.log"
