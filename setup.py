@@ -8,4 +8,9 @@ setup(
        # Add dependencies here.
        # e.g. 'numpy>=1.11.1'
    ],
+   entry_points={
+       'console_scripts': [
+           'tsbuddy=tsbuddy.tsbuddy:main',
+       ],
+   },
 )
