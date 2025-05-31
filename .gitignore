@@ -1,5 +1,6 @@
 # Custom
 .README-1.md
+tests/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
