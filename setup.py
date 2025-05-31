@@ -1,5 +1,8 @@
 from setuptools import setup, find_packages
 
+with open('README.md', 'r') as f:
+    long_description = f.read()
+
 setup(
    name='tsbuddy',
    version='0.0.1',
@@ -13,4 +16,6 @@ setup(
            'tsbuddy=tsbuddy.tsbuddy:main',
        ],
    },
+   long_description=long_description,
+   long_description_content_type='text/markdown',
 )
