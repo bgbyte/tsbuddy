@@ -13,6 +13,7 @@ Tech Support Buddy is a versatile Python module built to empower developers and 
 - [Installation](#installation)
 - [Usage](#usage)
   - [Basic Example: Parsing Temperature Data](#basic-example-parsing-temperature-data)
+  - [SSH Example: Parsing System Information from SSH Command Output](#example-2-parsing-system-information-from-ssh-command-output)
 - [Future Enhancements (Ideas)](#future-enhancements-examples)
 - [Contributing](#contributing)
 
@@ -29,7 +30,7 @@ This allows you to quickly turn unstructured command output into actionable insi
 ## Key Features
 
 *   **Log Section Extraction:** Easily isolate specific command output or sections from larger support files.
-*   **Structured Data Parsing:** Convert unstructured command output into Python objects for easy manipulation. (Simple example below).
+*   **Structured Data Parsing:** Convert unstructured command output into Python objects for easy manipulation. (Examples below).
 *   **Simplified Diagnostics:** Build custom logic on top of parsed data to automate checks, generate reports, trigger alerts or actions.
 *   **Developer-Friendly:** Designed to be easily integrated into existing Python scripts and workflows.
 
@@ -189,6 +190,104 @@ Output:
  'Thresh': '60',
  'Status': 'UNDER THRESHOLD'}
 -->
+
+
+### Example 2: Parsing System Information from SSH Command Output
+
+This example shows how to use `tsbuddy` to parse the output of a command executed over SSH.
+
+**1. Import necessary modules:**
+
+```python
+import tsbuddy as ts
+import subprocess as sp
+from pprint import pprint
+```
+
+**2. Execute the SSH command:**
+
+We'll use `subprocess.run` to execute an SSH command and capture its output.
+
+```python
+# We will extract data from the "show system" command
+command = 'ssh admin@10.255.121.24 "show system"'
+result = sp.run(command, shell=True, stdout=sp.PIPE, stderr=sp.PIPE, text=True, check=True, timeout=30)
+
+# The result object provides the stdout with the command output as raw text.
+print("--- CompletedProcess Object ---")
+print(result)
+```
+
+Expected output for `print(result)` (will vary based on your actual SSH output):
+```
+--- CompletedProcess Object ---
+CompletedProcess(args='ssh admin@10.255.121.24 "show system"', returncode=0, stdout='System:\n  Description:  Alcatel-Lucent Enterprise OS6900-X40 8.9.94.R04 GA, March 28, 2024.,\n  Object ID:    1.3.6.1.4.1.6486.801.1.1.2.1.10.1.2,\n  Up Time:      120 days 21 hours 29 minutes and 0 seconds,\n  Contact:      Alcatel-Lucent Enterprise, https://www.al-enterprise.com,\n  Name:         OS6900-X40,\n  Location:     Unknown,\n  Services:     78,\n  Date & Time:  MON JUN 02 2025 19:23:22 (UTC)\nFlash Space:\n    Primary CMM:\n      Available (bytes):  1440706560,\n      Comments         :  None\n\n', stderr='')
+```
+
+**3. Access the raw output (`stdout`):**
+
+```python
+# Here is the stdout raw text
+print("\n--- Raw stdout from SSH Command ---")
+print(result.stdout)
+```
+
+Expected `result.stdout` (will vary based on your actual SSH output):
+```
+--- Raw stdout from SSH Command ---
+System:
+  Description:  Alcatel-Lucent Enterprise OS6900-X40 8.9.94.R04 GA, March 28, 2024.,
+  Object ID:    1.3.6.1.4.1.6486.801.1.1.2.1.10.1.2,
+  Up Time:      120 days 21 hours 29 minutes and 0 seconds,
+  Contact:      Alcatel-Lucent Enterprise, https://www.al-enterprise.com,
+  Name:         OS6900-X40,
+  Location:     Unknown,
+  Services:     78,
+  Date & Time:  MON JUN 02 2025 19:23:22 (UTC)
+Flash Space:
+    Primary CMM:
+      Available (bytes):  1440706560,
+      Comments         :  None
+
+```
+
+**4. Parse the output using `tsbuddy`:**
+
+```python
+# Lets parse it and see the result
+system_info = ts.parse_system(result.stdout)
+
+print("\n--- Parsed System Information ---")
+pprint(system_info, sort_dicts=False)
+```
+
+Output:
+```
+--- Parsed System Information ---
+[{'Description': 'Alcatel-Lucent Enterprise OS6900-X40 8.9.94.R04 GA, March '
+                 '28, 2024.',
+  'Object ID': '1.3.6.1.4.1.6486.801.1.1.2.1.10.1.2',
+  'Up Time': '120 days 21 hours 29 minutes and 0 seconds',
+  'Contact': 'Alcatel-Lucent Enterprise, https://www.al-enterprise.com',
+  'Name': 'OS6900-X40',
+  'Location': 'Unknown',
+  'Services': '78',
+  'Date & Time': 'MON JUN 02 2025 19:23:22 (UTC)',
+  'Primary CMM - Available (bytes)': '1440706560',
+  'Primary CMM - Comments': 'None'}]
+```
+
+**5. Access specific data from the parsed output:**
+
+```python
+# Get the specific data you want, such as querying "Up Time"
+print(system_info[0]["Up Time"])
+```
+
+Output:
+```
+120 days 21 hours 29 minutes and 0 seconds
+```
 
 ## Future Enhancements (Examples)
 
