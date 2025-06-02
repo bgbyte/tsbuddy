@@ -12,7 +12,7 @@ Tech Support Buddy is a versatile Python module built to empower developers and 
 - [Key Features](#key-features)
 - [Installation](#installation)
 - [Usage](#usage)
-  - [Basic Example: Parsing Temperature Data](#basic-example-parsing-temperature-data)
+  - [Basic Example: Parsing Temperature Data](#example-1-parsing-temperature-data)
   - [SSH Example: Parsing System Information from SSH Command Output](#example-2-parsing-system-information-from-ssh-command-output)
 - [Future Enhancements (Ideas)](#future-enhancements-examples)
 - [Contributing](#contributing)
@@ -53,7 +53,7 @@ tsbuddy can be run directly from your preferred terminal. Doing so will run the 
 
 Here's a basic example demonstrating how to use `tsbuddy` within Python to parse temperature information from command output. 
 
-### Basic Example: Parsing Temperature Data
+### Example 1: Parsing Temperature Data
 
 For this example, we will use a file named `tech_support.log` in your working directory.
 
