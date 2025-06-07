@@ -14,6 +14,7 @@ Tech Support Buddy is a versatile Python module built to empower developers and 
 - [Usage](#usage)
   - [Basic Example: Parsing Temperature Data](#example-1-parsing-temperature-data)
   - [SSH Example: Parsing System Information from SSH Command Output](#example-2-parsing-system-information-from-ssh-command-output)
+  - [aosdl CLI Command](#aosdl-cli-command)
 - [Future Enhancements (Ideas)](#future-enhancements-examples)
 - [Contributing](#contributing)
 
@@ -53,7 +54,7 @@ tsbuddy can be run directly from your preferred terminal. Doing so will run the 
 
 Here's a basic example demonstrating how to use `tsbuddy` within Python to parse temperature information from command output. 
 
-### Example 1: Parsing Temperature Data
+## Example 1: Parsing Temperature Data
 
 For this example, we will use a file named `tech_support.log` in your working directory.
 
@@ -192,7 +193,7 @@ Output:
 -->
 
 
-### Example 2: Parsing System Information from SSH Command Output
+## Example 2: Parsing System Information from SSH Command Output
 
 This example shows how to use `tsbuddy` to parse the output of a command executed over SSH.
 
@@ -288,6 +289,35 @@ Output:
 ```
 120 days 21 hours 29 minutes and 0 seconds
 ```
+
+## aosdl CLI Command
+
+`aosdl` is a CLI command included in the `tsbuddy` module that facilitates downloading and managing AOS images to OmniSwitch. It automates the process of connecting to the devices via SSH, identifying their platform family, and downloading the appropriate images.
+
+### Usage
+
+Run the `aosdl` command directly from your terminal:
+
+```powershell
+(venv) admin:~/$ aosdl
+```
+
+This will prompt you to enter device details (IP, username, and password) and the AOS version. The script will then connect to the devices, identify their platform family, and download the appropriate images to their flash memory.
+
+### Example
+
+```powershell
+(venv) admin:~/$ aosdl
+Enter device IP: 192.168.1.1
+Enter username for 192.168.1.1 [admin]: admin
+Enter password for 192.168.1.1 [switch]:
+Connecting to 192.168.1.1...
+[192.168.1.1] Platform family: shasta
+[192.168.1.1] Downloading Uos.img...
+[192.168.1.1] Downloaded Uos.img to /flash/
+```
+
+The `aosdl` command simplifies the process of managing AOS images across multiple devices.
 
 ## Future Enhancements (Examples)
 
