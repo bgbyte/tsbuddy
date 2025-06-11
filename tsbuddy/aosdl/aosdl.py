@@ -5,6 +5,11 @@ import re
 import json
 import os
 
+# Load GA index once at the module level
+ga_index_path = os.path.join(os.path.dirname(__file__), "ga_index.json")
+with open(ga_index_path) as f:
+    ga_index = json.load(f)
+
 def wait_for_shell(shell, timeout=120):
     """Read output from shell until timeout or prompt returns."""
     shell.settimeout(2)
@@ -104,11 +109,18 @@ def get_aos_version_orchestrator():
             return aos_major, aos_build, aos_release
         # If not 'y', the loop will restart, prompting for the initial string again.
 
+def get_aos_version_simple():
+    while True:
+        """Prompts for AOS version components and confirms the full version."""
+        aos_major = input("Enter AOS Major Version (e.g., 8.9) [8.9]: ") or "8.9"
+        aos_build = input("Enter AOS Build Number (e.g., 221) [221]: ") or "221"
+        aos_release = input("Enter AOS Release (e.g., R03) [R03]: ") or "R03"
 
-# Load GA index once at the module level
-ga_index_path = os.path.join(os.path.dirname(__file__), "ga_index.json")
-with open(ga_index_path) as f:
-    ga_index = json.load(f)
+        full_version = f"{aos_major}.{aos_build}.{aos_release}"
+        confirm = input(f"Confirm full AOS version string [{full_version}] [y]/n: ").strip().lower() or "y"
+        if confirm == "y":
+            return aos_major, aos_build, aos_release
+        # If not 'y', the loop will restart, prompting for the initial string again.
 
 def get_ga_build(version, family):
     try:
@@ -135,13 +147,15 @@ def lookup_ga_build():
 
 def main():
     #lookup_ga_build()
-    aos_major, aos_build, aos_release = get_aos_version_orchestrator()
+    #aos_major, aos_build, aos_release = get_aos_version_orchestrator()
+    print("\nNote: you can lookup the GA build with aosdl-ga CLI command.\n")
+    aos_major, aos_build, aos_release = get_aos_version_simple()
 
-    print("\n--- AOS Version Parsed ---")
-    print(f"Major Version: {aos_major}")
-    print(f"Build Number:  {aos_build}")
-    print(f"Release:       {aos_release}")
-    print(f"Full Version:  {aos_major}.{aos_build}.{aos_release}")
+    #print("\n--- AOS Version Parsed ---")
+    #print(f"Major Version: {aos_major}")
+    #print(f"Build Number:  {aos_build}")
+    #print(f"Release:       {aos_release}")
+    #print(f"Full Version:  {aos_major}.{aos_build}.{aos_release}")
 
     # Step 2: Get list of IPs with optional usernames and passwords
     hosts = []

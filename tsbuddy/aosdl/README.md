@@ -1,7 +1,7 @@
 # OmniSwitch AOS Downloader (aosdl)
 
 ## Overview
-The `aosdl.py` script automates the process of connecting to multiple devices via SSH, identifying their platform family, and downloading the appropriate AOS images to the devices' flash storage.
+The `aosdl.py` script automates the process of connecting to multiple devices via SSH, identifying their platform family, and downloading the appropriate AOS images to the devices' /flash/ directory.
 
 ## Features
 - Connects to devices using SSH.
@@ -29,6 +29,17 @@ The `aosdl.py` script automates the process of connecting to multiple devices vi
    ```
 2. Follow the prompts to enter AOS version information and device details.
 3. The script will connect to each device, identify its platform family, and download the appropriate images.
+
+```powershell
+(venv) admin:~/$ aosdl
+Enter device IP: 192.168.1.1
+Enter username for 192.168.1.1 [admin]: admin
+Enter password for 192.168.1.1 [switch]:
+Connecting to 192.168.1.1...
+[192.168.1.1] Platform family: shasta
+[192.168.1.1] Downloading Uos.img...
+[192.168.1.1] Downloaded Uos.img to /flash/
+```
 
 ## Configuration
 ### Image Mapping

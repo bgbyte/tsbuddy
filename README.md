@@ -4,7 +4,7 @@
 <!-- Add other badges as appropriate: build status, coverage, etc. -->
 <!-- e.g., [![Build Status](https://travis-ci.org/YOUR_USERNAME/tsbuddy.svg?branch=main)](https://travis-ci.org/YOUR_USERNAME/tsbuddy) -->
 
-Tech Support Buddy is a versatile Python module built to empower developers and IT professionals in resolving technical issues. It provides a suite of Python functions designed to efficiently diagnose and resolve technical issues by parsing raw text into structured data, enabling automation and data-driven decision-making.
+Tech Support Buddy is a versatile Python module built to empower network engineers' and IT professionals' productivity. It provides a suite of Python functions designed to efficiently diagnose and resolve technical issues by parsing raw text into structured data, enabling automation and data-driven decision-making.
 
 ## Table of Contents
 
@@ -292,7 +292,7 @@ Output:
 
 ## aosdl CLI Command
 
-`aosdl` is a CLI command included in the `tsbuddy` module that facilitates downloading and managing AOS images to OmniSwitch. It automates the process of connecting to the devices via SSH, identifying their platform family, and downloading the appropriate images.
+`aosdl` is a CLI command included in the `tsbuddy` module that facilitates downloading AOS images to OmniSwitch. It automates the process of connecting to the devices via SSH, identifying their platform family, and downloading the appropriate images from your local repo.
 
 ### Usage
 
@@ -302,7 +302,7 @@ Run the `aosdl` command directly from your terminal:
 (venv) admin:~/$ aosdl
 ```
 
-This will prompt you to enter device details (IP, username, and password) and the AOS version. The script will then connect to the devices, identify their platform family, and download the appropriate images to their flash memory.
+This will prompt you to enter device details (IP, username, and password) and the AOS version. The script will then connect to the devices, identify their platform family, and download the appropriate images to their /flash/ directory.
 
 ### Example
 
@@ -317,7 +317,7 @@ Connecting to 192.168.1.1...
 [192.168.1.1] Downloaded Uos.img to /flash/
 ```
 
-The `aosdl` command simplifies the process of managing AOS images across multiple devices.
+The `aosdl` command simplifies the process of pushing AOS images across multiple devices. For more details, see the [aosdl README](./tsbuddy/aosdl/README.md).
 
 ## Future Enhancements (Examples)
 
