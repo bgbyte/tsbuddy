@@ -5,7 +5,7 @@ with open('README.md', 'r') as f:
 
 setup(
    name='tsbuddy',
-   version='0.0.5',
+   version='0.0.6',
    packages=find_packages(),
    install_requires=[
        # Add dependencies here.
@@ -14,9 +14,9 @@ setup(
    ],
    entry_points={
        'console_scripts': [
-           'tsbuddy=tsbuddy.tsbuddy:main',
-           'aosdl=tsbuddy.aosdl.aosdl:main',  # Run the main function in aosdl to download AOS
-           'aosdl-ga=tsbuddy.aosdl.aosdl:lookup_ga_build',  # Run lookup_ga_build function
+           'tsbuddy=src.tsbuddy:main',
+           'aosdl=src.aosdl.aosdl:main',  # Run the main function in aosdl to download AOS
+           'aosdl-ga=src.aosdl.aosdl:lookup_ga_build',  # Run lookup_ga_build function
        ],
    },
    long_description=long_description,
