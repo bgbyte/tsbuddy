@@ -330,7 +330,7 @@ The `tsbuddy` module is designed to be extensible. Future development could incl
 *   Convert configurations.
 *   Auto-detect parsing function.
 *   Generate tech-support & validate generation.
-*   Support outputting to MS Excel.
+*   Support outputting to .xlsx.
 *   Support for different log formats & devices.
 *   More sophisticated section extraction logic.
 
