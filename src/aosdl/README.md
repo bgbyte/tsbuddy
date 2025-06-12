@@ -1,4 +1,4 @@
-# OmniSwitch AOS Downloader (aosdl)
+# OmniSwitch AOS Downloader (`aosdl`)
 
 ## Overview
 The `aosdl` package automates the process of connecting to multiple devices via SSH, identifying their platform family, and downloading the appropriate AOS images to the devices' /flash/ directory.
