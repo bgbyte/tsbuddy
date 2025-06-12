@@ -140,8 +140,10 @@ def lookup_ga_build():
             print("Canceling GA build lookup...")
             break
         ga_prompt_ver = input("Provide the AOS version & Release for the lookup (e.g., 8.10R02) [exit]: ").strip().upper() or None
+        ga_ver, ga_release = ga_prompt_ver.split('R') if ga_prompt_ver else (None, None)
+        ga_release = "R" + ga_release  # Add "R" to the beginning of the ga_release string
         if ga_prompt_ver:
-            print("GA Build: ",get_ga_build(ga_prompt_ver, ga_prompt_fam))
+            print("GA Build: ",f"{ga_ver}{get_ga_build(ga_prompt_ver, ga_prompt_fam)}.{ga_release}")
         else:
             print("Lookup canceled.")
 
