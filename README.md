@@ -4,7 +4,7 @@
 <!-- Add other badges as appropriate: build status, coverage, etc. -->
 <!-- e.g., [![Build Status](https://travis-ci.org/YOUR_USERNAME/tsbuddy.svg?branch=main)](https://travis-ci.org/YOUR_USERNAME/tsbuddy) -->
 
-Tech Support Buddy is a versatile Python module built to empower network engineers' and IT professionals' productivity. It provides a suite of Python functions designed to efficiently diagnose and resolve technical issues by parsing raw text into structured data, enabling automation and data-driven decision-making.
+Tech Support Buddy is a versatile Python module built to improve network engineers' productivity. It provides a suite of Python utilities designed to efficiently diagnose technical issues, help resolve them, and facilitate automation. The main() function parses raw text into structured data, enabling automation and data-driven decision-making.
 
 ## Table of Contents
 
@@ -26,7 +26,7 @@ Dealing with raw text output can be tedious and time-consuming. `tsbuddy` parsin
 2.  **Parse** this raw text into structured Python objects.
 3.  **Enable** programmatic analysis and decision-making based on the parsed data.
 
-This allows you to quickly turn unstructured command output into actionable insights.
+This allows you to quickly turn unstructured command output into actionable insights. This package currently supports Alcatel-Lucent Enterprise's OmniSwitch. 
 
 ## Key Features
 
