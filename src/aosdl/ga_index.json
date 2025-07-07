@@ -1,4 +1,17 @@
 {
+	"8.10R03": {
+		"everest": ".93",
+		"medora_sim64": "",
+		"tor": "N/S",
+		"vindhya": ".93",
+		"medora": ".93",
+		"yukon": ".93",
+		"shasta": ".93",
+		"aravalli": ".93",
+		"shasta_n": ".93",
+		"whitney": ".93",
+		"nandi": ".93"
+	},
 	"8.10R02": {
 		"everest": ".105",
 		"medora_sim64": "",
