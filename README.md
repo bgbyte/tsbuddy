@@ -1,3 +1,5 @@
+![tsbuddy Avatar](tsbuddy-img.png)
+
 # Tech Support Buddy (`tsbuddy`)
 
 [![PyPI version](https://badge.fury.io/py/tsbuddy.svg?cache=0)](https://badge.fury.io/py/tsbuddy)
