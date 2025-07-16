@@ -1,4 +1,4 @@
-![tsbuddy Avatar](tsbuddy-img.png)
+![tsbuddy Avatar](https://raw.githubusercontent.com/bgbyte/tsbuddy/main/tsbuddy-img.png)
 
 # Tech Support Buddy (`tsbuddy`)
 
