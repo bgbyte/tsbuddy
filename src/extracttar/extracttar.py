@@ -11,10 +11,10 @@ def extract_tar_files(base_path='.'):
         output_dir = tar_file.parent
         subprocess.run([
             SEVEN_ZIP_PATH,
-            'x',
-            f'-o{output_dir}',
-            '-sccUTF-8',
-            '-aos',
+            'x',                    # Extract command
+            f'-o{output_dir}',      # Output to same directory
+            '-sccUTF-8',            # Force UTF-8 encoding
+            '-aos',                 # Skip overwriting existing files
             str(tar_file)
         ], check=True)
 
@@ -26,10 +26,10 @@ def extract_gz_files(base_path='.'):
         output_dir = gz_file.parent
         subprocess.run([
             SEVEN_ZIP_PATH,
-            'x',
-            f'-o{output_dir}',
-            '-sccUTF-8',
-            '-aos',
+            'x',                    # Extract command
+            f'-o{output_dir}',      # Output to same directory
+            '-sccUTF-8',            # Force UTF-8 encoding
+            '-aos',                 # Skip overwriting existing files
             str(gz_file)
         ], check=True)
 
