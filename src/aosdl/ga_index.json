@@ -10,7 +10,8 @@
 		"aravalli": ".93",
 		"shasta_n": ".93",
 		"whitney": ".93",
-		"nandi": ".93"
+		"nandi": ".93",
+		"kailash": ".93"
 	},
 	"8.10R02": {
 		"everest": ".105",
@@ -23,7 +24,8 @@
 		"aravalli": ".105",
 		"shasta_n": ".105",
 		"whitney": ".105",
-		"nandi": ".105"
+		"nandi": ".105",
+		"kailash": ".105"
 	},
 	"8.10R01": {
 		"everest": ".102",
@@ -36,7 +38,8 @@
 		"aravalli": ".102",
 		"shasta_n": ".102",
 		"whitney": ".102",
-		"nandi": ".102"
+		"nandi": ".102",
+		"kailash": "N/S"
 	},
 	"8.9R04": {
 		"everest": ".94",
@@ -49,7 +52,8 @@
 		"aravalli": ".94",
 		"shasta_n": ".94",
 		"whitney": ".94",
-		"nandi": ".94"
+		"nandi": ".94",
+		"kailash": "N/S"
 	},
 	"8.9R03": {
 		"everest": ".221",
@@ -62,7 +66,8 @@
 		"aravalli": ".221",
 		"shasta_n": ".221",
 		"whitney": ".221",
-		"nandi": ".221"
+		"nandi": ".221",
+		"kailash": "N/S"
 	},
 	"8.9R02": {
 		"everest": ".107",
@@ -75,7 +80,8 @@
 		"aravalli": ".107",
 		"shasta_n": ".107",
 		"whitney": ".107",
-		"nandi": ".107"
+		"nandi": ".107",
+		"kailash": "N/S"
 	},
 	"8.9R01": {
 		"everest": ".73",
@@ -88,7 +94,8 @@
 		"aravalli": ".73",
 		"shasta_n": ".73",
 		"whitney": "N/S",
-		"nandi": ".73"
+		"nandi": ".73",
+		"kailash": "N/S"
 	},
 	"8.8R02": {
 		"everest": ".56",
@@ -101,7 +108,8 @@
 		"aravalli": ".56",
 		"shasta_n": ".56",
 		"whitney": "N/S",
-		"nandi": ".56"
+		"nandi": ".56",
+		"kailash": "N/S"
 	},
 	"8.8R01": {
 		"everest": ".152",
@@ -114,7 +122,8 @@
 		"aravalli": ".152",
 		"shasta_n": ".153",
 		"whitney": "N/S",
-		"nandi": ".152"
+		"nandi": ".152",
+		"kailash": "N/S"
 	},
 	"8.7R03": {
 		"everest": ".98",
@@ -127,7 +136,8 @@
 		"aravalli": ".98",
 		"shasta_n": ".98",
 		"whitney": "N/S",
-		"nandi": ".98"
+		"nandi": ".98",
+		"kailash": "N/S"
 	},
 	"8.7R02": {
 		"everest": ".252",
@@ -140,7 +150,8 @@
 		"aravalli": "UNK",
 		"shasta_n": ".252",
 		"whitney": "N/S",
-		"nandi": ".252"
+		"nandi": ".252",
+		"kailash": "N/S"
 	},
 	"8.7R01": {
 		"everest": ".277",
@@ -153,7 +164,8 @@
 		"aravalli": "UNK",
 		"shasta_n": ".277",
 		"whitney": "N/S",
-		"nandi": ".354"
+		"nandi": ".354",
+		"kailash": "N/S"
 	},
 	"8.6R02": {
 		"everest": ".203",
@@ -166,7 +178,8 @@
 		"aravalli": "UNK",
 		"shasta_n": "UNK",
 		"whitney": "N/S",
-		"nandi": ".203"
+		"nandi": ".203",
+		"kailash": "N/S"
 	},
 	"8.6R01": {
 		"everest": ".289",
@@ -179,7 +192,8 @@
 		"aravalli": "UNK",
 		"shasta_n": "UNK",
 		"whitney": "N/S",
-		"nandi": ".289"
+		"nandi": ".289",
+		"kailash": "N/S"
 	},
 	"8.5R04": {
 		"everest": ".196",
@@ -192,7 +206,8 @@
 		"aravalli": "UNK",
 		"shasta_n": "UNK",
 		"whitney": "N/S",
-		"nandi": ".196"
+		"nandi": ".196",
+		"kailash": "N/S"
 	},
 	"8.5R02": {
 		"everest": ".255",
@@ -205,7 +220,8 @@
 		"aravalli": "UNK",
 		"shasta_n": "UNK",
 		"whitney": "N/S",
-		"nandi": "UNK"
+		"nandi": "UNK",
+		"kailash": "N/S"
 	},
 	"8.5R01": {
 		"everest": ".164",
@@ -218,7 +234,8 @@
 		"aravalli": "UNK",
 		"shasta_n": "UNK",
 		"whitney": "N/S",
-		"nandi": ".164"
+		"nandi": ".164",
+		"kailash": "N/S"
 	},
 	"8.4.1R03": {
 		"everest": ".141",
@@ -231,7 +248,8 @@
 		"aravalli": "UNK",
 		"shasta_n": "UNK",
 		"whitney": "N/S",
-		"nandi": ".141"
+		"nandi": ".141",
+		"kailash": "N/S"
 	},
 	"8.4.1R02": {
 		"everest": ".229",
@@ -244,7 +262,8 @@
 		"aravalli": "UNK",
 		"shasta_n": "UNK",
 		"whitney": "N/S",
-		"nandi": ".229"
+		"nandi": ".229",
+		"kailash": "N/S"
 	},
 	"8.4.1R01": {
 		"everest": ".170",
@@ -257,7 +276,8 @@
 		"aravalli": "UNK",
 		"shasta_n": "UNK",
 		"whitney": "N/S",
-		"nandi": "UNK"
+		"nandi": "UNK",
+		"kailash": "N/S"
 	},
 	"8.3.1R02": {
 		"everest": ".160",
@@ -270,7 +290,8 @@
 		"aravalli": "UNK",
 		"shasta_n": "UNK",
 		"whitney": "N/S",
-		"nandi": "UNK"
+		"nandi": "UNK",
+		"kailash": "N/S"
 	},
 	"8.3.1R01": {
 		"everest": "UNK",
@@ -283,6 +304,7 @@
 		"aravalli": "UNK",
 		"shasta_n": "UNK",
 		"whitney": "UNK",
-		"nandi": "UNK"
+		"nandi": "UNK",
+		"kailash": "N/S"
 	}
 }
