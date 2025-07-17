@@ -249,7 +249,8 @@ def main(folder_name=None, reload_when_finished=False):
         "shasta_n": ["Uosn.img"],
         "whitney": ["Wos.img"],
         "nandi": ["Nos.img"],
-        "whitney_sim": ["Wossim.img"]
+        "whitney_sim": ["Wossim.img"],
+        "kailash": ["Kaos.img"]
     }
     base_ip = "http://10.46.4.37"
     base_dir = "/bop/images"
