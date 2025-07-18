@@ -325,6 +325,7 @@ The `aosdl` command simplifies the process of pushing AOS images across multiple
 
 The `tsbuddy` module is designed to be extensible. Future development could include:
 
+*   Chatbot
 *   More parsers for common log outputs (e.g., `show fabric`, `vrf ... show ...`, `debug show ...`).
 *   Functions to compare states (e.g., before/after changes).
 *   Integration with alerting systems.
