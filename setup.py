@@ -20,6 +20,7 @@ setup(
            'aosdl-ga=src.aosdl.aosdl:lookup_ga_build',  # Run lookup_ga_build function
            'aosdl-up=src.aosdl.aosdl:aosup',  # Run AOS Upgrade function to prompt for directory name and reload option
            'tsbuddy-menu=src.tsbuddy_menu:menu',  # New menu entry point
+           'logparser=src.logparser:main', # Run function to consolidate logs in current directory
        ],
    },
    long_description=long_description,
