@@ -4,7 +4,6 @@ import json
 import os
 
 
-LogByLine = []
 SwlogFiles1 = []
 SwlogFiles2 = []
 SwlogFiles3 = []
@@ -17,12 +16,11 @@ ConsoleFiles = []
 dir_list = os.listdir()
 
 #Opens specified file, grabs the data, formats it, and exports it as a CSV
-def ReadandParse(OutputFilePath):
+def ReadandParse(OutputFilePath,LogByLine):
 	with open(OutputFilePath, 'w', newline='') as csvfile:
 		OutputFile = csv.writer(csvfile)
 		OutputFile.writerow(['Year', 'Month', 'Day', 'Time', 'SwitchName', 'Source', 'AppID', 'Subapp', 'Priority', 'LogMessage'])
 		for line in LogByLine:
-			print(line)
 			line = line.replace("  ", " ")
 			parts = line.split(" ")
 			partsSize = len(parts)
@@ -77,7 +75,7 @@ def main():
 		with open(logfile, 'r') as file:
 			LogByLine = file.readlines()
 	OutputFilePath = 'Chassis1SwlogsParsed.csv'
-	ReadandParse(OutputFilePath)
+	ReadandParse(OutputFilePath,LogByLine)
 	#Convert to JSON
 	with open(OutputFilePath, mode='r', newline='', encoding='utf-8') as csvfile:
 		data = list(csv.DictReader(csvfile))
@@ -90,7 +88,7 @@ def main():
 			with open(logfile, 'r') as file:
 				LogByLine = file.readlines()
 		OutputFilePath = 'Chassis2SwlogsParsed.csv'
-		ReadandParse(OutputFilePath)
+		ReadandParse(OutputFilePath,LogByLine)
 	#Convert to JSON
 		with open(OutputFilePath, mode='r', newline='', encoding='utf-8') as csvfile:
 			data = list(csv.DictReader(csvfile))
@@ -103,7 +101,7 @@ def main():
 			with open(logfile, 'r') as file:
 				LogByLine = file.readlines()
 		OutputFilePath = 'Chassis3SwlogsParsed.csv'
-		ReadandParse(OutputFilePath)
+		ReadandParse(OutputFilePath,LogByLine)
 	#Convert to JSON
 		with open(OutputFilePath, mode='r', newline='', encoding='utf-8') as csvfile:
 			data = list(csv.DictReader(csvfile))
@@ -116,7 +114,7 @@ def main():
 			with open(logfile, 'r') as file:
 				LogByLine = file.readlines()
 		OutputFilePath = 'Chassis4SwlogsParsed.csv'
-		ReadandParse(OutputFilePath)
+		ReadandParse(OutputFilePath,LogByLine)
 	#Convert to JSON
 		with open(OutputFilePath, mode='r', newline='', encoding='utf-8') as csvfile:
 			data = list(csv.DictReader(csvfile))
@@ -129,7 +127,7 @@ def main():
 			with open(logfile, 'r') as file:
 				LogByLine = file.readlines()
 		OutputFilePath = 'Chassis5SwlogsParsed.csv'
-		ReadandParse(OutputFilePath)
+		ReadandParse(OutputFilePath,LogByLine)
 	#Convert to JSON
 		with open(OutputFilePath, mode='r', newline='', encoding='utf-8') as csvfile:
 			data = list(csv.DictReader(csvfile))
@@ -142,7 +140,7 @@ def main():
 			with open(logfile, 'r') as file:
 				LogByLine = file.readlines()
 		OutputFilePath = 'Chassis6SwlogsParsed.csv'
-		ReadandParse(OutputFilePath)
+		ReadandParse(OutputFilePath,LogByLine)
 	#Convert to JSON
 		with open(OutputFilePath, mode='r', newline='', encoding='utf-8') as csvfile:
 			data = list(csv.DictReader(csvfile))
@@ -155,7 +153,7 @@ def main():
 			with open(logfile, 'r') as file:
 				LogByLine = file.readlines()
 		OutputFilePath = 'Chassis7SwlogsParsed.csv'
-		ReadandParse(OutputFilePath)
+		ReadandParse(OutputFilePath,LogByLine)
 	#Convert to JSON
 		with open(OutputFilePath, mode='r', newline='', encoding='utf-8') as csvfile:
 			data = list(csv.DictReader(csvfile))
@@ -168,7 +166,7 @@ def main():
 			with open(logfile, 'r') as file:
 				LogByLine = file.readlines()
 		OutputFilePath = 'Chassis8SwlogsParsed.csv'
-		ReadandParse(OutputFilePath)
+		ReadandParse(OutputFilePath,LogByLine)
 	#Convert to JSON
 		with open(OutputFilePath, mode='r', newline='', encoding='utf-8') as csvfile:
 			data = list(csv.DictReader(csvfile))
@@ -181,7 +179,7 @@ def main():
 			with open(logfile, 'r') as file:
 				LogByLine = file.readlines()
 		OutputFilePath = 'ConsoleLogsParsed.csv'
-		ReadandParse(OutputFilePath)
+		ReadandParse(OutputFilePath,LogByLine)
 	#Convert to JSON
 		with open(OutputFilePath, mode='r', newline='', encoding='utf-8') as csvfile:
 			data = list(csv.DictReader(csvfile))
