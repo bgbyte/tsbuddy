@@ -19,6 +19,7 @@ setup(
            'aosdl=src.aosdl.aosdl:main',  # Run the main function in aosdl to download AOS
            'aosdl-ga=src.aosdl.aosdl:lookup_ga_build',  # Run lookup_ga_build function
            'aosdl-up=src.aosdl.aosdl:aosup',  # Run AOS Upgrade function to prompt for directory name and reload option
+           'tsbuddy-menu=src.tsbuddy_menu:menu',  # New menu entry point
        ],
    },
    long_description=long_description,
