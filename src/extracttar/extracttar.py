@@ -1,7 +1,19 @@
 import subprocess
 from pathlib import Path
+import os
+import platform
+import shutil
 
-SEVEN_ZIP_PATH = r"C:\Program Files\7-Zip\7z.exe"
+SEVEN_ZIP_PATH = shutil.which("7z")
+#SEVEN_ZIP_PATH = r"C:\Program Files\7-Zip\7z.exe"
+
+if SEVEN_ZIP_PATH is None:
+    print("Warning: '7z' is not found in your system PATH. Please install 7-Zip or add it to your PATH. ...Attempting Windows 7z executable path (this may not work on all systems).")
+    SEVEN_ZIP_PATH = r"C:\Program Files\7-Zip\7z.exe"
+else:
+    SEVEN_ZIP_PATH = r"7z"
+    #SEVEN_ZIP_PATH = shutil.which("7z")
+
 
 def extract_tar_files(base_path='.'):
     """
