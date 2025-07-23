@@ -47,18 +47,30 @@ def menu():
     while True:
         #print("\n       (•‿•)  Hey there, buddy!")
         print(ale_ascii)
-        print("\n   ( ^_^)ノ  Hey there, tsbuddy is at your service!")
-        print("\n=== 🛎️  ===")
+        try:
+            print("\n   ( ^_^)ノ  Hey there, tsbuddy is at your service!")
+        except:
+            print("\n   ( ^_^)/  Hey there, tsbuddy is at your service!")
+        try:
+            print("\n=== 🛎️  ===")
+        except:
+            print("\n=== Menu ===")
         for idx, option in enumerate(options, 1):
             print(f"{idx}. {option}")
-        print("\n0. Exit  (つ﹏<) \n")
+        try:
+            print("\n0. Exit  (つ﹏<) \n")
+        except:
+            print("\n0. Exit  (T_T) \n")
         choice = input("Select an option: ").strip()
         if choice.isdigit() and 1 <= int(choice) <= len(functions):
-            #print(f"\n   ( ^_^)ノ⌒☆   \n")
-            print(f"\n   ( ^_^)ノ🛎️   \n")
+            try:
+                #print(f"\n   ( ^_^)ノ⌒☆   \n")
+                print(f"\n   ( ^_^)ノ🛎️   \n")
+            except:
+                print(f"\n   ( ^_^)/🕭   \n")
             functions[int(choice) - 1]()
         elif choice == '0':
-            print("Exiting...\n\n  (×_×) \n")
+            print("Exiting...\n\n  (x_x) \n")
             sys.exit(0)
         else:
             print("Invalid choice. Please try again.")
