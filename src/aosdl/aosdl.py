@@ -132,7 +132,7 @@ def get_ga_build(version, family):
         raise ValueError(f"No GA build found for version {version} and family {family}")
 
 def lookup_ga_build():
-    """Allows the user to repeatedly look up GA builds until they provide a blank input."""
+    """Allows the user to look up GA builds with an option to upgrade OmniSwitch."""
     print("Lookup the GA build by providing the AOS version & switch family...")
     while True:
         ga_prompt_fam = input("Enter the switch family name to lookup the GA build # (e.g., shasta) [exit]: ").strip().lower() or None
