@@ -58,7 +58,8 @@ def menu():
                 #print(f"\n   ( ^_^)ノ⌒☆   \n")
                 print(f"\n   ( ^_^)ノ🛎️   \n")
             except:
-                print(f"\n   ( ^_^)/🕭   \n")
+                #print(f"\n   ( ^_^)/🕭   \n")
+                pass
             # Get the function from the selected option
             selected_func = list(menu_options[int(choice)-1].values())[0]
             selected_func()
