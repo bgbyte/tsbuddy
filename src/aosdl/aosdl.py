@@ -140,10 +140,14 @@ def lookup_ga_build():
             print("Canceling GA build lookup...")
             break
         ga_prompt_ver = input("Provide the AOS version & Release for the lookup (e.g., 8.10R02) [exit]: ").strip().upper() or None
+        gadl = input(f"Would you like to download to OmniSwitch? [y]/n: ").strip().lower() or "y"
         ga_ver, ga_release = ga_prompt_ver.split('R') if ga_prompt_ver else (None, None)
         ga_release = "R" + ga_release  # Add "R" to the beginning of the ga_release string
         if ga_prompt_ver:
-            print("GA Build: ",f"{ga_ver}{get_ga_build(ga_prompt_ver, ga_prompt_fam)}.{ga_release}")
+            found_ga_build = f"{ga_ver}{get_ga_build(ga_prompt_ver, ga_prompt_fam)}.{ga_release}"
+            print("GA Build: ", found_ga_build)
+            if gadl == "y":
+                aosup()
         else:
             print("Lookup canceled.")
 
@@ -172,7 +176,7 @@ def get_platform_family(shell):
     return family
 
 
-def aosup():
+def aosup(found_ga_build=None):
     """Prompt the user for folder name and reload option, then execute main with those arguments."""
     folder_name = input("Which folder name would you like to download to? [working]: ").strip() or "working"
     reload_choice = input("Would you like to reload when finished? [y]/n: ").strip().lower() or "y"

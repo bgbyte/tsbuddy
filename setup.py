@@ -5,7 +5,7 @@ with open('README.md', 'r') as f:
 
 setup(
    name='tsbuddy',
-   version='0.0.11',
+   version='0.0.12',
    packages=find_packages(),
    install_requires=[
        # Add dependencies here.
@@ -14,12 +14,12 @@ setup(
    ],
    entry_points={
        'console_scripts': [
-           'tsbuddy=src.tsbuddy:main',
+           'tsbuddy-csv=src.tsbuddy:main',
            'tsbuddy-extract=src.extracttar:main',  # Run the main function in extracttar to extract tar files
            'aosdl=src.aosdl.aosdl:main',  # Run the main function in aosdl to download AOS
            'aosdl-ga=src.aosdl.aosdl:lookup_ga_build',  # Run lookup_ga_build function
            'aosdl-up=src.aosdl.aosdl:aosup',  # Run AOS Upgrade function to prompt for directory name and reload option
-           'tsbuddy-menu=src.tsbuddy_menu:menu',  # New menu entry point
+           'tsbuddy=src.tsbuddy_menu:menu',  # New menu entry point
            'logparser=src.logparser:main', # Run function to consolidate logs in current directory
        ],
    },
