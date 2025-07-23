@@ -4,16 +4,19 @@ import os
 import platform
 import shutil
 
-SEVEN_ZIP_PATH = shutil.which("7z")
-#SEVEN_ZIP_PATH = r"C:\Program Files\7-Zip\7z.exe"
-
-if SEVEN_ZIP_PATH is None:
-    print("Warning: '7z' is not found in your system PATH. Please install 7-Zip or add it to your PATH. ...Attempting Windows 7z executable path (this may not work on all systems).")
-    SEVEN_ZIP_PATH = r"C:\Program Files\7-Zip\7z.exe"
-else:
-    SEVEN_ZIP_PATH = r"7z"
-    #SEVEN_ZIP_PATH = shutil.which("7z")
-
+def resolve_seven_zip_path():
+    """
+    Determines the path to the 7z executable. Warns if not found and attempts a Windows fallback.
+    Returns the resolved path as a string.
+    """
+    seven_zip_path = shutil.which("7z")
+    if seven_zip_path is None:
+        print("Warning: '7z' is not found in your system PATH. Please install 7-Zip or add it to your PATH. ...Attempting Windows 7z executable path (this may not work on all systems).")
+        seven_zip_path = r"C:\Program Files\7-Zip\7z.exe"
+    else:
+        seven_zip_path = r"7z"
+        #seven_zip_path = shutil.which("7z")
+    return seven_zip_path
 
 def extract_tar_files(base_path='.'):
     """
@@ -50,4 +53,5 @@ def main():
     extract_gz_files()
 
 if __name__ == '__main__':
+    SEVEN_ZIP_PATH = resolve_seven_zip_path()
     main()

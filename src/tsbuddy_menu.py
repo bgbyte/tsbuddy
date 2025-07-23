@@ -29,19 +29,19 @@ ale_ascii = '''
 
 def menu():
     options = [
-        "Run tsbuddy",
-        "Run extracttar",
-        "Run aosdl",
-        "Run aosdl-ga (GA Build Lookup)",
-        "Run aosdl-up (AOS Upgrade)",
+        "Run AOS Upgrader",
+        "Run GA Build Lookup",
+        "Run AOS Downloader",
+        "Run tech_support_complete.tar Extractor",
+        "Run tech_support.log to CSV Converter",
         #"Exit"
     ]
     functions = [
-        tsbuddy_main,
-        extracttar_main,
-        aosdl_main,
-        lookup_ga_build,
         aosup,
+        lookup_ga_build,
+        aosdl_main,
+        extracttar_main,
+        tsbuddy_main,
         lambda: (print("Exiting."), sys.exit(0))
     ]
     while True:
