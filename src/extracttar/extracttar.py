@@ -18,6 +18,8 @@ def resolve_seven_zip_path():
         #seven_zip_path = shutil.which("7z")
     return seven_zip_path
 
+SEVEN_ZIP_PATH = resolve_seven_zip_path()
+
 def extract_tar_files(base_path='.'):
     """
     Recursively extracts all .tar files under the given base_path using 7-Zip.
@@ -53,5 +55,4 @@ def main():
     extract_gz_files()
 
 if __name__ == '__main__':
-    SEVEN_ZIP_PATH = resolve_seven_zip_path()
     main()
