@@ -3,6 +3,7 @@ import sys
 from src.tsbuddy import main as tsbuddy_main
 from src.extracttar.extracttar import main as extracttar_main
 from src.aosdl.aosdl import main as aosdl_main, lookup_ga_build, aosup
+from src.logparser import main as logparser_main
 
 ale_ascii = '''
                   ...                   
@@ -33,6 +34,7 @@ def menu():
         {"Run GA Build Lookup": lookup_ga_build},
         {"Run AOS Downloader": aosdl_main},
         {"Run tech_support_complete.tar Extractor": extracttar_main},
+        {"Run swlog parser (to CSV & JSON)": logparser_main},
         {"Run tech_support.log to CSV Converter": tsbuddy_main},
     ]
     while True:
