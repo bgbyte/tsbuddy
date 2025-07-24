@@ -1,7 +1,5 @@
 import subprocess
 from pathlib import Path
-import os
-import platform
 import shutil
 
 def resolve_seven_zip_path():
