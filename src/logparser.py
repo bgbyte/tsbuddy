@@ -1,10 +1,10 @@
-
 import csv
 import json
 import os
 import paramiko
 from getpass import getpass
 import fnmatch
+from . import logfinder
 
 SwlogFiles1 = []
 SwlogFiles2 = []
@@ -16,6 +16,18 @@ SwlogFiles7 = []
 SwlogFiles8 = []
 ConsoleFiles = []
 dir_list = os.listdir()
+
+def find_log_paths(root_dir=None):
+	"""
+	Finds all swlog & console files in the specified directory and its subdirectories.
+	Returns a dictionary categorizing log files with file paths for processing.
+	"""
+	dir_list_recursive = logfinder.main()
+	return dir_list_recursive
+
+
+
+
 
 #Opens specified file, grabs the data, formats it, and exports it as a CSV
 def ReadandParse(OutputFilePath,LogByLine):
@@ -77,6 +89,18 @@ def ReadandParse(OutputFilePath,LogByLine):
 						LogMessage = LogMessage.strip()
 						OutputFile.writerow([Year, Month, Date, Time, SwitchName, Source, "", "", "", LogMessage])
 					
+def process_logs(log_files, csv_name, json_name):
+    LogByLine = []
+    if log_files:
+        for logfile in log_files:
+            with open(logfile, 'r', errors='ignore') as file:
+                LogByLine += file.readlines()
+        ReadandParse(csv_name, LogByLine)
+        with open(csv_name, mode='r', newline='') as csvfile:
+            data = list(csv.DictReader(csvfile))
+        with open(json_name, mode='w') as jsonfile:
+            json.dump(data, jsonfile, indent=4)
+
 def main():
 #Testing the new stuff
 	hosts = collect_hosts()
@@ -103,6 +127,25 @@ def main():
 		if 'swlog_localConsole' in file:
 			ConsoleFiles.append(file)
 	
+	# # Group chassis files for easier iteration
+	# chassis_files = [
+    #     (SwlogFiles1, 'Chassis1SwlogsParsed-tsbuddy.csv', 'Chassis1SwlogsParsed-tsbuddy.json'),
+    #     (SwlogFiles2, 'Chassis2SwlogsParsed-tsbuddy.csv', 'Chassis2SwlogsParsed-tsbuddy.json'),
+    #     (SwlogFiles3, 'Chassis3SwlogsParsed-tsbuddy.csv', 'Chassis3SwlogsParsed-tsbuddy.json'),
+    #     (SwlogFiles4, 'Chassis4SwlogsParsed-tsbuddy.csv', 'Chassis4SwlogsParsed-tsbuddy.json'),
+    #     (SwlogFiles5, 'Chassis5SwlogsParsed-tsbuddy.csv', 'Chassis5SwlogsParsed-tsbuddy.json'),
+    #     (SwlogFiles6, 'Chassis6SwlogsParsed-tsbuddy.csv', 'Chassis6SwlogsParsed-tsbuddy.json'),
+    #     (SwlogFiles7, 'Chassis7SwlogsParsed-tsbuddy.csv', 'Chassis7SwlogsParsed-tsbuddy.json'),
+    #     (SwlogFiles8, 'Chassis8SwlogsParsed-tsbuddy.csv', 'Chassis8SwlogsParsed-tsbuddy.json'),
+    # ]
+
+	# for files, csv_name, json_name in chassis_files:
+	# 	process_logs(files, csv_name, json_name)
+
+    # # Console logs
+	# process_logs(ConsoleFiles, 'ConsoleLogsParsed-tsbuddy.csv', 'ConsoleLogsParsed-tsbuddy.json')
+
+
 	#Combine all log files
 	
 	#SwlogChassis1
