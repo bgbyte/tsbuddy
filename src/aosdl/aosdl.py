@@ -4,6 +4,28 @@ import time
 import re
 import json
 import os
+import sys
+import subprocess
+
+def safe_password_prompt(prompt="Password: ", fallback="switch"):
+    try:
+        if sys.stdin.isatty():
+            return getpass.getpass(prompt) or fallback
+        else:
+            # Try manual stty fallback
+            try:
+                sys.stdout.write(prompt)
+                sys.stdout.flush()
+                subprocess.check_call(["stty", "-echo"])
+                password = input()
+            finally:
+                subprocess.call(["stty", "echo"])
+                sys.stdout.write("\n")
+            return password or fallback
+    except Exception:
+        # Final fallback
+        #print("Falling back to visible input.")
+        return input(prompt) or fallback
 
 # Load GA index once at the module level
 ga_index_path = os.path.join(os.path.dirname(__file__), "ga_index.json")
@@ -160,7 +182,8 @@ def collect_hosts():
         if not ip:
             break
         username = input(f"Enter username for {ip} [admin]: ") or "admin"
-        password = getpass(f"Enter password for {ip} [switch]: ") or "switch"
+        password = safe_password_prompt(f"Enter password for {ip} [switch]: ")
+        #password = getpass(f"Enter password for {ip} [switch]: ") or "switch"
         hosts.append({"ip": ip, "username": username, "password": password})
     return hosts
 
