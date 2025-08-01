@@ -111,13 +111,13 @@ def main():
 		with open(logfile, 'r', errors='ignore') as file:
 			LogByLine += file.readlines()
 			#print("Reading "+str(logfile)+". Total line count is "+str(len(LogByLine))+" lines.")
-	OutputFilePath = 'Chassis1SwlogsParsed.csv'
+	OutputFilePath = 'Chassis1SwlogsParsed-tsbuddy.csv'
 	ReadandParse(OutputFilePath,LogByLine)
 	#Convert to JSON
 	#with open(OutputFilePath, mode='r', newline='') as csvfile:
 	with open(OutputFilePath, mode='r', newline='') as csvfile:
 		data = list(csv.DictReader(csvfile))
-	with open('Chassis1SwlogsParsed.json', mode='w') as jsonfile:
+	with open('Chassis1SwlogsParsed-tsbuddy.json', mode='w') as jsonfile:
 		json.dump(data, jsonfile, indent=4)
 	
 	#SwlogChassis2
@@ -126,12 +126,12 @@ def main():
 		for logfile in SwlogFiles2:
 			with open(logfile, 'r', errors='ignore') as file:
 				LogByLine += file.readlines()
-		OutputFilePath = 'Chassis2SwlogsParsed.csv'
+		OutputFilePath = 'Chassis2SwlogsParsed-tsbuddy.csv'
 		ReadandParse(OutputFilePath,LogByLine)
 	#Convert to JSON
 		with open(OutputFilePath, mode='r', newline='') as csvfile:
 			data = list(csv.DictReader(csvfile))
-		with open('Chassis2SwlogsParsed.json', mode='w') as jsonfile:
+		with open('Chassis2SwlogsParsed-tsbuddy.json', mode='w') as jsonfile:
 			json.dump(data, jsonfile, indent=4)
 		
 	#SwlogChassis3
@@ -140,12 +140,12 @@ def main():
 		for logfile in SwlogFiles3:
 			with open(logfile, 'r', errors='ignore') as file:
 				LogByLine += file.readlines()
-		OutputFilePath = 'Chassis3SwlogsParsed.csv'
+		OutputFilePath = 'Chassis3SwlogsParsed-tsbuddy.csv'
 		ReadandParse(OutputFilePath,LogByLine)
 	#Convert to JSON
 		with open(OutputFilePath, mode='r', newline='') as csvfile:
 			data = list(csv.DictReader(csvfile))
-		with open('Chassis3SwlogsParsed.json', mode='w') as jsonfile:
+		with open('Chassis3SwlogsParsed-tsbuddy.json', mode='w') as jsonfile:
 			json.dump(data, jsonfile, indent=4)
 	
 	#SwlogChassis4
@@ -154,12 +154,12 @@ def main():
 		for logfile in SwlogFiles4:
 			with open(logfile, 'r', errors='ignore') as file:
 				LogByLine += file.readlines()
-		OutputFilePath = 'Chassis4SwlogsParsed.csv'
+		OutputFilePath = 'Chassis4SwlogsParsed-tsbuddy.csv'
 		ReadandParse(OutputFilePath,LogByLine)
 	#Convert to JSON
 		with open(OutputFilePath, mode='r', newline='') as csvfile:
 			data = list(csv.DictReader(csvfile))
-		with open('Chassis4SwlogsParsed.json', mode='w') as jsonfile:
+		with open('Chassis4SwlogsParsed-tsbuddy.json', mode='w') as jsonfile:
 			json.dump(data, jsonfile, indent=4)
 	
 	#SwlogChassis5
@@ -168,12 +168,12 @@ def main():
 		for logfile in SwlogFiles5:
 			with open(logfile, 'r', errors='ignore') as file:
 				LogByLine += file.readlines()
-		OutputFilePath = 'Chassis5SwlogsParsed.csv'
+		OutputFilePath = 'Chassis5SwlogsParsed-tsbuddy.csv'
 		ReadandParse(OutputFilePath,LogByLine)
 	#Convert to JSON
 		with open(OutputFilePath, mode='r', newline='') as csvfile:
 			data = list(csv.DictReader(csvfile))
-		with open('Chassis5SwlogsParsed.json', mode='w') as jsonfile:
+		with open('Chassis5SwlogsParsed-tsbuddy.json', mode='w') as jsonfile:
 			json.dump(data, jsonfile, indent=4)
 	
 	#SwlogChassis6
@@ -182,12 +182,12 @@ def main():
 		for logfile in SwlogFiles6:
 			with open(logfile, 'r', errors='ignore') as file:
 				LogByLine += file.readlines()
-		OutputFilePath = 'Chassis6SwlogsParsed.csv'
+		OutputFilePath = 'Chassis6SwlogsParsed-tsbuddy.csv'
 		ReadandParse(OutputFilePath,LogByLine)
 	#Convert to JSON
 		with open(OutputFilePath, mode='r', newline='') as csvfile:
 			data = list(csv.DictReader(csvfile))
-		with open('Chassis6SwlogsParsed.json', mode='w') as jsonfile:
+		with open('Chassis6SwlogsParsed-tsbuddy.json', mode='w') as jsonfile:
 			json.dump(data, jsonfile, indent=4)
 	
 	#SwlogChassis7
@@ -196,12 +196,12 @@ def main():
 		for logfile in SwlogFiles7:
 			with open(logfile, 'r', errors='ignore') as file:
 				LogByLine += file.readlines()
-		OutputFilePath = 'Chassis7SwlogsParsed.csv'
+		OutputFilePath = 'Chassis7SwlogsParsed-tsbuddy.csv'
 		ReadandParse(OutputFilePath,LogByLine)
 	#Convert to JSON
 		with open(OutputFilePath, mode='r', newline='') as csvfile:
 			data = list(csv.DictReader(csvfile))
-		with open('Chassis7SwlogsParsed.json', mode='w') as jsonfile:
+		with open('Chassis7SwlogsParsed-tsbuddy.json', mode='w') as jsonfile:
 			json.dump(data, jsonfile, indent=4)
 	
 	#SwlogChassis8
@@ -210,12 +210,12 @@ def main():
 		for logfile in SwlogFiles8:
 			with open(logfile, 'r', errors='ignore') as file:
 				LogByLine += file.readlines()
-		OutputFilePath = 'Chassis8SwlogsParsed.csv'
+		OutputFilePath = 'Chassis8SwlogsParsed-tsbuddy.csv'
 		ReadandParse(OutputFilePath,LogByLine)
 	#Convert to JSON
 		with open(OutputFilePath, mode='r', newline='') as csvfile:
 			data = list(csv.DictReader(csvfile))
-		with open('Chassis8SwlogsParsed.json', mode='w') as jsonfile:
+		with open('Chassis8SwlogsParsed-tsbuddy.json', mode='w') as jsonfile:
 			json.dump(data, jsonfile, indent=4)
 	
 	#ConsoleFiles
@@ -224,13 +224,14 @@ def main():
 		for logfile in ConsoleFiles:
 			with open(logfile, 'r', errors='ignore') as file:
 				LogByLine += file.readlines()
-		OutputFilePath = 'ConsoleLogsParsed.csv'
+		OutputFilePath = 'ConsoleLogsParsed-tsbuddy.csv'
 		ReadandParse(OutputFilePath,LogByLine)
 	#Convert to JSON
 		with open(OutputFilePath, mode='r', newline='') as csvfile:
 			data = list(csv.DictReader(csvfile))
-		with open('ConsoleLogsParsed.json', mode='w') as jsonfile:
+		with open('ConsoleLogsParsed-tsbuddy.json', mode='w') as jsonfile:
 			json.dump(data, jsonfile, indent=4)
+	print("Logs parsed successfully!")
 	
 def collect_hosts():
 	"""Collects device details from the user and returns a list of hosts."""
@@ -242,32 +243,32 @@ def collect_hosts():
 	username = input(f"Enter username for {ip} [admin]: ") or "admin"
 	password = getpass(f"Enter password for {ip} [switch]: ") or "switch"
 	hosts.append({"ip": ip, "username": username, "password": password})
-	print(hosts)
+	#print(hosts)
 	return hosts
 
 def grab_logs(hosts):
-	paramiko.util.log_to_file("paramiko.log")
-	print(hosts)
+	paramiko.util.log_to_file("paramiko-tsbuddy.log")
+	#print(hosts)
 	for host in hosts:
 		ip = host["ip"]
 		username = host["username"]
 		password = host["password"]
-		print("Connecting to {ip}")
+		print("Connecting to "+str(ip))
 		try:
 			transport = paramiko.Transport((ip,22))
 			transport.connect(None,username,password)
 			sftp = paramiko.SFTPClient.from_transport(transport)
 			for file in sftp.listdir('/flash/'):
-				print(file)
+				#print(file)
 				if fnmatch.fnmatch(file, "swlog_archive"):
-					print("Skipping swlog_archive")
+					#print("Skipping swlog_archive")
 					continue
 				if fnmatch.fnmatch(file, "*swlog*.*"):
-					print(file+" is good")
+					#print(file+" is good")
 					sftp.get("/flash/"+file, file)
 					continue
 				if fnmatch.fnmatch(file, "*swlog*"):
-					print(file+" is good")
+					#print(file+" is good")
 					sftp.get("/flash/"+file, file)
 					continue
 			#filepath = "/flash/swlog_chassis1"
