@@ -64,7 +64,10 @@ def menu():
                 pass
             # Get the function from the selected option
             selected_func = list(menu_options[int(choice)-1].values())[0]
-            selected_func()
+            try:
+                selected_func()
+            except Exception as e:
+                print(f"Error: {e}\nReturning to menu...")
         elif choice == '0':
             print("Exiting...\n\n  (x_x) \n")
             sys.exit(0)
