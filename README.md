@@ -37,6 +37,53 @@ This allows you to quickly turn unstructured command output into actionable insi
 *   **Simplified Diagnostics:** Build custom logic on top of parsed data to automate checks, generate reports, trigger alerts or actions.
 *   **Developer-Friendly:** Designed to be easily integrated into existing Python scripts and workflows.
 
+## 🛎️ tsbuddy Interactive Menu & CLI Tools
+
+Tech Support Buddy (`tsbuddy`) now includes an interactive menu and several CLI tools for common network support tasks. You can run the menu or any tool directly from the command line.
+
+## Interactive Menu
+
+Run the menu to access all major features:
+
+```bash
+tsbuddy
+```
+
+You'll see a menu like:
+
+```
+   ( ^_^)ノ  Hey there, tsbuddy is at your service!
+
+ Skip this menu by running the CLI commands directly (in parentheses below), e.g. `ts-extract`.
+
+=== 🛎️  ===
+1. Run AOS Upgrader (aosup)
+2. Run GA Build Lookup (aosga)
+3. Run AOS Downloader (aosdl)
+4. Run tech_support_complete.tar Extractor (ts-extract)
+5. Run swlog parser (to CSV & JSON) (ts-log)
+6. Run tech_support.log to CSV Converter (ts-csv)
+0. Exit  (つ﹏<)
+```
+
+Select an option by number, or run the CLI commands directly as shown in parentheses.
+
+## CLI Commands
+
+Each menu option is also available as a CLI command:
+
+- `aosup` — Run AOS Upgrader
+- `aosga` — Run GA Build Lookup
+- `aosdl` — Run AOS Downloader
+- `ts-extract` — Extract tech_support_complete.tar
+- `ts-log` — Parse swlog to CSV & JSON
+- `ts-csv` — Convert tech_support.log to CSV
+
+Example:
+```bash
+ts-extract
+```
+
 ## Installation
 
 You can install `tsbuddy` via pip:
@@ -47,10 +94,10 @@ pip install tsbuddy
 
 ## Usage
 
-tsbuddy can be run directly from your preferred terminal. Doing so will run the main() function where tsbuddy will search for tech_support.log in your working directory & output its contents to a CSV.
+tsbuddy can be run directly from your preferred terminal. The command ts-csv will search for tech_support.log in your current directory & output its contents to a CSV.
 
 ```powershell
-(venv) admin:~/tech_support_complete$ tsbuddy
+(venv) admin:~/tech_support_complete$ ts-csv
 ✅ CSV exported to parsed_sections_2025-05-30_220933.csv
 ```
 
