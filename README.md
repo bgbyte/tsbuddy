@@ -19,6 +19,7 @@ Tech Support Buddy is a versatile Python module built to improve network enginee
   - [aosdl CLI Command](#aosdl-cli-command)
 - [Future Enhancements (Ideas)](#future-enhancements-examples)
 - [Contributing](#contributing)
+- [Changelog](#changelog)
 
 ## Overview
 
@@ -396,3 +397,19 @@ Contributions are welcome! If you have ideas for improvements or new features, o
 6.  Open a Pull Request.
 
 Please ensure your code adheres to any existing style guidelines and includes tests where appropriate.
+
+## Changelog
+
+### 2025-08-04
+- Introduced interactive menu for easier navigation of `tsbuddy` features.
+- Added interactive menu and CLI tool documentation to README.
+- Linked CLI commands and menu options to their respective modules.
+- Added this changelog section and linked it in the Table of Contents.
+- Created CLI commands for common tasks: `aosup`, `aosga`, `ts-extract`, `ts-log`.
+
+### 2025-05-30
+- Initial release and documentation for tsbuddy core features and parsers.
+- Added aosdl CLI documentation and usage examples.
+- Added initial parsing functions for temperature and system information.
+- Created CLI commands for common tasks: `aosdl`, `ts-csv`.
+- Added extensibility for future parser and feature additions.
