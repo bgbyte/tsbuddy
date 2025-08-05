@@ -19,7 +19,7 @@ def main():
 			if 'tech_support_complete' in file:
 				os.remove(file)
 		grab_tech_support(hosts)
-		print("Finished gathering tech support files. Check the current directory for the downloaded files.")
+		print("Grab logs finished")
 		#Grab new dir_list
 	
 def collect_hosts():
@@ -77,7 +77,7 @@ def grab_tech_support(hosts):
 						#print("It is "+str(file_attributes.st_size))
 						newfilesize = file_attributes.st_size
 						if newfilesize == filesize:
-							print("Beginning download...")
+							print("The tech support files is ready. Beginning download")
 							# Create new local filename with timestamp: e.g., config_2025-08-05_153012.txt
 							filename_parts = file.rsplit('.', 1)  # Split into name and extension
 							if len(filename_parts) == 2:
