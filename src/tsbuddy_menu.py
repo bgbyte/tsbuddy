@@ -39,7 +39,7 @@ def menu():
     ]
     while True:
         #print("\n       (•‿•)  Hey there, buddy!")
-        print(ale_ascii)
+        #print(ale_ascii)
         try:
             print("\n   ( ^_^)ノ  Hey there, tsbuddy is at your service!")
         except:
