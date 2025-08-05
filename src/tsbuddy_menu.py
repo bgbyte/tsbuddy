@@ -37,13 +37,13 @@ def menu():
         {"Run swlog parser (to CSV & JSON)": logparser_main},
         {"Run tech_support.log to CSV Converter": tsbuddy_main},
     ]
+    #print("\n       (•‿•)  Hey there, buddy!")
+    #print(ale_ascii)
+    try:
+        print("\n   ( ^_^)ノ  Hey there, tsbuddy is at your service!")
+    except:
+        print("\n   ( ^_^)/  Hey there, tsbuddy is at your service!")
     while True:
-        #print("\n       (•‿•)  Hey there, buddy!")
-        #print(ale_ascii)
-        try:
-            print("\n   ( ^_^)ノ  Hey there, tsbuddy is at your service!")
-        except:
-            print("\n   ( ^_^)/  Hey there, tsbuddy is at your service!")
         try:
             print("\n=== 🛎️  ===")
         except:
@@ -67,12 +67,12 @@ def menu():
             try:
                 selected_func()
             except Exception as e:
-                print(f"Error: {e}\nReturning to menu...")
+                print(f"\nError: {e}\nReturning to menu...\n")
         elif choice == '0':
             print("Exiting...\n\n  (x_x) \n")
             sys.exit(0)
         else:
-            print("Invalid choice. Please try again.")
+            print("\nInvalid choice. Please try again.")
 
 if __name__ == "__main__":
     menu()
