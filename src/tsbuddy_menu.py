@@ -30,12 +30,12 @@ ale_ascii = '''
 
 def menu():
     menu_options = [
-        {"Run AOS Upgrader": aosup},
-        {"Run GA Build Lookup": lookup_ga_build},
-        {"Run AOS Downloader": aosdl_main},
-        {"Run tech_support_complete.tar Extractor": extracttar_main},
-        {"Run swlog parser (to CSV & JSON)": logparser_main},
-        {"Run tech_support.log to CSV Converter": tsbuddy_main},
+        {"Run AOS Upgrader (aosup)": aosup},
+        {"Run GA Build Lookup (aosga)": lookup_ga_build},
+        {"Run AOS Downloader (aosdl)": aosdl_main},
+        {"Run tech_support_complete.tar Extractor (ts-extract)": extracttar_main},
+        {"Run swlog parser (to CSV & JSON) (ts-log)": logparser_main},
+        {"Run tech_support.log to CSV Converter (ts-csv)": tsbuddy_main},
     ]
     #print("\n       (•‿•)  Hey there, buddy!")
     #print(ale_ascii)
@@ -43,6 +43,7 @@ def menu():
         print("\n   ( ^_^)ノ  Hey there, tsbuddy is at your service!")
     except:
         print("\n   ( ^_^)/  Hey there, tsbuddy is at your service!")
+        print("\n Skip this menu by running the CLI commands directly (in parentheses below), e.g. `ts-extract`.\n")
     while True:
         try:
             print("\n=== 🛎️  ===")

@@ -14,13 +14,13 @@ setup(
    ],
    entry_points={
        'console_scripts': [
-           'tsbuddy-csv=src.tsbuddy:main',  # Run the main function in tsbuddy to convert tech_support.log to CSV
-           'tsbuddy-extract=src.extracttar:main',  # Run the main function in extracttar to extract tar files
+           'ts-csv=src.tsbuddy:main',  # Run the main function in tsbuddy to convert tech_support.log to CSV
+           'ts-extract=src.extracttar:main',  # Run the main function in extracttar to extract tar files
            'aosdl=src.aosdl.aosdl:main',  # Run the main function in aosdl to download AOS
-           'aosdl-ga=src.aosdl.aosdl:lookup_ga_build',  # Run lookup_ga_build function
-           'aosdl-up=src.aosdl.aosdl:aosup',  # Run AOS Upgrade function to prompt for directory name and reload option
+           'aosga=src.aosdl.aosdl:lookup_ga_build',  # Run lookup_ga_build function
+           'aosup=src.aosdl.aosdl:aosup',  # Run AOS Upgrade function to prompt for directory name and reload option
            'tsbuddy=src.tsbuddy_menu:menu',  # New menu entry point
-           'logparser=src.logparser:main', # Run function to consolidate logs in current directory
+           'ts-log=src.logparser:main', # Run function to consolidate logs in current directory
        ],
    },
    long_description=long_description,
