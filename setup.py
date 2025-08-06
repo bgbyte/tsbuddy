@@ -5,7 +5,7 @@ with open('README.md', 'r') as f:
 
 setup(
    name='tsbuddy',
-   version='0.0.16',
+   version='0.0.17',
    packages=find_packages(),
    install_requires=[
        # Add dependencies here.
@@ -21,6 +21,7 @@ setup(
            'aosup=src.aosdl.aosdl:aosup',  # Run AOS Upgrade function to prompt for directory name and reload option
            'tsbuddy=src.tsbuddy_menu:menu',  # New menu entry point
            'ts-log=src.logparser:main', # Run function to consolidate logs in current directory
+           'ts-get=src.get_techsupport:main',  # Run the main function in get_techsupport to gather tech support data
        ],
    },
    long_description=long_description,

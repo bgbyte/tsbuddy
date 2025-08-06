@@ -367,7 +367,7 @@ Connecting to 192.168.1.1...
 [192.168.1.1] Downloaded Uos.img to /flash/
 ```
 
-The `aosdl` command simplifies the process of pushing AOS images across multiple devices. For more details, see the [aosdl README](./tsbuddy/aosdl/README.md).
+The `aosdl` command simplifies the process of pushing AOS images across multiple devices. For more details, see the [aosdl README](./src/aosdl/README.md).
 
 ## Future Enhancements (Examples)
 
