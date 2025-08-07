@@ -3,6 +3,8 @@
 tests/
 .git-credentials
 src/ov
+tech_support*
+paramiko.log
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
