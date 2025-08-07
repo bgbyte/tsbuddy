@@ -71,7 +71,7 @@ def menu():
         {"Run tech support gatherer (ts-get)": get_techsupport_main},
         {"Run tech_support_complete.tar Extractor (ts-extract)": extracttar_main},
         {"Run tech_support.log to CSV Converter (ts-csv)": tsbuddy_main},
-        {"Run swlog parser (to CSV & JSON) (ts-log)": logparser_main},
+        {"Run swlog parser to CSV & JSON (ts-log)": logparser_main},
         {"Run AOS Upgrader (aosup)": aosup},
         {"Run AOS Downloader (aosdl)": aosdl_main},
         #{"Clear pycache and .pyc files (ts-clean)": clean_pycache_and_pyc},

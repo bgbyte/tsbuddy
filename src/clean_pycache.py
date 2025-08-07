@@ -20,3 +20,6 @@ def clean_pycache_and_pyc(start_dir="."):
                 os.remove(pyc_file_path)
                 pyc_files_deleted += 1
     print(f"Deleted {pycache_dirs_deleted} __pycache__ directories and {pyc_files_deleted} .pyc files.")
+
+# if __name__ == "__main__":
+#     clean_pycache_and_pyc(start_dir=".")  # Change to "." if you want to clean the entire project

@@ -62,7 +62,7 @@ You'll see a menu like:
 2. Run tech support gatherer (ts-get)
 3. Run tech_support_complete.tar Extractor (ts-extract)
 4. Run tech_support.log to CSV Converter (ts-csv)
-5. Run swlog parser (to CSV & JSON) (ts-log)
+5. Run swlog parser to CSV & JSON (ts-log)
 6. Run AOS Upgrader (aosup)
 7. Run AOS Downloader (aosdl)
 8. Show help info
