@@ -22,6 +22,7 @@ setup(
            'tsbuddy=src.tsbuddy_menu:menu',  # New menu entry point
            'ts-log=src.logparser:main', # Run function to consolidate logs in current directory
            'ts-get=src.get_techsupport:main',  # Run the main function in get_techsupport to gather tech support data
+           'ts-clean=clean_pycache:clean_pycache_and_pyc',  # Run the clean function to remove __pycache__ directories and .pyc files
        ],
    },
    long_description=long_description,
