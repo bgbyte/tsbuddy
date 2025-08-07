@@ -300,7 +300,7 @@ def collect_hosts():
 	return hosts
 
 def grab_logs(hosts):
-	paramiko.util.log_to_file("paramiko-tsbuddy.log")
+	#paramiko.util.log_to_file("paramiko-tsbuddy.log")
 	#print(hosts)
 	for host in hosts:
 		ip = host["ip"]

@@ -1,3 +1,4 @@
+print("Loading tsbuddy menu...First run will take extra time.")
 import sys
 import time
 
