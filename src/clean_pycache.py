@@ -4,7 +4,6 @@ import shutil
 def clean_pycache_and_pyc(start_dir="."):
     pycache_dirs_deleted = 0
     pyc_files_deleted = 0
-
     for root, dirs, files in os.walk(start_dir):
         # Delete __pycache__ directories
         for dir_name in dirs:
@@ -13,7 +12,6 @@ def clean_pycache_and_pyc(start_dir="."):
                 print(f"Deleting directory: {full_path}")
                 shutil.rmtree(full_path)
                 pycache_dirs_deleted += 1
-
         # Delete .pyc files
         for file_name in files:
             if file_name.endswith(".pyc"):
@@ -21,9 +19,4 @@ def clean_pycache_and_pyc(start_dir="."):
                 print(f"Deleting file: {pyc_file_path}")
                 os.remove(pyc_file_path)
                 pyc_files_deleted += 1
-
-    print(f"\nDeleted {pycache_dirs_deleted} __pycache__ director{'y' if pycache_dirs_deleted == 1 else 'ies'}")
-    print(f"Deleted {pyc_files_deleted} .pyc file{'s' if pyc_files_deleted != 1 else ''}")
-
-if __name__ == "__main__":
-    clean_pycache_and_pyc(start_dir=".")  # Change to "." if you want to clean the entire project
+    print(f"Deleted {pycache_dirs_deleted} __pycache__ directories and {pyc_files_deleted} .pyc files.")

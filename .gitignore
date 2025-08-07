@@ -5,6 +5,7 @@ tests/
 src/ov
 tech_support*
 paramiko.log
+old_clean_pycache.py
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

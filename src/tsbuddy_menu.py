@@ -1,11 +1,12 @@
 import sys
+import time
 
 from src.tsbuddy import main as tsbuddy_main
 from src.extracttar.extracttar import main as extracttar_main
 from src.aosdl.aosdl import main as aosdl_main, lookup_ga_build, aosup
 from src.logparser import main as logparser_main
 from src.get_techsupport import main as get_techsupport_main
-from clean_pycache import clean_pycache_and_pyc
+from src.clean_pycache import clean_pycache_and_pyc
 
 ale_ascii = '''
                   ...                   
@@ -62,6 +63,7 @@ def print_help():
 \n
 """
     print(help_text)
+    time.sleep(1)  # Pause to allow user to read
 
 def menu():
     menu_options = [
