@@ -16,6 +16,7 @@ SwlogFiles7 = []
 SwlogFiles8 = []
 ConsoleFiles = []
 dir_list = os.listdir()
+first_dir_list = os.listdir()
 
 def find_log_paths(root_dir=None):
 	"""
@@ -105,7 +106,16 @@ def main():
 #Testing the new stuff
 	hosts = collect_hosts()
 	if hosts != []:
+		#Erase existing log files in the directory
+		for file in first_dir_list:
+			if 'swlog_chassis' in file:
+				os.remove(file)
+			if 'swlog_localConsole' in file:
+				os.remove(file)
 		grab_logs(hosts)
+		print("Grab logs finished")
+		#Grab new dir_list
+	dir_list = os.listdir()
 #Find swlogs in current directory
 	for file in dir_list:
 		if 'swlog_chassis1' in file:

@@ -23,3 +23,5 @@ def clean_pycache_and_pyc(start_dir="."):
 
 # if __name__ == "__main__":
 #     clean_pycache_and_pyc(start_dir=".")  # Change to "." if you want to clean the entire project
+
+# for linux run: find . -type d -name "__pycache__" -exec rm -r {} +
