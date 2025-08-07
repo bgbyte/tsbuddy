@@ -58,12 +58,15 @@ You'll see a menu like:
  Skip this menu by running the CLI commands directly (in parentheses below), e.g. `ts-extract`.
 
 === 🛎️  ===
-1. Run AOS Upgrader (aosup)
-2. Run GA Build Lookup (aosga)
-3. Run AOS Downloader (aosdl)
-4. Run tech_support_complete.tar Extractor (ts-extract)
+1. Get GA Build & Upgrade (aosga)
+2. Run tech support gatherer (ts-get)
+3. Run tech_support_complete.tar Extractor (ts-extract)
+4. Run tech_support.log to CSV Converter (ts-csv)
 5. Run swlog parser (to CSV & JSON) (ts-log)
-6. Run tech_support.log to CSV Converter (ts-csv)
+6. Run AOS Upgrader (aosup)
+7. Run AOS Downloader (aosdl)
+8. Show help info
+
 0. Exit  (つ﹏<)
 ```
 
@@ -79,11 +82,36 @@ Each menu option is also available as a CLI command:
 - `ts-extract` — Extract tech_support_complete.tar
 - `ts-log` — Parse swlog to CSV & JSON
 - `ts-csv` — Convert tech_support.log to CSV
+- `ts-get` — Collect tech support file from a switch via SSH and download it to your local machine
+
+### `ts-get` Command
+
+The `ts-get` command connects to a switch via SSH, runs the tech support command, and downloads the resulting `tech_support_complete.tar` file to your local directory. It will prompt for device IP, username, and password, and will automatically handle file backup and cleanup on the device.
 
 Example:
 ```bash
-ts-extract
+ts-get
 ```
+
+Sample session:
+```
+Enter device IP [exit]: 10.1.1.1
+Enter username for 10.1.1.1 [admin]: admin
+Enter password for 10.1.1.1 [switch]:
+Getting SN of 10.1.1.1.
+Backing up existing file for 10.1.1.1
+Downloaded existing tech_support_complete.tar as tech_support_complete_<serial>_<timestamp>_old.tar (size: 1234567 bytes)
+Removed tech_support_complete.tar from /flash/
+Connecting to 10.1.1.1 via SSH to run the tech support command
+Command sent to switch
+The file is still generating. Please wait...
+The tech support files is ready. Beginning download
+Downloaded new tech support file of size 2345678 bytes for 10.1.1.1
+Removed tech_support_complete.tar from /flash/
+Finished
+```
+
+The downloaded file will be named with the device serial number and timestamp for easy identification.
 
 ## Installation
 
