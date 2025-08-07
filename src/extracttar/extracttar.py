@@ -31,7 +31,7 @@ def extract_tar_files(base_path='.'):
             '-sccUTF-8',            # Force UTF-8 encoding
             '-aos',                 # Skip overwriting existing files
             str(tar_file)
-        ], check=True)
+        ], check=False)
 
 def extract_gz_files(base_path='.'):
     """
@@ -46,7 +46,7 @@ def extract_gz_files(base_path='.'):
             '-sccUTF-8',            # Force UTF-8 encoding
             '-aos',                 # Skip overwriting existing files
             str(gz_file)
-        ], check=True)
+        ], check=False)
 
 def main():
     extract_tar_files()
