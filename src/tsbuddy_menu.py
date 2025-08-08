@@ -1,4 +1,5 @@
 print("Loading tsbuddy menu...First run will take extra time.")
+import os
 import sys
 import time
 
@@ -7,30 +8,8 @@ from src.extracttar.extracttar import main as extracttar_main
 from src.aosdl.aosdl import main as aosdl_main, lookup_ga_build, aosup
 from src.logparser import main as logparser_main
 from src.get_techsupport import main as get_techsupport_main
-from src.clean_pycache import clean_pycache_and_pyc
+#from src.clean_pycache import clean_pycache_and_pyc
 
-ale_ascii = '''
-                  ...                   
-            .+@@@@@@@@@@@%=             
-         .#@@@@@@@@@@@@@@@@@@*.         
-       .%@@@@@@@@@@+. :%@@@@@@@#.       
-      *@@@@@@@@@@:  ++  @@@@@@@@@+      
-     #@@@@@@@@@=  =@@  -@@@@@@@@@@*     
-    %@@@@@@@@%. .%@@=  @@@@@@@@@@@@+    
-   =@@@@@@@@+  -@@@%. =@@@@%#%@@@@@@:   
-   #@@@@@@@.  -%  %#  #@@@@@@#@@@@@@*   
-   @@@@@@@.    =@@@  .@@@@@@@@+@@@@@#   
-   @@@@@%    -@@@@:  %@@@@@@@*#@@@@@#   
-   %@@@%.  .@@@@@@.  @@@@@@@@-@@@@@@*   
-   +@@@%- =@@@@@@*  +@@@@@@@@%@@@@@@=   
-   .@@@@@@@@@@@@@+  #@@@@@-.@@@@@@@@    
-    :@@@@@@@@@@@@+  #@@*: -@@@@@@@%.    
-     :@@@@@@@@@@@+      -@@@@@@@@%.     
-       +@@@@@@@@@@+..+%@@@@@@@@@=       
-        .*@@@@@@@@@@@@@@@@@@@@+         
-           .#@@@@@@@@@@@@@@*            
-               .-=++++=-.               
-'''
 
 def print_help():
     help_text = """
@@ -59,12 +38,45 @@ def print_help():
 7. Run AOS Downloader (aosdl):
    - Downloads the requested AOS version to /flash for later processing.
 
-8. Print Help (help):
+8. Change current directory:
+   - Allows you to view and change the current working directory. Lists available directories and files, and lets you navigate to a new directory for file operations.
+
+9. Print Help (help):
    - Shows this help text describing each menu option in detail.
 \n
 """
     print(help_text)
     time.sleep(1)  # Pause to allow user to read
+
+def change_directory():
+    # Print current directory
+    print(f"Current directory: {os.getcwd()}\n")
+    # Print available directories
+    dirs = []
+    files = []
+    print("Contents:")
+    for item in os.listdir('.'):
+        if os.path.isdir(item):
+            dirs.append(item)
+            #print(f"- {item}")
+        elif os.path.isfile(item):
+            files.append(item)
+            #print(f"- {item}")
+    print("Directories:")
+    for i in dirs:
+        print(f"- {i}/")
+    print("Files:")
+    for i in files:
+        print(f"- {i}")
+    # Prompt user for new directory
+    print("\nEnter the path to the new directory (or press Enter to keep current):")
+    print("You can also use relative paths like '../' to go up a directory.")
+    new_dir = input("Enter the path to the new directory: ").strip()
+    if os.path.isdir(new_dir):
+        os.chdir(new_dir)
+        print(f"Directory changed to: {os.getcwd()}")
+    else:
+        print("Current directory remains unchanged: ", os.getcwd())
 
 def menu():
     menu_options = [
@@ -75,6 +87,7 @@ def menu():
         {"Run swlog parser to CSV & JSON (ts-log)": logparser_main},
         {"Run AOS Upgrader (aosup)": aosup},
         {"Run AOS Downloader (aosdl)": aosdl_main},
+        {"Change current directory": change_directory},
         #{"Clear pycache and .pyc files (ts-clean)": clean_pycache_and_pyc},
         {"Show help info": print_help},
     ]
@@ -84,7 +97,7 @@ def menu():
         print("\n   ( ^_^)ノ  Hey there, tsbuddy is at your service!")
     except:
         print("\n   ( ^_^)/  Hey there, tsbuddy is at your service!")
-    print("\n Skip this menu by running the CLI commands directly (in parentheses below), e.g. `ts-extract`.\n")
+    print("\n Skip this menu by running the CLI commands directly (provided in parentheses below), e.g. `ts-get`.\n")
     while True:
         try:
             print("\n=== 🛎️  ===")
