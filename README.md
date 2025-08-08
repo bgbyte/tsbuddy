@@ -428,6 +428,13 @@ Please ensure your code adheres to any existing style guidelines and includes te
 
 ## Changelog
 
+### 2025-08-08
+- Added change directory feature.
+- Fixed crash when extracting corrupted files; now errors are ignored.
+
+### 2025-08-06
+- Added get tech support feature.
+
 ### 2025-08-04
 - Introduced interactive menu for easier navigation of `tsbuddy` features.
 - Added interactive menu and CLI tool documentation to README.
