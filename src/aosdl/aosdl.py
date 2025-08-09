@@ -14,10 +14,11 @@ def safe_password_prompt(prompt="Password: ", fallback="switch"):
         else:
             # Try manual stty fallback
             try:
+                print("Incompatible terminal detected. Password will not be hidden.\n")
                 sys.stdout.write(prompt)
                 sys.stdout.flush()
                 subprocess.check_call(["stty", "-echo"])
-                password = input()
+                password = input("")
             finally:
                 subprocess.call(["stty", "echo"])
                 sys.stdout.write("\n")
@@ -88,7 +89,6 @@ def validate_and_complete_version_parts(parsed_parts):
     major = parsed_parts.get("major") # Should already be there from a successful parse
     build = parsed_parts.get("build")
     release = parsed_parts.get("release")
-
     if major is None:
         # This indicates a fundamental failure in parsing the initial string.
         # The main loop should handle this by re-prompting for the full string.
@@ -97,13 +97,10 @@ def validate_and_complete_version_parts(parsed_parts):
             major = input("Enter AOS Major version (e.g., 8.9): ").strip()
         # For this exercise, we assume parse_aos_version_string got the major if input was valid.
         #pass # Major should be handled by the calling function based on parse_aos_version_string output
-
     if build is None:
         build = input("Enter AOS Build Number (e.g., 221): ").strip() or "221" # Default if empty
-
     if release is None:
         release = input("Enter AOS Release (e.g., R03): ").strip() or "R03" # Default if empty
-
     return {"major": major, "build": build, "release": release}
 
 def get_aos_version_orchestrator():
@@ -111,22 +108,17 @@ def get_aos_version_orchestrator():
     while True:
         initial_version_string = prompt_initial_aos_version()
         parsed_components = parse_aos_version_string(initial_version_string)
-
         if not parsed_components.get("major"):
             print("Invalid format. Major version (e.g., X.Y) could not be parsed. Please try again.")
             continue # Re-prompt for the full string
-
         # Now, parsed_components["major"] is guaranteed to be something.
         # Fill in any missing optional parts (build, release)
         completed_components = validate_and_complete_version_parts(parsed_components)
-
         aos_major = completed_components["major"]
         aos_build = completed_components["build"]
         aos_release = completed_components["release"]
-
         full_version = f"{aos_major}.{aos_build}.{aos_release}"
         confirm = input(f"Confirm full AOS version string [{full_version}] [y]/n: ").strip().lower() or "y"
-
         if confirm == "y":
             return aos_major, aos_build, aos_release
         # If not 'y', the loop will restart, prompting for the initial string again.
@@ -137,7 +129,6 @@ def get_aos_version_simple():
         aos_major = input("Enter AOS Major Version (e.g., 8.9) [8.9]: ") or "8.9"
         aos_build = input("Enter AOS Build Number (e.g., 221) [221]: ") or "221"
         aos_release = input("Enter AOS Release (e.g., R03) [R03]: ") or "R03"
-
         full_version = f"{aos_major}.{aos_build}.{aos_release}"
         confirm = input(f"Confirm full AOS version string [{full_version}] [y]/n: ").strip().lower() or "y"
         if confirm == "y":
@@ -261,7 +252,6 @@ def download_images_for_host(host, aos_major, aos_build, aos_release, image_map,
 def main(folder_name=None, reload_when_finished=False):
     print("\nNote: you can lookup the GA build with aosdl-ga CLI command.\n")
     aos_major, aos_build, aos_release = get_aos_version_simple()
-
     # Image mapping
     image_map = {
         "nandi_sim": ["Nossim.img"],
@@ -281,7 +271,6 @@ def main(folder_name=None, reload_when_finished=False):
     }
     base_ip = "http://10.46.4.37"
     base_dir = "/bop/images"
-
     hosts = collect_hosts()
     for host in hosts:
         download_images_for_host(host, aos_major, aos_build, aos_release, image_map, base_ip, base_dir, folder_name, reload_when_finished)
