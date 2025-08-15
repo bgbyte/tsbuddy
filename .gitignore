@@ -8,6 +8,7 @@ paramiko.log
 old_clean_pycache.py
 tschat.py
 tschat2.py
+uboot*json
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
