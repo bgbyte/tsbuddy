@@ -6,7 +6,7 @@ src/ov
 tech_support*
 paramiko.log
 old_clean_pycache.py
-tschat*py
+*tschat*py
 uboot*json
 
 # Byte-compiled / optimized / DLL files
