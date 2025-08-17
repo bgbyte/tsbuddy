@@ -65,13 +65,32 @@ def main():
         except Exception as e:
             print(f"Could not read {file}: {e}")
         return datetime.max
-    # Extract the last number from filename using regex
-    def extract_last_number(filename):
-        match = re.search(r'(\d+)(?=\D*\.\w+$)', filename)
-        return int(match.group(1)) if match else -1
+    # Extract the suffix number after the last underscore, or after the last dot, or assign 0 for base file
+    def extract_suffix_number(filename):
+        base = os.path.splitext(os.path.basename(filename))[0]
+        # Try to match _<number> at the end
+        match = re.search(r'_(\d+)$', base)
+        if match:
+            return int(match.group(1))
+        # Try to match .<number> at the end
+        match = re.search(r'\.(\d+)$', base)
+        if match:
+            return int(match.group(1))
+        # Base file (no suffix)
+        return 0
     # STEP 2: Filter and sort files
     files = [f for f in glob.glob(FILE_PATTERN) if not f.endswith(EXCLUDE_SUFFIX)]
-    files_sorted = sorted(files, key=extract_last_number)
+    files_sorted = sorted(
+        files,
+        key=lambda f: (extract_suffix_number(f), len(f), f),
+        reverse=True
+    )
+    # Debug: print file order and extracted numbers
+    print("Files sorted by suffix number (descending, oldest to newest, left to right):")
+    for f in files_sorted:
+        #print(f"{f} -> {extract_suffix_number(f)}")
+        print(f"{f}")
+    print("\nPlease wait while the data is being processed...\n")
     # STEP 3: Assign colors per file
     file_colors = {f: "#{:06x}".format(random.randint(0, 0xFFFFFF)) for f in files_sorted}
     # STEP 4: Load and store all data rows
@@ -93,11 +112,11 @@ def main():
     if not data_points:
         print("No valid data found.")
         exit()
-    # STEP 5: Sort all data by actual timestamps
-    data_points.sort(key=lambda x: x[0])
+    # STEP 5: Do NOT sort all data by actual timestamps; chain by filename order
+    # Instead, use the order in which data_points were appended (by files_sorted)
     time_stamps, cpu_usages, file_names = zip(*data_points)
-    start_time = time_stamps[0]
-    times_in_seconds = [(ts - start_time).total_seconds() for ts in time_stamps]
+    # Use a simple index as the time axis (chained by file order)
+    times_in_seconds = list(range(len(time_stamps)))
     # STEP 6: Configure scrollable canvas
     SCROLLABLE_WIDTH = max(1000, int(len(times_in_seconds)) * .5)
     SCROLLABLE_HEIGHT = WINDOW_HEIGHT
