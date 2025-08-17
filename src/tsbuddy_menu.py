@@ -27,6 +27,8 @@ def print_help():
 
 3. Run tech_support_complete.tar Extractor (ts-extract):
    - Extracts the contents of a tech_support_complete.tar archive, making logs and files accessible for analysis.
+   - Use the legacy ts-extract-legacy command if you encounter issues with the new extractor.
+   - The legacy extractor requires 7zip to be installed on your system and does not extract hmon data.
 
 4. Run tech_support.log to CSV Converter (ts-csv):
    - Converts tech_support.log files into a CSV file for easier viewing and analysis.
@@ -53,26 +55,27 @@ def print_help():
     print(help_text)
     time.sleep(1)  # Pause to allow user to read
 
-def change_directory():
-    # Print current directory
-    print(f"Current directory: {os.getcwd()}\n")
-    # Print available directories
+def list_directory_contents(path="."):
+    """List directories and files in the given path. Returns (dirs, files)."""
     dirs = []
     files = []
-    print("Contents:")
-    for item in os.listdir('.'):
-        if os.path.isdir(item):
+    for item in os.listdir(path):
+        if os.path.isdir(os.path.join(path, item)):
             dirs.append(item)
-            #print(f"- {item}")
-        elif os.path.isfile(item):
+        elif os.path.isfile(os.path.join(path, item)):
             files.append(item)
-            #print(f"- {item}")
     print("Directories:")
     for i in dirs:
         print(f"- {i}/")
     print("Files:")
     for i in files:
         print(f"- {i}")
+    return dirs, files
+
+def change_directory():
+    # Print current directory
+    print(f"Current directory: {os.getcwd()}\n")
+    list_directory_contents()
     # Prompt user for new directory
     print("\nEnter the path to the new directory (or press Enter to keep current):")
     print("You can also use relative paths like '../' to go up a directory.")
@@ -80,6 +83,7 @@ def change_directory():
     if os.path.isdir(new_dir):
         os.chdir(new_dir)
         print(f"Directory changed to: {os.getcwd()}")
+        list_directory_contents()
     else:
         print("Current directory remains unchanged: ", os.getcwd())
 

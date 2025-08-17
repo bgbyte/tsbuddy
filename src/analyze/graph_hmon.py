@@ -111,7 +111,6 @@ def main():
             print(f"Failed to read {file}: {e}")
     if not data_points:
         print("No valid data found.")
-        exit()
     # STEP 5: Do NOT sort all data by actual timestamps; chain by filename order
     # Instead, use the order in which data_points were appended (by files_sorted)
     time_stamps, cpu_usages, file_names = zip(*data_points)
