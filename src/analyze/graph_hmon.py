@@ -4,6 +4,7 @@ import glob
 from datetime import datetime
 import tkinter as tk
 import random
+import re
 
 # --------- SETTINGS ---------
 EXCLUDE_SUFFIX = ".gz"
@@ -64,10 +65,13 @@ def main():
         except Exception as e:
             print(f"Could not read {file}: {e}")
         return datetime.max
+    # Extract the last number from filename using regex
+    def extract_last_number(filename):
+        match = re.search(r'(\d+)(?=\D*\.\w+$)', filename)
+        return int(match.group(1)) if match else -1
     # STEP 2: Filter and sort files
     files = [f for f in glob.glob(FILE_PATTERN) if not f.endswith(EXCLUDE_SUFFIX)]
-    files_with_times = [(get_first_timestamp(f), f) for f in files]
-    files_sorted = [f for _, f in sorted(files_with_times)]
+    files_sorted = sorted(files, key=extract_last_number)
     # STEP 3: Assign colors per file
     file_colors = {f: "#{:06x}".format(random.randint(0, 0xFFFFFF)) for f in files_sorted}
     # STEP 4: Load and store all data rows
