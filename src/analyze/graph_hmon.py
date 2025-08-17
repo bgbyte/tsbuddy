@@ -13,6 +13,7 @@ WINDOW_HEIGHT = 500
 MARGIN = 70
 # ----------------------------
 
+
 # Help text
 HELP_TEXT = """
 This script visualizes CPU usage data from multiple files in a chronological graph.
@@ -46,10 +47,8 @@ def get_chassis_id():
 def main():
     print_help()
     chassis_id = get_chassis_id()
-
     # Insert the chassis ID into the file pattern
     FILE_PATTERN = f"*hmondata_chassis{chassis_id}*"
-
     # STEP 1: Get first timestamp from each file
     def get_first_timestamp(file):
         try:
@@ -65,15 +64,12 @@ def main():
         except Exception as e:
             print(f"Could not read {file}: {e}")
         return datetime.max
-
     # STEP 2: Filter and sort files
     files = [f for f in glob.glob(FILE_PATTERN) if not f.endswith(EXCLUDE_SUFFIX)]
     files_with_times = [(get_first_timestamp(f), f) for f in files]
     files_sorted = [f for _, f in sorted(files_with_times)]
-
     # STEP 3: Assign colors per file
     file_colors = {f: "#{:06x}".format(random.randint(0, 0xFFFFFF)) for f in files_sorted}
-
     # STEP 4: Load and store all data rows
     data_points = []
     for file in files_sorted:
@@ -90,32 +86,25 @@ def main():
                         continue
         except Exception as e:
             print(f"Failed to read {file}: {e}")
-
     if not data_points:
         print("No valid data found.")
         exit()
-
     # STEP 5: Sort all data by actual timestamps
     data_points.sort(key=lambda x: x[0])
     time_stamps, cpu_usages, file_names = zip(*data_points)
     start_time = time_stamps[0]
     times_in_seconds = [(ts - start_time).total_seconds() for ts in time_stamps]
-
     # STEP 6: Configure scrollable canvas
     SCROLLABLE_WIDTH = max(1000, int(len(times_in_seconds)) * .5)
     SCROLLABLE_HEIGHT = WINDOW_HEIGHT
-
     root = tk.Tk()
     root.title("Chronological CPU Usage Graph with Scroll")
-
     # Canvas + scrollbar frame
     frame = tk.Frame(root)
     frame.pack(fill='both', expand=True)
-
     # Horizontal scrollbar
     h_scrollbar = tk.Scrollbar(frame, orient='horizontal')
     h_scrollbar.pack(side='bottom', fill='x')
-
     # Canvas setup
     canvas = tk.Canvas(
         frame,
@@ -127,26 +116,21 @@ def main():
     )
     canvas.pack(side='left', fill='both', expand=True)
     h_scrollbar.config(command=canvas.xview)
-
     # Scaling
     PLOT_WIDTH = SCROLLABLE_WIDTH
     x_scale = (PLOT_WIDTH - 2 * MARGIN) / max(times_in_seconds)
     y_scale = (WINDOW_HEIGHT - 2 * MARGIN) / Y_MAX
-
     # Draw axes
     canvas.create_line(MARGIN, WINDOW_HEIGHT - MARGIN, PLOT_WIDTH - MARGIN, WINDOW_HEIGHT - MARGIN)
     canvas.create_line(MARGIN, MARGIN, MARGIN, WINDOW_HEIGHT - MARGIN)
-
     # Axis labels
     canvas.create_text(WINDOW_WIDTH // 2, WINDOW_HEIGHT - MARGIN // 2 + 20, text="Time (HH:MM)", font=("Arial", 12))
     canvas.create_text(MARGIN // 2, WINDOW_HEIGHT // 2, text="CPU Usage (%)", angle=90, font=("Arial", 12))
-
     # Y-axis ticks
     for y in range(0, Y_MAX + 1, 10):
         y_pos = WINDOW_HEIGHT - MARGIN - y * y_scale
         canvas.create_line(MARGIN - 5, y_pos, MARGIN, y_pos)
         canvas.create_text(MARGIN - 25, y_pos, text=f"{y}", font=("Arial", 10))
-
     # X-axis hourly ticks
     last_hour = None
     for i, ts in enumerate(time_stamps):
@@ -156,7 +140,6 @@ def main():
             canvas.create_line(x, WINDOW_HEIGHT - MARGIN, x, WINDOW_HEIGHT - MARGIN + 5)
             canvas.create_text(x, WINDOW_HEIGHT - MARGIN + 20, text=hour_min, font=("Arial", 10))
             last_hour = ts.hour
-
     # Plot data
     for i in range(1, len(cpu_usages)):
         x1 = MARGIN + times_in_seconds[i - 1] * x_scale
@@ -165,7 +148,6 @@ def main():
         y2 = WINDOW_HEIGHT - MARGIN - cpu_usages[i] * y_scale
         color = file_colors[file_names[i]]
         canvas.create_line(x1, y1, x2, y2, fill=color)
-
     # Click handler to show info
     def on_click(event):
         canvas_x = canvas.canvasx(event.x)
@@ -177,18 +159,14 @@ def main():
         usage = cpu_usages[closest_idx]
         fname = file_names[closest_idx]
         print(f"Clicked near: {ts} | CPU: {usage:.2f}% | File: {fname}")
-
     canvas.bind("<Button-1>", on_click)
-
     # Draw legend (at end of scrollable area)
     legend_y = MARGIN
     for file, color in file_colors.items():
         canvas.create_rectangle(PLOT_WIDTH + 10, legend_y, PLOT_WIDTH + 30, legend_y + 10, fill=color)
         canvas.create_text(PLOT_WIDTH + 35, legend_y + 5, text=file, anchor='w', font=("Arial", 8))
         legend_y += 15
-
     root.mainloop()
-
 
 if __name__ == "__main__":
     main()
