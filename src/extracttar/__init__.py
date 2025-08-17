@@ -4,8 +4,11 @@ from .extracttar import (
     main
 )
 
+from .extract_all import main as extract_all_main
+
 __all__ = [
     'extract_tar_files', 
     'extract_gz_files', 
-    'main'
+    'main',
+    'extract_all_main'
 ]

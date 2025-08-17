@@ -5,7 +5,7 @@ with open('README.md', 'r') as f:
 
 setup(
    name='tsbuddy',
-   version='0.0.18',
+   version='0.0.19',
    packages=find_packages(),
    install_requires=[
        # Add dependencies here.
@@ -17,7 +17,8 @@ setup(
    entry_points={
        'console_scripts': [
            'ts-csv=src.tsbuddy:main',  # Run the main function in tsbuddy to convert tech_support.log to CSV
-           'ts-extract=src.extracttar:main',  # Run the main function in extracttar to extract tar files
+           'ts-extract=src.extracttar.extract_all:main',  # Run the main function in extract_all to extract tar files
+           'ts-extract-legacy=src.extracttar:main',  # Run the main function in extracttar to extract tar files
            'aosdl=src.aosdl.aosdl:main',  # Run the main function in aosdl to download AOS
            'aosga=src.aosdl.aosdl:lookup_ga_build',  # Run lookup_ga_build function
            'aosup=src.aosdl.aosdl:aosup',  # Run AOS Upgrade function to prompt for directory name and reload option
@@ -25,6 +26,7 @@ setup(
            'ts-log=src.logparser:main', # Run function to consolidate logs in current directory
            'ts-get=src.get_techsupport:main',  # Run the main function in get_techsupport to gather tech support data
            'ts-clean=clean_pycache:clean_pycache_and_pyc',  # Run the clean function to remove __pycache__ directories and .pyc files
+           'ts-graph-hmon=src.analyze.graph_hmon:main',  # Entry point for HMON Graph Generator
        ],
    },
    long_description=long_description,

@@ -4,10 +4,12 @@ import sys
 import time
 
 from src.tsbuddy import main as tsbuddy_main
-from src.extracttar.extracttar import main as extracttar_main
+#from src.extracttar.extracttar import main as extracttar_main
+from src.extracttar.extract_all import main as extract_all_main
 from src.aosdl.aosdl import main as aosdl_main, lookup_ga_build, aosup
 from src.logparser import main as logparser_main
 from src.get_techsupport import main as get_techsupport_main
+from src.analyze.graph_hmon import main as graph_hmon_main
 #from src.clean_pycache import clean_pycache_and_pyc
 
 
@@ -38,10 +40,13 @@ def print_help():
 7. Run AOS Downloader (aosdl):
    - Downloads the requested AOS version to /flash for later processing.
 
-8. Change current directory:
+8. Run HMON Graph Generator (graph-hmon):
+   - Generates graphs from HMON data using the new script graph_hmon.py. Must be in the same directory as HMON data files.
+
+9. Change current directory:
    - Allows you to view and change the current working directory. Lists available directories and files, and lets you navigate to a new directory for file operations.
 
-9. Print Help (help):
+10. Print Help (help):
    - Shows this help text describing each menu option in detail.
 \n
 """
@@ -82,13 +87,14 @@ def menu():
     menu_options = [
         {"Get GA Build & Upgrade (aosga)": lookup_ga_build},
         {"Run tech support gatherer (ts-get)": get_techsupport_main},
-        {"Run tech_support_complete.tar Extractor (ts-extract)": extracttar_main},
+        {"Run tech_support_complete.tar Extractor (ts-extract)": extract_all_main},
         {"Run tech_support.log to CSV Converter (ts-csv)": tsbuddy_main},
         {"Run swlog parser to CSV & JSON (ts-log)": logparser_main},
         {"Run AOS Upgrader (aosup)": aosup},
         {"Run AOS Downloader (aosdl)": aosdl_main},
+        {"Run HMON Graph (ts-graph-hmon)": graph_hmon_main},
         {"Change current directory": change_directory},
-        #{"Clear pycache and .pyc files (ts-clean)": clean_pycache_and_pyc},
+        # {"Clear pycache and .pyc files (ts-clean)": clean_pycache_and_pyc},
         {"Show help info": print_help},
     ]
     #print("\n       (•‿•)  Hey there, buddy!")
