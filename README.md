@@ -428,6 +428,11 @@ Please ensure your code adheres to any existing style guidelines and includes te
 
 ## Changelog
 
+### 2025-08-18
+- Added change directory function in `tsbuddy_menu` for improved navigation.
+- Introduced a new extractor script to accommodate `hmon` files.
+- Moved the old extractor to `ts-extract-legacy` for legacy support.
+
 ### 2025-08-08
 - Added change directory feature.
 - Fixed crash when extracting corrupted files; now errors are ignored.
