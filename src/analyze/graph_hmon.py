@@ -79,7 +79,7 @@ def main():
         # Base file (no suffix)
         return 0
     # STEP 2: Filter and sort files
-    files = [f for f in glob.glob(FILE_PATTERN) if not f.endswith(EXCLUDE_SUFFIX)]
+    files = [f for f in glob.glob(f"flash/flash/system/hmon/{FILE_PATTERN}") if not f.endswith(EXCLUDE_SUFFIX)]
     files_sorted = sorted(
         files,
         key=lambda f: (extract_suffix_number(f), len(f), f),
