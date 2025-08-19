@@ -1,0 +1,7 @@
+﻿LogMessage,LogMeaning
+Reboot,Keyword Check
+reboot,Keyword Check
+BusyBox,This is the first log that appears in the console during switch bootup
+Chassis Supervision: CMM has reached the ready state,This log indicates that the switch has booted successfully and should begin passing traffic
+Power Supply,"Keyword Check, it is common to see Power Supply events during a bootup"
+bootMgrRebootCMM:,This log is from the process responsible for rebooting the CMM. This log indicates a software-initiated reboot rather than one from a power event
