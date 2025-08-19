@@ -130,7 +130,7 @@ def main():
 
 #Select columns and export        
         Output = pd.read_sql("SELECT Year,Month,Day,Time,TimeDiff,SwitchName,AppID,Subapp,Priority,LogMessage,LogMeaning from Logs order by LogMatch desc", conn)
-        Output.to_excel("SQLLogAnalysis.xlsx")
+        Output.to_excel("tsbuddy-ConsoleLogAnalysis-Reboots.xlsx")
 
 #List reboot count and times
         RebootCount = len(RebootIDs)
