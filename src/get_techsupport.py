@@ -83,7 +83,7 @@ def gen_tech_support(host):
         client.close()
 
 def grab_tech_support(hosts):
-    paramiko.util.log_to_file("paramiko.log")
+    #paramiko.util.log_to_file("paramiko.log")
     master_serials = {}
     for host in hosts:
         ip = host["ip"]
