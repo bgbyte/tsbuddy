@@ -91,7 +91,7 @@ def menu():
     menu_options = [
         {"Get GA Build & Upgrade (aosga)": lookup_ga_build},
         {"Run tech support gatherer (ts-get)": get_techsupport_main},
-        {"Run tech_support_complete.tar Extractor (ts-extract)": extract_all_main},
+        {"Run tech_support_complete.tar Extractor (ts-extract) (ts-extract-legacy)": extract_all_main},
         {"Run tech_support.log to CSV Converter (ts-csv)": tsbuddy_main},
         {"Run swlog parser to CSV & JSON (ts-log)": logparser_main},
         {"Run AOS Upgrader (aosup)": aosup},
