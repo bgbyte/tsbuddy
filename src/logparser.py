@@ -1,10 +1,14 @@
+
 import csv
 import json
 import os
 import paramiko
 from getpass import getpass
 import fnmatch
-from . import logfinder
+import pandas as pd
+#from . import logfinder
+
+
 
 SwlogFiles1 = []
 SwlogFiles2 = []
@@ -16,6 +20,7 @@ SwlogFiles7 = []
 SwlogFiles8 = []
 ConsoleFiles = []
 dir_list = os.listdir()
+
 first_dir_list = os.listdir()
 
 def find_log_paths(root_dir=None):
@@ -26,13 +31,21 @@ def find_log_paths(root_dir=None):
 	dir_list_recursive = logfinder.main()
 	return dir_list_recursive
 
-
-
-
+def process_logs(log_files, csv_name, json_name):
+    LogByLine = []
+    if log_files:
+        for logfile in log_files:
+            with open(logfile, 'r', errors='ignore') as file:
+                LogByLine += file.readlines()
+        ReadandParse(csv_name, LogByLine)
+        with open(csv_name, mode='r', newline='') as csvfile:
+            data = list(csv.DictReader(csvfile))
+        with open(json_name, mode='w') as jsonfile:
+            json.dump(data, jsonfile, indent=4)
 
 #Opens specified file, grabs the data, formats it, and exports it as a CSV
 def ReadandParse(OutputFilePath,LogByLine):
-	with open(OutputFilePath, 'w', newline='') as csvfile:
+	with open(OutputFilePath, 'w', newline='', encoding='utf-8') as csvfile:
 		OutputFile = csv.writer(csvfile)
 		OutputFile.writerow(['Year', 'Month', 'Day', 'Time', 'SwitchName', 'Source', 'AppID', 'Subapp', 'Priority', 'LogMessage'])
 		for line in LogByLine:
@@ -89,20 +102,17 @@ def ReadandParse(OutputFilePath,LogByLine):
 							LogPartsCounter += 1
 						LogMessage = LogMessage.strip()
 						OutputFile.writerow([Year, Month, Date, Time, SwitchName, Source, "", "", "", LogMessage])
-					
-def process_logs(log_files, csv_name, json_name):
-    LogByLine = []
-    if log_files:
-        for logfile in log_files:
-            with open(logfile, 'r', errors='ignore') as file:
-                LogByLine += file.readlines()
-        ReadandParse(csv_name, LogByLine)
-        with open(csv_name, mode='r', newline='') as csvfile:
-            data = list(csv.DictReader(csvfile))
-        with open(json_name, mode='w') as jsonfile:
-            json.dump(data, jsonfile, indent=4)
-
+#export to Pandas and sort by time
+	file = pd.read_csv(OutputFilePath,index_col=False)
+	pd.set_option('future.no_silent_downcasting', True)
+	months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"]
+	monthnumbers = [1,2,3,4,5,6,7,8,9,10,11,12]
+	file["Month"] = file["Month"].replace(months,monthnumbers)
+	file = file.sort_values(by =["Year","Month","Day","Time","LogMessage"],ascending=False)
+	file["Month"] = file["Month"].replace(monthnumbers,months)
+	file.to_csv(OutputFilePath)
 def main():
+
 #Testing the new stuff
 	hosts = collect_hosts()
 	if hosts != []:
@@ -136,7 +146,6 @@ def main():
 			SwlogFiles8.append(file)
 		if 'swlog_localConsole' in file:
 			ConsoleFiles.append(file)
-	
 	# # Group chassis files for easier iteration
 	# chassis_files = [
     #     (SwlogFiles1, 'Chassis1SwlogsParsed-tsbuddy.csv', 'Chassis1SwlogsParsed-tsbuddy.json'),
@@ -155,7 +164,6 @@ def main():
     # # Console logs
 	# process_logs(ConsoleFiles, 'ConsoleLogsParsed-tsbuddy.csv', 'ConsoleLogsParsed-tsbuddy.json')
 
-
 	#Combine all log files
 	
 	#SwlogChassis1
@@ -170,7 +178,7 @@ def main():
 	#with open(OutputFilePath, mode='r', newline='') as csvfile:
 	with open(OutputFilePath, mode='r', newline='') as csvfile:
 		data = list(csv.DictReader(csvfile))
-	with open('Chassis1SwlogsParsed-tsbuddy.json', mode='w') as jsonfile:
+	with open('Chassis1SwlogsParsed.json-tsbuddy', mode='w') as jsonfile:
 		json.dump(data, jsonfile, indent=4)
 	
 	#SwlogChassis2
@@ -317,11 +325,11 @@ def grab_logs(hosts):
 					#print("Skipping swlog_archive")
 					continue
 				if fnmatch.fnmatch(file, "*swlog*.*"):
-					#print(file+" is good")
+					#print("Downloading "+file)
 					sftp.get("/flash/"+file, file)
 					continue
 				if fnmatch.fnmatch(file, "*swlog*"):
-					#print(file+" is good")
+					#print("Downloading "+file)
 					sftp.get("/flash/"+file, file)
 					continue
 			#filepath = "/flash/swlog_chassis1"
@@ -331,6 +339,7 @@ def grab_logs(hosts):
 			if transport: transport.close()
 		except Exception as e:
 			print(f"[{ip}] ERROR: {e}")
+			quit()
 
 if __name__ == "__main__":
     main()
