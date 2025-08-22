@@ -30,7 +30,6 @@ def last_number_sort_key3(filename: str) -> tuple:
     """
     # Remove swlog_archive/ if present
     stripped = filename.replace("swlog_archive/", "")
-    
     # Separate base name and numeric suffix
     match = re.match(r'(.+?)\.(\d+)$', stripped)
     if match:
@@ -77,7 +76,8 @@ category_patterns = [
     "swlog_chassis6",
     "swlog_chassis7",
     "swlog_chassis8",
-    "localConsole"
+    "localConsole",
+    "hmondata"
 ]
 
 # Categorize a single file name
@@ -92,7 +92,7 @@ def categorize(name: str) -> str:
 # Step 1: Read and group files into dir_dict
 def filter_log_paths(
     root_dir: str = None,
-    include_keywords=("swlog", "console"),
+    include_keywords=("swlog", "console", "hmon"),
     exclude_keywords=("tsbuddy",),
 ):
     """
@@ -119,12 +119,9 @@ categorized_by_dir = {}
 def main():
     """Main function to categorize and print log file paths."""
     file_paths = filter_log_paths()
-
     skip_suffixes = {'.gz', '.tar', '.time', '.level'}
     skip_name_suffixes = ('_Qemu', '_Vm')
-
     dir_dict = defaultdict(list)
-
     for full_path_str in file_paths:
         path = Path(full_path_str)
         if not path.is_file() or path.suffix in skip_suffixes or path.stem.endswith(skip_name_suffixes):
@@ -136,7 +133,6 @@ def main():
             dir_dict[str(grandparent)].append(relative_name)
         else:
             dir_dict[str(parent)].append(path.name)
-
     #for parent_dir, files in dir_dict.items():
     #    category_map = defaultdict(list)
     #    for file in files:
@@ -146,7 +142,6 @@ def main():
     #    for cat in category_map:
     #        category_map[cat] = sorted(category_map[cat], key=natural_sort_key)
     #    categorized_by_dir[parent_dir] = dict(category_map)
-
     for parent_dir, files in dir_dict.items():
         category_map = defaultdict(list)
         for file in files:
