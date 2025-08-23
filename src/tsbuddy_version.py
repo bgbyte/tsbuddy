@@ -60,6 +60,34 @@ def get_latest_version(package_name):
         print(f"Error fetching latest version for '{package_name}': {e}")
         return None
 
+def get_pypi_description(package_name, limit=3):
+    """Fetch the package description from PyPI JSON API."""
+    url = f"https://pypi.org/pypi/{package_name}/json"
+    try:
+        with urllib.request.urlopen(url) as resp:
+            data = json.load(resp)
+            content = data["info"].get("description")
+    except Exception as e:
+        print(f"Error fetching description for '{package_name}': {e}")
+        return None
+    
+    # Extract the full changelog section
+    match = re.search(r"##\s*Changelog\s*([\s\S]*?)(?:\n## |\Z)", content, re.IGNORECASE)
+    if not match:
+        return None
+
+    changelog_section = match.group(1).strip()
+
+    # Split by full changelog entries (keep the delimiter)
+    entries = re.findall(r"(###\s.*?)(?=\n### |\Z)", changelog_section, re.DOTALL)
+    
+    if not entries:
+        return None
+
+    # Take the most recent N entries
+    latest_entries = entries[:limit]
+    return "\n\n".join(entry.strip() for entry in latest_entries)
+
 # --- Changelog Fetching Function ---
 
 def fetch_changelog(limit=3):
@@ -168,8 +196,15 @@ def main():
 
     # Show changelog if available
     if show_changelog:
+        # print("\n--- 📦 PyPI Description ---\n")
+        # description = get_pypi_description(package)
+        # if description:
+        #     print(description)
+        # else:
+        #     print("No description found on PyPI.")
         print("\n--- 📄 Latest Changelog Entries ---\n")
-        changelog = fetch_changelog(limit=3)
+        #changelog = fetch_changelog(limit=3)
+        changelog = get_pypi_description(package)
         if changelog:
             print(changelog)
             print("\nView full history at: https://github.com/bgbyte/tsbuddy#changelog")
