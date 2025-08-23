@@ -1,8 +1,13 @@
-print("Loading tsbuddy menu...First run will take extra time.")
+print("\nLoading tsbuddy menu...First run will take extra time.\n")
 import os
 import sys
 import time
 
+from src.tsbuddy_version import main as check_version
+# Ensure the tsbuddy_version check runs first
+check_version()
+
+from src.tsbuddy_version import update_package_safe as update_package
 from src.tsbuddy import main as tsbuddy_main
 #from src.extracttar.extracttar import main as extracttar_main
 from src.extracttar.extract_all import main as extract_all_main
@@ -12,6 +17,10 @@ from src.get_techsupport import main as get_techsupport_main
 from src.analyze.graph_hmon import main as graph_hmon_main
 #from src.clean_pycache import clean_pycache_and_pyc
 
+print("\n" * 15)  # Clear screen by printing new lines
+
+def update_tsbuddy():
+    update_package("tsbuddy")
 
 def print_help():
     help_text = """
@@ -50,6 +59,11 @@ def print_help():
 
 10. Print Help (help):
    - Shows this help text describing each menu option in detail.
+
+🤫 Secrets and ⚙️ Settings:
+- The ~/.tsbuddy_secrets file is used to store sensitive information like API keys.
+- The ~/.tsbuddy_settings file is used to store user preferences and settings.
+
 \n
 """
     print(help_text)
@@ -99,6 +113,7 @@ def menu():
         {"Run HMON Graph (ts-graph-hmon)": graph_hmon_main},
         {"Change current directory": change_directory},
         # {"Clear pycache and .pyc files (ts-clean)": clean_pycache_and_pyc},
+        {"Update tsbuddy to latest version": update_tsbuddy},
         {"Show help info": print_help},
     ]
     #print("\n       (•‿•)  Hey there, buddy!")

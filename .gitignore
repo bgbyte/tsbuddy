@@ -7,6 +7,7 @@ tech_support*
 paramiko.log
 *tsbuddy_secrets*
 *tsbuddy_settings*
+_tsbuddy_updater*
 old_clean_pycache.py
 *tschat*py
 uboot*json

@@ -428,8 +428,12 @@ Please ensure your code adheres to any existing style guidelines and includes te
 
 ## Changelog
 
+### 2025-08-26
+- tsbuddy can now be updated from...tsbuddy 🔄
+- Auto-check for latest version during menu startup, update, or skip version
+
 ### 2025-08-18
-- Added change directory function in `tsbuddy_menu` for improved navigation.
+- Added change directory function in `tsbuddy_menu` for improved usability.
 - Introduced a new extractor script to accommodate `hmon` files.
 - Moved the old extractor to `ts-extract-legacy` for legacy support.
 

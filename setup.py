@@ -5,13 +5,12 @@ with open('README.md', 'r') as f:
 
 setup(
    name='tsbuddy',
-   version='0.0.19',
+   version='0.0.21',
    packages=find_packages(),
    install_requires=[
        # Add dependencies here.
        # e.g. 'numpy>=1.11.1'
        'paramiko>=2.7.0',
-       #'setuptools<81',
        #'pandas>=1.0.0',
        #'openai>=0.27.0',
    ],
