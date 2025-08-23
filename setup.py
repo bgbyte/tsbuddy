@@ -5,12 +5,13 @@ with open('README.md', 'r') as f:
 
 setup(
    name='tsbuddy',
-   version='0.0.21',
+   version='0.0.19',
    packages=find_packages(),
    install_requires=[
        # Add dependencies here.
        # e.g. 'numpy>=1.11.1'
        'paramiko>=2.7.0',
+       #'setuptools<81',
        #'pandas>=1.0.0',
        #'openai>=0.27.0',
    ],
@@ -33,5 +34,5 @@ setup(
    long_description_content_type='text/markdown',
    description = "Tech Support Buddy is a versatile Python module built to empower developers and IT professionals in resolving technical issues. It provides a suite of Python functions designed to efficiently diagnose and resolve technical issues by parsing raw text into structured data, enabling automation and data-driven decision-making.",
    include_package_data=True,
-   exclude_package_data={"": [".env"]},
+   exclude_package_data={"": [".env", ".tsbuddy_secrets", ".tsbuddy_settings"]},
 )
