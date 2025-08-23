@@ -4,7 +4,7 @@ from getpass import getpass
 import fnmatch
 import time
 import datetime
-from tsbuddy import parse_chassis, parse_system
+from src.tsbuddy import parse_chassis, parse_system
 
 first_dir_list = os.listdir()
 
