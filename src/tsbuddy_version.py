@@ -258,7 +258,7 @@ def main():
 
     # Check if user wants to ignore this version
     ignore_version = os.environ.get("TSBUDDY_IGNORE_VERSION")
-    if ignore_version == latest_version:
+    if latest_version == ignore_version != current_version:
         print(f"⚠  Old version {current_version}\n⬆️ Upgrade {package} to {latest_version} manually using: \npip cache purge\npip install --upgrade {package}")
         time.sleep(1)
         return
