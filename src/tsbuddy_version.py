@@ -125,7 +125,7 @@ def update_package(package_name):
     subprocess.check_call([sys.executable, "-m", "pip", "install", "--upgrade", package_name])
     print(f"\n✅ '{package_name}' updated.\n")
 
-def update_package_safe(package_name):
+def update_package_safe(package_name, current_version=None):
     import subprocess, sys, os
     import tempfile
 
@@ -147,7 +147,13 @@ import sys
 print("Waiting for current process to exit...")
 time.sleep(2)  # Give time for the main script to exit
 
-subprocess.check_call([r"{sys.executable}", "-m", "pip", "install", "--upgrade", "{package_name}"])
+subprocess.check_call([r"{sys.executable}", "-m", "pip", "install", "--upgrade", "{package_name}", "--trusted-host", "pypi.org", "--trusted-host", "files.pythonhosted.org"])
+print("\\n"+("#"*15))
+print("Please report any bugs to Brian.")
+print("If there is an issue, you can revert to your previous version using: ")
+print("`pip install tsbuddy=={current_version}`")
+print("#"*15,"\\n")
+time.sleep(5)
 print("\\n* Upgrade complete. You can now rerun tsbuddy.")
 """
 
@@ -159,8 +165,82 @@ print("\\n* Upgrade complete. You can now rerun tsbuddy.")
     # Launch the updater in a new process
     subprocess.Popen([sys.executable, updater_path], close_fds=True)
 
+    if current_version:
+        set_env_variable("TSBUDDY_PREVIOUS_VERSION", current_version)
     print("Exiting to allow upgrade to complete...")
     sys.exit(0)
+
+def downgrade_package_safe(package_name, previous_version):
+    import subprocess, sys, os
+    import tempfile
+
+    # Path to re-launch after upgrade
+    #relaunch_cmd = [sys.executable, "-m", "tsbuddy"]
+    #relaunch_cmd = ["tsbuddy"]
+    
+    # Path to the temporary updater script
+    updater_path = os.path.join(tempfile.gettempdir(), "_tsbuddy_updater.py")
+
+    print(f"\n🔄 Preparing to downgrade '{package_name}'...")
+
+    # Write a temporary updater script
+    updater_script = f"""
+import time
+import subprocess
+import sys
+
+print("Waiting for current process to exit...")
+time.sleep(2)  # Give time for the main script to exit
+
+subprocess.check_call([r"{sys.executable}", "-m", "pip", "install", "{package_name}=={previous_version}", "--trusted-host", "pypi.org", "--trusted-host", "files.pythonhosted.org"])
+print("\\n"+("#"*15))
+print("Important: Please report any bugs to Brian.")
+print("#"*15,"\\n")
+time.sleep(5)
+print("\\n* Downgrade complete. You can now rerun tsbuddy.")
+"""
+
+    #updater_path = os.path.join(os.getcwd(), "_tsbuddy_updater.py")
+
+    with open(updater_path, "w") as f:
+        f.write(updater_script)
+
+    # Launch the updater in a new process
+    subprocess.Popen([sys.executable, updater_path], close_fds=True)
+
+    print("Exiting to allow downgrade to complete...")
+    sys.exit(0)
+
+def downgrade_to_previous_version(package="tsbuddy"):
+    """
+    Downgrade tsbuddy to the previous version found in the environment variable TSBUDDY_PREVIOUS_VERSION.
+    """
+    previous_version = os.environ.get("TSBUDDY_PREVIOUS_VERSION")
+    if not previous_version:
+        print("No previous version found in environment variable TSBUDDY_PREVIOUS_VERSION loaded from ~/.tsbuddy_settings")
+        print("If you want to downgrade, please specify the version manually, e.g.: 0.0.23")
+        #print("pip install tsbuddy==0.0.23")
+        previous_version = input("Enter the version to downgrade to: ").strip()
+        if not previous_version:
+            return
+    print(f"Enter version to downgrade to. By default, previous version: {previous_version}")
+    previous_version = input(f"Downgrade to version [{previous_version}]: ").strip() or previous_version
+    print(f"\n⏬ Downgrading 'tsbuddy' to previous version: {previous_version} ...\n")
+    try:
+        downgrade_package_safe(package, previous_version)
+        print(f"\n✅ 'tsbuddy' downgraded to version {previous_version}.")
+        #set_env_variable("TSBUDDY_IGNORE_VERSION", "")  # Clear ignore version if set
+    except Exception as e:
+        print(f"Error downgrading to version {previous_version}: {e}")
+
+def choice_form():
+    choice = input("Do you want to upgrade or downgrade? [U/d]: ").strip().lower()
+    if choice == 'u':
+        update_package_safe("tsbuddy", current_version=get_installed_version("tsbuddy"))
+    elif choice == 'd':
+        downgrade_to_previous_version()
+    else:
+        return None
 
 
 # --- Main Logic ---
@@ -215,7 +295,7 @@ def main():
     # Ask for update
     confirm = input(f"Do you want to update '{package}' to {latest_version}? [y/N], 'N' will skip future prompts for {latest_version}: ").strip().lower()
     if confirm == 'y':
-        update_package_safe(package)
+        update_package_safe(package, current_version)
     else:
         set_env_variable("TSBUDDY_IGNORE_VERSION", latest_version)
         print(f"Skipping version {latest_version}.")

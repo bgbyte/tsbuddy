@@ -8,6 +8,7 @@ from src.tsbuddy_version import main as check_version
 check_version()
 
 from src.tsbuddy_version import update_package_safe as update_package
+from src.tsbuddy_version import choice_form as upgrade_downgrade_choice
 from src.tsbuddy import main as tsbuddy_main
 #from src.extracttar.extracttar import main as extracttar_main
 from src.extracttar.extract_all import main as extract_all_main
@@ -113,7 +114,7 @@ def menu():
         {"Run HMON Graph (ts-graph-hmon)": graph_hmon_main},
         {"Change current directory": change_directory},
         # {"Clear pycache and .pyc files (ts-clean)": clean_pycache_and_pyc},
-        {"Update tsbuddy to latest version": update_tsbuddy},
+        {"Upgrade or downgrade tsbuddy": upgrade_downgrade_choice},
         {"Show help info": print_help},
     ]
     #print("\n       (•‿•)  Hey there, buddy!")
