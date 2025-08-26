@@ -167,6 +167,7 @@ print("\\n* Upgrade complete. You can now rerun tsbuddy.")
 
     if current_version:
         set_env_variable("TSBUDDY_PREVIOUS_VERSION", current_version)
+    set_env_variable("TSBUDDY_IGNORE_VERSION", "")  # Clear ignore version if set
     print("Exiting to allow upgrade to complete...")
     sys.exit(0)
 
@@ -229,7 +230,7 @@ def downgrade_to_previous_version(package="tsbuddy"):
     try:
         downgrade_package_safe(package, previous_version)
         print(f"\n✅ 'tsbuddy' downgraded to version {previous_version}.")
-        #set_env_variable("TSBUDDY_IGNORE_VERSION", "")  # Clear ignore version if set
+        set_env_variable("TSBUDDY_IGNORE_VERSION", "")  # Clear ignore version if set
     except Exception as e:
         print(f"Error downgrading to version {previous_version}: {e}")
 
