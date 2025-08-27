@@ -151,7 +151,7 @@ subprocess.check_call([r"{sys.executable}", "-m", "pip", "install", "--upgrade",
 print("\\n"+("#"*15))
 print("Please report any bugs to Brian.")
 print("If there is an issue, you can revert to your previous version using: ")
-print("`pip install tsbuddy=={current_version}`")
+print("pip install tsbuddy=={current_version}")
 print("#"*15,"\\n")
 time.sleep(5)
 print("\\n* Upgrade complete. You can now rerun tsbuddy.")
