@@ -431,6 +431,7 @@ Please ensure your code adheres to any existing style guidelines and includes te
 ### 2025-08-26
 - tsbuddy can now be updated from...tsbuddy 🔄
 - Auto-check for latest version during menu startup, update, or skip version
+- New workflow for "Get GA Build, family, & Upgrade (aosga)"
 
 ### 2025-08-18
 - Added change directory function in `tsbuddy_menu` for improved usability.
