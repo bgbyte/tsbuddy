@@ -7,6 +7,89 @@ import os
 import sys
 import subprocess
 
+image_map = {
+    "nandi_sim": ["Nossim.img"],
+    "everest": ["Uos.img"],
+    "medora_sim64": ["Mossim.img", "Menisim.img"],
+    "tor": ["Tos.img"],
+    "vindhya": ["Nos.img"],
+    "medora": ["Mos.img", "Meni.img", "Mhost.img"],
+    "yukon": ["Yos.img"],
+    "shasta": ["Uos.img"],
+    "aravalli": ["Nosa.img"],
+    "shasta_n": ["Uosn.img"],
+    "whitney": ["Wos.img"],
+    "nandi": ["Nos.img"],
+    "whitney_sim": ["Wossim.img"],
+    "kailash": ["Kaos.img"]
+}
+
+model_family_map = {
+ '6360': 'aravalli',
+ '6465': 'vindhya',
+ '6560': 'nandi',
+ '6570M': 'whitney',
+ '6860': 'shasta',
+ '6860N': 'shasta_n',
+ '6865': 'everest',
+ '6870': 'kailash',
+ '6900 Tor': 'tor',
+ '6900 Yukon': 'yukon',
+ '9900': 'medora'
+ }
+
+model_6900_variants = {
+    "6900 Yukon":"T48C6/V72/V48C8/X48C6", 
+    "6900 Tor":"X20/X40/X72/T20/T40/Q32"
+    }
+
+family_model_image_map = {
+  "everest": {
+    "models": ["6865", "6865"],
+    "Img": "Uos.img"
+  },
+  "tor": {
+    "models": ["6900 Tor", "X20/X40/X72/T20/T40/Q32"],
+    "Img": "Tos.img"
+  },
+  "vindhya": {
+    "models": ["6465", "6465"],
+    "Img": "Nos.img"
+  },
+  "medora": {
+    "models": ["9900", "9900"],
+    "Img": "Mos.img"
+  },
+  "yukon": {
+    "models": ["6900 Yukon", "T48C6/V72/V48C8"],
+    "Img": "Yos.img"
+  },
+  "shasta": {
+    "models": ["6860", "6860"],
+    "Img": "Uos.img"
+  },
+  "aravalli": {
+    "models": ["6360", "6360"],
+    "Img": "Nosa.img"
+  },
+  "shasta_n": {
+    "models": ["6860N", "6860N"],
+    "Img": "Uosn.img"
+  },
+  "whitney": {
+    "models": ["6570M", "6570M"],
+    "Img": "Wos.img"
+  },
+  "nandi": {
+    "models": ["6560", "6560"],
+    "Img": "Nos.img"
+  },
+  "kailash": {
+    "models": ["6870", "6870"],
+    "Img": "Kaos.img"
+  }
+}
+
 def safe_password_prompt(prompt="Password: ", fallback="switch"):
     try:
         if sys.stdin.isatty():
@@ -146,23 +229,56 @@ def get_ga_build(version, family):
 
 def lookup_ga_build():
     """Allows the user to look up GA builds with an option to upgrade OmniSwitch."""
-    print("Lookup the GA build by providing the AOS version & switch family...")
+    print("\n----- Models -----")
+    print("---- Model : Family ----")
+    for model, family in model_family_map.items():
+        max_key_length = max(len(k) for k in model_family_map)
+        print(f"{model:<{max_key_length}} : {family}")
+    print("\n----- 6900 Variants -----")
+    print("-- Variant : Models --")
+    for model, variants in model_6900_variants.items():
+        max_key_length = max(len(k) for k in model_6900_variants)
+        print(f"{model:<{max_key_length}} : {variants}")
+    print("\nLookup the GA build by providing a model or device IP...")
     while True:
-        ga_prompt_fam = input("Enter the switch family name to lookup the GA build # (e.g., shasta) [exit]: ").strip().lower() or None
-        if not ga_prompt_fam:
+        user_input = input("Enter a model name (e.g., 6900 Yukon) or device IP (e.g., 192.168.1.1) [exit]: ").strip()
+        if not user_input or user_input.lower() == 'exit':
             print("Canceling GA build lookup...")
             break
-        ga_prompt_ver = input("Provide the AOS version & Release for the lookup (e.g., 8.10R02) [exit]: ").strip().upper() or None
+        # Use regex to check for IP (contains . or :)
+        if re.search(r'[.:]', user_input):
+            # Assume IP, prompt for credentials
+            ip = user_input
+            username = input(f"Enter username for {ip} [admin]: ") or "admin"
+            password = getpass(f"Enter password for {ip} [switch]: ") or "switch"
+            host = {"ip": ip, "username": username, "password": password}
+            family = get_family_from_ip(host)
+            if not family:
+                print(f"Could not determine family from IP {ip}.")
+                continue
+            print(f"Family for {ip}: {family}")
+        else:
+            # Assume model
+            model = user_input
+            family = model_family_map.get(model)
+            if not family:
+                print(f"Unknown model: {model}. Please try again.")
+                continue
+            print(f"Family for model {model}: {family}")
+        ga_prompt_ver = input("Provide the AOS version & Release for GA lookup (e.g., 8.10R02) [exit]: ").strip().upper() or None
+        if not ga_prompt_ver or ga_prompt_ver.lower() == 'exit':
+            print("Lookup canceled.")
+            continue
         gadl = input(f"Would you like to download to OmniSwitch? [y]/n: ").strip().lower() or "y"
-        ga_ver, ga_release = ga_prompt_ver.split('R') if ga_prompt_ver else (None, None)
-        ga_release = "R" + ga_release  # Add "R" to the beginning of the ga_release string
-        if ga_prompt_ver:
-            found_ga_build = f"{ga_ver}{get_ga_build(ga_prompt_ver, ga_prompt_fam)}.{ga_release}"
+        try:
+            ga_ver, ga_release = ga_prompt_ver.split('R') if ga_prompt_ver else (None, None)
+            ga_release = "R" + ga_release  # Add "R" to the beginning of the ga_release string
+            found_ga_build = f"{ga_ver}{get_ga_build(ga_prompt_ver, family)}.{ga_release}"
             print("GA Build: ", found_ga_build)
             if gadl == "y":
-                aosup()
-        else:
-            print("Lookup canceled.")
+                aosup(found_ga_build=found_ga_build)
+        except Exception as e:
+            print(f"Error looking up GA build: {e}")
 
 def collect_hosts():
     """Collects device details from the user and returns a list of hosts."""
@@ -195,7 +311,7 @@ def aosup(found_ga_build=None):
     folder_name = input("Which folder name would you like to download to? [working]: ").strip() or "working"
     reload_choice = input("Would you like to reload when finished? [y]/n: ").strip().lower() or "y"
     reload_when_finished = reload_choice == "y"
-    main(folder_name=folder_name, reload_when_finished=reload_when_finished)
+    main(folder_name=folder_name, reload_when_finished=reload_when_finished, found_ga_build=found_ga_build)
     #if reload_when_finished:
     #    print(f"Reloading from folder '/flash/{folder_name}'...")
     #else:
@@ -247,28 +363,63 @@ def download_images_for_host(host, aos_major, aos_build, aos_release, image_map,
         client.close()
     except Exception as e:
         print(f"[{ip}] ERROR: {e}")
+    finally:
+        try:
+            client.close()
+        except:
+            pass
 
+def get_family_from_filename(filename: str) -> str | None:
+    """Infers the family by finding the provided filename in the mapping."""
+    for family, filenames_list in image_map.items():
+        if filename in filenames_list:
+            return family
+    return None
 
-def main(folder_name=None, reload_when_finished=False):
+def get_filenames_for_family(family: str) -> list[str] | None:
+    """Retrieves the list of software filenames for a given family."""
+    return image_map.get(family)
+
+def get_family_from_ip(host: str) -> str | None:
+    """
+    Connects to a device via SSH to determine its model and then its family.
+    """
+    ip = host["ip"]
+    print(f"\nConnecting to {ip}...")
+    try:
+        # Connect via SSH
+        client = paramiko.SSHClient()
+        client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+        client.connect(ip, username=host["username"], password=host["password"], timeout=10)
+        shell = client.invoke_shell()
+        shell.send("su\n")
+        time.sleep(1)
+        shell.recv(1024)  # No password needed
+        family = get_platform_family(shell)
+        if not family or family not in image_map:
+            print(f"[{ip}] Unknown or missing platform family: '{family}'")
+            client.close()
+            return
+        print(f"[{ip}] Platform family: {family}")
+        client.close()
+        return family
+    except Exception as e:
+        print(f"[{ip}] ERROR: {e}")
+    finally:
+        try:
+            client.close()
+        except:
+            pass
+
+def main(folder_name=None, reload_when_finished=False, found_ga_build=None):
     print("\nNote: you can lookup the GA build with aosdl-ga CLI command.\n")
-    aos_major, aos_build, aos_release = get_aos_version_simple()
-    # Image mapping
-    image_map = {
-        "nandi_sim": ["Nossim.img"],
-        "everest": ["Uos.img"],
-        "medora_sim64": ["Mossim.img", "Menisim.img"],
-        "tor": ["Tos.img"],
-        "vindhya": ["Nos.img"],
-        "medora": ["Mos.img", "Meni.img", "Mhost.img"],
-        "yukon": ["Yos.img"],
-        "shasta": ["Uos.img"],
-        "aravalli": ["Nosa.img"],
-        "shasta_n": ["Uosn.img"],
-        "whitney": ["Wos.img"],
-        "nandi": ["Nos.img"],
-        "whitney_sim": ["Wossim.img"],
-        "kailash": ["Kaos.img"]
-    }
+    if not found_ga_build:
+        aos_major, aos_build, aos_release = get_aos_version_simple()
+    else:
+        parts = found_ga_build.split('.')
+        aos_major, aos_build, aos_release = [".".join(parts[:2]), parts[2], parts[3]]
+    print(f"Using AOS Version: {aos_major}.{aos_build}.{aos_release}")
+    # Image mapping, moved to global scope for reusability
     base_ip = "http://10.46.4.37"
     base_dir = "/bop/images"
     hosts = collect_hosts()
