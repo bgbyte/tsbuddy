@@ -10,6 +10,8 @@ paramiko.log
 _tsbuddy_updater*
 old_clean_pycache.py
 *tschat*py
+ts-chat/
+*chat*
 uboot*json
 
 # Byte-compiled / optimized / DLL files

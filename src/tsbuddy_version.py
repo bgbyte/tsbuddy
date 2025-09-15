@@ -226,7 +226,7 @@ def downgrade_to_previous_version(package="tsbuddy"):
             return
     print(f"Enter version to downgrade to. By default, previous version: {previous_version}")
     previous_version = input(f"Downgrade to version [{previous_version}]: ").strip() or previous_version
-    print(f"\n⏬ Downgrading 'tsbuddy' to previous version: {previous_version} ...\n")
+    print(f"\n⏬ Downgrading 'tsbuddy' to version: {previous_version} ...\n")
     try:
         downgrade_package_safe(package, previous_version)
         print(f"\n✅ 'tsbuddy' downgraded to version {previous_version}.")

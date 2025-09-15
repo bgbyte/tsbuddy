@@ -5,14 +5,16 @@ with open('README.md', 'r') as f:
 
 setup(
    name='tsbuddy',
-   version='0.0.25',
+   version='0.0.26',
    packages=find_packages(),
    install_requires=[
        # Add dependencies here.
        # e.g. 'numpy>=1.11.1'
        'paramiko>=2.7.0',
+       'xlsxwriter>=3.2.5',
+       'scapy>=2.6.1',
+       'pandas>=2.3.1',
        #'prompt_toolkit>=3.0.0',
-       #'pandas>=1.0.0',
        #'openai>=0.27.0',
    ],
    entry_points={
@@ -28,6 +30,7 @@ setup(
            'ts-get=src.get_techsupport:main',  # Run the main function in get_techsupport to gather tech support data
            'ts-clean=clean_pycache:clean_pycache_and_pyc',  # Run the clean function to remove __pycache__ directories and .pyc files
            'ts-graph-hmon=src.analyze.graph_hmon:main',  # Entry point for HMON Graph Generator
+           'ts-chat=src.ts_chat.main_api_caller:main',  # Entry point for the chat interface
        ],
    },
    long_description=long_description,

@@ -6,7 +6,7 @@
 <!-- Add other badges as appropriate: build status, coverage, etc. -->
 <!-- e.g., [![Build Status](https://travis-ci.org/YOUR_USERNAME/tsbuddy.svg?branch=main)](https://travis-ci.org/YOUR_USERNAME/tsbuddy) -->
 
-Tech Support Buddy is a versatile Python module built to improve network engineers' productivity. It provides a suite of Python utilities designed to efficiently diagnose technical issues, help resolve them, and facilitate automation. The main() function parses raw text into structured data, enabling automation and data-driven decision-making.
+Tech Support Buddy is a versatile Python library built to improve network engineers' productivity. It provides a suite of Python utilities designed to efficiently diagnose technical issues, help resolve them, and facilitate automation. The main() function parses raw text into structured data, enabling automation and data-driven decision-making.
 
 ## Table of Contents
 

@@ -104,7 +104,7 @@ def change_directory():
 
 def menu():
     menu_options = [
-        {" Get GA Build, Family, & Upgrade (aosga)": lookup_ga_build},
+        {" Get GA Build, Family, or Upgrade (aosga)": lookup_ga_build},
         {" Run tech support gatherer (ts-get)": get_techsupport_main},
         {" Run tech_support_complete.tar Extractor (ts-extract) (ts-extract-legacy)": extract_all_main},
         {" Run tech_support.log to CSV Converter (ts-csv)": tsbuddy_main},
@@ -112,7 +112,7 @@ def menu():
         {" Run AOS Upgrader (aosup)": aosup},
         {" Run AOS Downloader (aosdl)": aosdl_main},
         {" Run HMON Graph (ts-graph-hmon)": graph_hmon_main},
-        {" Change current directory": change_directory},
+        {" Change current directory or list contents": change_directory},
         # {"Clear pycache and .pyc files (ts-clean)": clean_pycache_and_pyc},
         {"Upgrade or downgrade tsbuddy": upgrade_downgrade_choice},
         {"Show help info": print_help},
