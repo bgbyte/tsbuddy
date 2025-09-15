@@ -48,3 +48,5 @@ from .tsbuddy import parse_virtual_chassis_topology
 from .tsbuddy import parse_virtual_chassis_vf_link
 from .tsbuddy import parse_virtual_chassis_vf_link_member_port
 from .tsbuddy import parse_vlan
+from .extracttar.extract_all import extract_tar_archive, decompress_gz_file, extract_archives
+from .extracttar.extract_all import main as extract_all_cwd
