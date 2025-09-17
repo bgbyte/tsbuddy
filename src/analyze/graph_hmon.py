@@ -2,7 +2,16 @@ import os
 import csv
 import glob
 from datetime import datetime
-import tkinter as tk
+try:
+    import tkinter as tk
+except ImportError:
+    print("Error: The 'tkinter' module is not installed.")
+    print("Tkinter is required to run tsbuddy's graphical features.")
+    print("Please install it using your system's package manager:")
+    print("  - Debian/Ubuntu: sudo apt-get install python3-tk")
+    print("  - Fedora: sudo dnf install python3-tkinter")
+    print("  - Arch Linux: sudo pacman -S tk")
+    exit(1)
 import random
 import re
 
