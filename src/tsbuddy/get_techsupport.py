@@ -4,7 +4,7 @@ from getpass import getpass
 import fnmatch
 import time
 import datetime
-from src.tsbuddy import parse_chassis, parse_system
+from .extract.tslog2csv import parse_chassis, parse_system
 
 first_dir_list = os.listdir()
 
@@ -161,7 +161,7 @@ def get_new_tech_support(sftp, master_serial):
             continue
         newfilesize = file_attributes.st_size
         if newfilesize == filesize:
-            print("The tech support files is ready. Beginning download")
+            print("The tech support file is ready. Beginning download")
             timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H%M%S")
             local_file = f"tech_support_complete_{master_serial}_{timestamp}.tar"
             sftp.get("/flash/tech_support_complete.tar", local_file)

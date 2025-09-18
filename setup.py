@@ -6,7 +6,8 @@ with open('README.md', 'r') as f:
 setup(
    name='tsbuddy',
    version='0.0.26',
-   packages=find_packages(),
+   packages=find_packages(where='src'),
+   package_dir={'': 'src'},
    install_requires=[
        # Add dependencies here.
        # e.g. 'numpy>=1.11.1'
@@ -19,18 +20,18 @@ setup(
    ],
    entry_points={
        'console_scripts': [
-           'ts-csv=src.tsbuddy:main',  # Run the main function in tsbuddy to convert tech_support.log to CSV
-           'ts-extract=src.extracttar.extract_all:main',  # Run the main function in extract_all to extract tar files
-           'ts-extract-legacy=src.extracttar:main',  # Run the main function in extracttar to extract tar files
-           'aosdl=src.aosdl.aosdl:main',  # Run the main function in aosdl to download AOS
-           'aosga=src.aosdl.aosdl:lookup_ga_build',  # Run lookup_ga_build function
-           'aosup=src.aosdl.aosdl:aosup',  # Run AOS Upgrade function to prompt for directory name and reload option
-           'tsbuddy=src.tsbuddy_menu:menu',  # New menu entry point
-           'ts-log=src.logparser:main', # Run function to consolidate logs in current directory
-           'ts-get=src.get_techsupport:main',  # Run the main function in get_techsupport to gather tech support data
+           'tslog2csv=tsbuddy.extract.tslog2csv:main',  # Run the main function in tsbuddy to convert tech_support.log to CSV
+           'ts-extract=tsbuddy.extract.extract_all:main',  # Run the main function in extract_all to extract tar files
+           'ts-extract-legacy=tsbuddy.extract.extracttar:main',  # Run the main function in extracttar to extract tar files
+           'aosdl=tsbuddy.aosdl.aosdl:main',  # Run the main function in aosdl to download AOS
+           'aosga=tsbuddy.aosdl.aosdl:lookup_ga_build',  # Run lookup_ga_build function
+           'aosup=tsbuddy.aosdl.aosdl:aosup',  # Run AOS Upgrade function to prompt for directory name and reload option
+           'tsbuddy=tsbuddy.tsbuddy_menu:menu',  # New menu entry point
+           'ts-log=tsbuddy.logparser:main', # Run function to consolidate logs in current directory
+           'ts-get=tsbuddy.get_techsupport:main',  # Run the main function in get_techsupport to gather tech support data
            'ts-clean=clean_pycache:clean_pycache_and_pyc',  # Run the clean function to remove __pycache__ directories and .pyc files
-           'ts-graph-hmon=src.analyze.graph_hmon:main',  # Entry point for HMON Graph Generator
-           'ts-chat=src.ts_chat.main_api_caller:main',  # Entry point for the chat interface
+           'ts-graph-hmon=tsbuddy.analyze.graph_hmon:main',  # Entry point for HMON Graph Generator
+           'ts-chat=tsbuddy.ts_chat.main_api_caller:main',  # Entry point for the chat interface
        ],
    },
    long_description=long_description,

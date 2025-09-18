@@ -3,20 +3,20 @@ import os
 import sys
 import time
 
-from src.tsbuddy_version import main as check_version
+from .tsbuddy_version import main as check_version
 # Ensure the tsbuddy_version check runs first
 check_version()
 
-from src.tsbuddy_version import update_package_safe as update_package
-from src.tsbuddy_version import choice_form as upgrade_downgrade_choice
-from src.tsbuddy import main as tsbuddy_main
-#from src.extracttar.extracttar import main as extracttar_main
-from src.extracttar.extract_all import main as extract_all_main
-from src.aosdl.aosdl import main as aosdl_main, lookup_ga_build, aosup
-from src.logparser import main as logparser_main
-from src.get_techsupport import main as get_techsupport_main
-from src.analyze.graph_hmon import main as graph_hmon_main
-#from src.clean_pycache import clean_pycache_and_pyc
+from .tsbuddy_version import update_package_safe as update_package
+from .tsbuddy_version import choice_form as upgrade_downgrade_choice
+from .extract.tslog2csv import main as tsbuddy_main
+#from .extract.extracttar import main as extracttar_main
+from .extract.extract_all import main as extract_all_main
+from .aosdl.aosdl import main as aosdl_main, lookup_ga_build, aosup
+from .logparser import main as logparser_main
+from .get_techsupport import main as get_techsupport_main
+from .analyze.graph_hmon import main as graph_hmon_main
+#from .clean_pycache import clean_pycache_and_pyc
 
 print("\n" * 15)  # Clear screen by printing new lines
 

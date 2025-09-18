@@ -1,41 +1,48 @@
-[tool.poetry]
-name = "tsbuddy"
-version = "0.0.1"
-description = "Tech Support Buddy is a versatile Python module built to empower developers and IT professionals in resolving technical issues. It provides a suite of Python functions designed to efficiently diagnose and resolve technical issues by parsing raw text into structured data, enabling automation and data-driven decision-making."
-#authors = ["Your Name <your.email@example.com>"]
-#license = "MIT"
-readme = "README.md"
-homepage = "https://github.com/bgbyte/tsbuddy"
-repository = "https://github.com/bgbyte/tsbuddy"
-keywords = ["tsbuddy", "Tech Support Buddy"]
-
-[tool.poetry.dependencies]
-python = "^3.8"
-
-#[build-system]
-#requires = ["poetry-core>=1.0.0"]
-#build-backend = "poetry.core.masonry.api"
-
 [build-system]
-requires = ["setuptools >= 77.0.3"]
+requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "tsbuddy"
-version = "0.0.1"
-#authors = [
-#  { name="Example Author", email="author@example.com" },
-#]
+version = "0.0.26"
 description = "Tech Support Buddy is a versatile Python module built to empower developers and IT professionals in resolving technical issues. It provides a suite of Python functions designed to efficiently diagnose and resolve technical issues by parsing raw text into structured data, enabling automation and data-driven decision-making."
 readme = "README.md"
-requires-python = ">=3.9"
+requires-python = ">=3.7"
+license = {file = "LICENSE"}
+authors = [
+    {name = "", email = ""}
+]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Operating System :: OS Independent",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent"
 ]
-#license = "MIT"
-#license-files = ["LICEN[CS]E*"]
+dependencies = [
+    "paramiko>=2.7.0",
+    "xlsxwriter>=3.2.5",
+    "scapy>=2.6.1",
+    "pandas>=2.3.1"
+]
 
 [project.urls]
 Homepage = "https://github.com/bgbyte/tsbuddy"
-Issues = "https://github.com/bgbyte/tsbuddy/issues"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = ["tsbuddy"]
+include-package-data = true
+exclude-package-data = {"" = [".env", ".tsbuddy_secrets", ".tsbuddy_settings"]}
+
+[project.scripts]
+tslog2csv = "tsbuddy.extract.tslog2csv:main"
+ts-extract = "tsbuddy.extract.extract_all:main"
+ts-extract-legacy = "tsbuddy.extract.extracttar:main"
+aosdl = "tsbuddy.aosdl.aosdl:main"
+aosga = "tsbuddy.aosdl.aosdl:lookup_ga_build"
+aosup = "tsbuddy.aosdl.aosdl:aosup"
+tsbuddy = "tsbuddy.tsbuddy_menu:menu"
+ts-log = "tsbuddy.logparser:main"
+ts-get = "tsbuddy.get_techsupport:main"
+ts-clean = "clean_pycache:clean_pycache_and_pyc"
+ts-graph-hmon = "tsbuddy.analyze.graph_hmon:main"
+ts-chat = "tsbuddy.ts_chat.main_api_caller:main"
