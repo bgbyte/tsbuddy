@@ -428,6 +428,12 @@ Please ensure your code adheres to any existing style guidelines and includes te
 
 ## Changelog
 
+### 2025-09-18
+- Added tcpdump file converter to Wireshark compatible file. Thank you @NathanielOrlina
+- Fixed pandas import error (added to dependencies)
+- Fixed tkinter import error on Linux
+- Added more dependencies
+
 ### 2025-08-26
 - tsbuddy can now be updated from...tsbuddy 🔄
 - Auto-check for latest version during menu startup, update, or skip version
