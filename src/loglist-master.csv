@@ -1,0 +1,22 @@
+﻿Source,Category,LogMessage,LogMeaning
+Console,Reboot,Reboot,Keyword Check
+Console,Reboot,reboot,Keyword Check
+Swlog,Reboot,BusyBox,This is the first log that appears in the console during switch bootup
+Console,Reboot,Chassis Supervision: CMM has reached the ready state,This log indicates that the switch has booted successfully and should begin passing traffic
+Console,"Reboot,Hardware",Power Supply,"Keyword Check, it is common to see Power Supply events during a bootup"
+Console,Reboot,bootMgrRebootCMM:,This log is from the process responsible for rebooting the CMM. This log indicates a software-initiated reboot rather than one from a power event
+Swlog,Connectivity,logs since its last successful log,The switch was unable to send logs to its configured log server. This indicates a connectivity issue between the switch and the log server
+Swlog,Health,falling below,The switch has recovered from a high CPU status
+Swlog,SPB,Lost L1 adjacency ,An SPB Adjcency went down
+Swlog,Connectivity,Root port change detected,"The Spanning Tree root bridge for this VLAN has changed. If you see several of these logs, that could indicate a loop on the network"
+Swlog,Health,Kernel panic,The switch has an issue with the Kernel. Please gather Console Output logs by connecting a console cable to the switch
+Swlog,Reboot,Last reboot due to,This indicates why the switch last rebooted
+Console,VC,VC Takeover,A VC Topology change is taking place
+Console,Interface,operationally up,An interface has come up
+Console,Interface,operationally down,An interface has gone down
+swlog,Upgrades,Booting up with,Displays the directory and image to be used in the next boot
+swlog,Health,Buffer list is empty,Out of Memory
+swlog,Health,rising above,The switch is entering a high CPU status
+Console,"Reboot,Health",PowerSupply status changed,A power event has occurred on one of the power supplies
+swlog,"Reboot,Health",ps * change,A power event has occurred on one of the power supplies
+swlog,General,CLI log,A command was inputted into the switch by a user
