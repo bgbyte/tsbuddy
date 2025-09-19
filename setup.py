@@ -5,7 +5,7 @@ with open('README.md', 'r') as f:
 
 setup(
    name='tsbuddy',
-   version='0.0.26',
+   version='0.0.27',
    packages=find_packages(),
    install_requires=[
        # Add dependencies here.
