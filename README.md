@@ -428,10 +428,14 @@ Please ensure your code adheres to any existing style guidelines and includes te
 
 ## Changelog
 
+### 2025-09-20
+- Added LogAnalyzer v2 by @NathanielOrlina, currently depends on 7zip
+- Restructured the library to accomodate imports
+
 ### 2025-09-18
 - Added tcpdump file converter to Wireshark compatible file. Thank you @NathanielOrlina
 - Fixed pandas import error (added to dependencies)
-- Fixed tkinter import error on Linux
+- Added help text for tkinter import error on Linux
 - Added more dependencies
 
 ### 2025-08-26

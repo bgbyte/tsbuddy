@@ -981,7 +981,7 @@ def analysis_menu(conn,cursor):
             case "7":
                 ChangeSwitchName()
             case "0":
-                quit()
+                break
             case _:
                 print("Invalid Selection")
 
