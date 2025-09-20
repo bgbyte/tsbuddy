@@ -5,7 +5,7 @@ with open('README.md', 'r') as f:
 
 setup(
    name='tsbuddy',
-   version='0.0.26',
+   version='0.0.27',
    packages=find_packages(where='src'),
    package_dir={'': 'src'},
    install_requires=[
@@ -27,7 +27,7 @@ setup(
            'aosga=tsbuddy.aos.aosdl:lookup_ga_build',  # Run lookup_ga_build function
            'aosup=tsbuddy.aos.aosdl:aosup',  # Run AOS Upgrade function to prompt for directory name and reload option
            'tsbuddy=tsbuddy.tsbuddy_menu:menu',  # New menu entry point
-           'ts-log=tsbuddy.log_analyzer.logparser:main', # Run function to consolidate logs in current directory
+           'ts-log=tsbuddy.log_analyzer.logparser_v2:main', # Run function to consolidate logs in current directory
            'ts-get=tsbuddy.log_analyzer.get_techsupport:main',  # Run the main function in get_techsupport to gather tech support data
            'ts-clean=utils.clean_pycache:clean_pycache_and_pyc',  # Run the clean function to remove __pycache__ directories and .pyc files
            'ts-graph-hmon=tsbuddy.hmon.graph_cpu:main',  # Entry point for HMON Graph Generator
