@@ -2,7 +2,7 @@ from . import aos
 from . import extracttar
 from . import hmon
 from . import log_analyzer
-from . import tsbuddy_menu
+#from . import tsbuddy_menu # Avoid Python script import issue 
 from . import tslog2csv
 from . import utils
 
@@ -11,7 +11,7 @@ __all__ = [
     'extracttar',
     'hmon',
     'log_analyzer',
-    'tsbuddy_menu',
+    #'tsbuddy_menu',
     'tslog2csv',
     'utils',
 ]
