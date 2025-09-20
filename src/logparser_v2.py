@@ -13,7 +13,7 @@ import subprocess
 from pathlib import Path
 import xlsxwriter
 import socket
-import tsbuddy
+#import tsbuddy
 
 
 SEVEN_ZIP_PATH = r"C:\Program Files\7-Zip\7z.exe"

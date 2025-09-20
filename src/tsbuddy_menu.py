@@ -13,7 +13,7 @@ from src.tsbuddy import main as tsbuddy_main
 #from src.extracttar.extracttar import main as extracttar_main
 from src.extracttar.extract_all import main as extract_all_main
 from src.aosdl.aosdl import main as aosdl_main, lookup_ga_build, aosup
-from src.logparser import main as logparser_main
+from src.logparser_v2 import main as logparser_main
 from src.get_techsupport import main as get_techsupport_main
 from src.analyze.graph_hmon import main as graph_hmon_main
 #from src.clean_pycache import clean_pycache_and_pyc
@@ -43,8 +43,10 @@ def print_help():
 4. Run tech_support.log to CSV Converter (ts-csv):
    - Converts tech_support.log files into a CSV file for easier viewing and analysis.
 
-5. Run swlog parser (to CSV & JSON) (ts-log):
-   - Parses switch log & console log files and outputs the results in both CSV and JSON files.
+5. Run Log Analyzer (ts-log):
+   - Creates DB of switch log & console log files
+   - Interactive menu for filtering 
+   - Option to output the results to Excel (.xlsx)
 
 6. Run AOS Upgrader (aosup):
    - Upgrades your OmniSwitch to the requested AOS build #, automating the upgrade process.
@@ -108,7 +110,7 @@ def menu():
         {" Run tech support gatherer (ts-get)": get_techsupport_main},
         {" Run tech_support_complete.tar Extractor (ts-extract) (ts-extract-legacy)": extract_all_main},
         {" Run tech_support.log to CSV Converter (ts-csv)": tsbuddy_main},
-        {" Run swlog parser to CSV & JSON (ts-log)": logparser_main},
+        {" Run Log Analyzer (ts-log)": logparser_main},
         {" Run AOS Upgrader (aosup)": aosup},
         {" Run AOS Downloader (aosdl)": aosdl_main},
         {" Run HMON Graph (ts-graph-hmon)": graph_hmon_main},
