@@ -15,7 +15,7 @@ from .extracttar.extract_ts_tar import main as extract_all_main
 from .aos.aosdl import main as aosdl_main, lookup_ga_build, aosup
 from .log_analyzer.logparser import main as logparser_main
 from .log_analyzer.get_techsupport import main as get_techsupport_main
-from .hmon.graph_hmon import main as graph_hmon_main
+from .hmon.graph_cpu import main as graph_hmon_main
 #from .clean_pycache import clean_pycache_and_pyc
 
 print("\n" * 15)  # Clear screen by printing new lines
