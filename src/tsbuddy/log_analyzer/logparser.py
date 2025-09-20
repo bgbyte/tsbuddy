@@ -6,7 +6,7 @@ import paramiko
 from getpass import getpass
 import fnmatch
 import pandas as pd
-#from . import logfinder
+from . import logfinder
 
 
 

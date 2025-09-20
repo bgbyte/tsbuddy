@@ -1,12 +1,3 @@
-# from .extracttar import (
-#     extract_tar_files, 
-#     extract_gz_files, 
-#     main
-# )
-
-from .extract_all import main as extract_all_cwd
-from .extract_all import extract_tar_archive, decompress_gz_file, extract_archives
-
 from .tslog2csv import export_to_csv
 from .tslog2csv import extract_section
 from .tslog2csv import parse_sections
@@ -59,10 +50,6 @@ from .tslog2csv import parse_virtual_chassis_vf_link_member_port
 from .tslog2csv import parse_vlan
 
 __all__ = [
-    'extract_tar_archive', 
-    'decompress_gz_file', 
-    'extract_archives',
-    'extract_all_cwd',
     'export_to_csv',
     'extract_section',
     'parse_sections',

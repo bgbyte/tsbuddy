@@ -3,19 +3,19 @@ import os
 import sys
 import time
 
-from .tsbuddy_version import main as check_version
+from .utils.tsbuddy_version import main as check_version
 # Ensure the tsbuddy_version check runs first
 check_version()
 
-from .tsbuddy_version import update_package_safe as update_package
-from .tsbuddy_version import choice_form as upgrade_downgrade_choice
-from .extract.tslog2csv import main as tsbuddy_main
+from .utils.tsbuddy_version import update_package_safe as update_package
+from .utils.tsbuddy_version import choice_form as upgrade_downgrade_choice
+from .tslog2csv.tslog2csv import main as tsbuddy_main
 #from .extract.extracttar import main as extracttar_main
-from .extract.extract_all import main as extract_all_main
-from .aosdl.aosdl import main as aosdl_main, lookup_ga_build, aosup
-from .logparser import main as logparser_main
-from .get_techsupport import main as get_techsupport_main
-from .analyze.graph_hmon import main as graph_hmon_main
+from .extracttar.extract_ts_tar import main as extract_all_main
+from .aos.aosdl import main as aosdl_main, lookup_ga_build, aosup
+from .log_analyzer.logparser import main as logparser_main
+from .log_analyzer.get_techsupport import main as get_techsupport_main
+from .hmon.graph_hmon import main as graph_hmon_main
 #from .clean_pycache import clean_pycache_and_pyc
 
 print("\n" * 15)  # Clear screen by printing new lines
@@ -111,7 +111,7 @@ def menu():
         {" Run swlog parser to CSV & JSON (ts-log)": logparser_main},
         {" Run AOS Upgrader (aosup)": aosup},
         {" Run AOS Downloader (aosdl)": aosdl_main},
-        {" Run HMON Graph (ts-graph-hmon)": graph_hmon_main},
+        {" Run CPU Graph (ts-graph-hmon)": graph_hmon_main},
         {" Change current directory or list contents": change_directory},
         # {"Clear pycache and .pyc files (ts-clean)": clean_pycache_and_pyc},
         {"Upgrade or downgrade tsbuddy": upgrade_downgrade_choice},

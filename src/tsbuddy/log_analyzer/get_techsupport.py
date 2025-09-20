@@ -4,7 +4,7 @@ from getpass import getpass
 import fnmatch
 import time
 import datetime
-from .extract.tslog2csv import parse_chassis, parse_system
+from tsbuddy.tslog2csv.tslog2csv import parse_chassis, parse_system
 
 first_dir_list = os.listdir()
 
