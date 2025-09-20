@@ -54,7 +54,7 @@ def print_help():
 7. Run AOS Downloader (aosdl):
    - Downloads the requested AOS version to /flash for later processing.
 
-8. Run HMON Graph Generator (graph-hmon):
+8. Run HMON Graph Generator (ts-graph-cpu):
    - Generates graphs from HMON data using the new script graph_hmon.py. Must be in the same directory as HMON data files.
 
 9. Change current directory:
@@ -113,8 +113,8 @@ def menu():
         {" Run Log Analyzer (ts-log)": logparser_main},
         {" Run AOS Upgrader (aosup)": aosup},
         {" Run AOS Downloader (aosdl)": aosdl_main},
-        {" Run CPU Graph (ts-graph-hmon)": graph_hmon_main},
-        {" Change current directory or list contents": change_directory},
+        {" Run CPU Graph (ts-graph-cpu)": graph_hmon_main},
+        {" Change current directory or list contents (cd)": change_directory},
         # {"Clear pycache and .pyc files (ts-clean)": clean_pycache_and_pyc},
         {"Upgrade or downgrade tsbuddy": upgrade_downgrade_choice},
         {"Show help info": print_help},
@@ -151,6 +151,8 @@ def menu():
                 selected_func()
             except Exception as e:
                 print(f"\nError: {e}\nReturning to menu...\n")
+        elif choice.lower() == 'cd' or choice.lower() == 'ls':
+            change_directory()
         elif choice == '0':
             print("Exiting...\n\n  (x_x) \n")
             sys.exit(0)

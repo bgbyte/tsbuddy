@@ -430,7 +430,8 @@ Please ensure your code adheres to any existing style guidelines and includes te
 
 ### 2025-09-20
 - Added LogAnalyzer v2 by @NathanielOrlina, currently depends on 7zip
-- Restructured the library to accomodate imports
+- Restructured the library to accomodate imports better
+- Added 'cd' as a menu option in the main tsbuddy menu
 
 ### 2025-09-18
 - Added tcpdump file converter to Wireshark compatible file. Thank you @NathanielOrlina

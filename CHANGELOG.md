@@ -1,9 +1,14 @@
 # Changelog
 
+### 2025-09-20 [0.0.30]
+- Added LogAnalyzer v2 by @NathanielOrlina, currently depends on 7zip
+- Restructured the library to accomodate imports better
+- Added 'cd' as a menu option in the main tsbuddy menu
+
 ## 2025-09-18 [0.0.26]
 - Added tcpdump file converter to Wireshark compatible file. Thank you @NathanielOrlina
 - Fixed pandas import error (added to dependencies)
-- Fixed tkinter import error on Linux
+- Added help text for tkinter import error on Linux
 - Added more dependencies
 
 ## 2025-08-26 [0.0.25]

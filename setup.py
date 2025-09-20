@@ -5,7 +5,7 @@ with open('README.md', 'r') as f:
 
 setup(
    name='tsbuddy',
-   version='0.0.28',
+   version='0.0.30',
    packages=find_packages(where='src'),
    package_dir={'': 'src'},
    install_requires=[
@@ -30,7 +30,7 @@ setup(
            'ts-log=tsbuddy.log_analyzer.logparser_v2:main', # Run function to consolidate logs in current directory
            'ts-get=tsbuddy.log_analyzer.get_techsupport:main',  # Run the main function in get_techsupport to gather tech support data
            'ts-clean=utils.clean_pycache:clean_pycache_and_pyc',  # Run the clean function to remove __pycache__ directories and .pyc files
-           'ts-graph-hmon=tsbuddy.hmon.graph_cpu:main',  # Entry point for HMON Graph Generator
+           'ts-graph-cpu=tsbuddy.hmon.graph_cpu:main',  # Entry point for HMON Graph Generator
            'ts-chat=tsbuddy.ts_chat.main_api_caller:main',  # Entry point for the chat interface
        ],
    },
