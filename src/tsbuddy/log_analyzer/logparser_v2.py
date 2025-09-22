@@ -1,5 +1,3 @@
-import csv
-import json
 import os
 import paramiko
 import sqlite3
@@ -36,6 +34,7 @@ SEVEN_ZIP_PATH = r"C:\Program Files\7-Zip\7z.exe"
 
 #Known issues:
 #I/O Error on program close
+#Main menu displays twice - Keyword, enter, export, exit, exit
 
 
 
@@ -2033,7 +2032,13 @@ def process_logs(conn,cursor,chassis_selection):
 
 def ReadandParse(LogByLine,conn,cursor,Filename,ChassisID):
     for line in LogByLine:
+        #debug prints
+        #print(len(line))
+        #print(Filename)
         #print(line)
+        #skip empty lines
+        if len(line) < 2:
+            continue
         #Remove null characters
         line = line.replace('\0',"")
         #8.10.R03 removed the year in console logs. This hardcodes 2025 if we do not have a year
@@ -2042,6 +2047,11 @@ def ReadandParse(LogByLine,conn,cursor,Filename,ChassisID):
         line = line.replace("  ", " ")
         parts = line.split(" ")
         partsSize = len(parts)
+        #Put all log fragments in LogMessage
+        if partsSize < 6:
+            line = line.replace("2025 ","")
+            cursor.execute("insert into Logs (ChassisID, Filename, LogMessage) values ('"+ChassisID+"','"+Filename+"','"+line+"')")
+            continue
         #Format Timestamp as ISO8601 strings ("YYYY-MM-DD HH:MM:SS.SSS")
         Year = parts[0]
         Month = parts[1]
@@ -2168,7 +2178,7 @@ def local_logs(conn,cursor):
     match len(techSupports):
         case 0:
             print("There are no files or directories containing 'tech_support_complete' in this directory")
-            break
+            exit()
         case 1:
             print("There is 1 tech support file in this directory. Opening "+str(techSupports[0]))
             selectedTS = techSupports[0]
