@@ -2168,7 +2168,7 @@ def local_logs(conn,cursor):
     match len(techSupports):
         case 0:
             print("There are no files or directories containing 'tech_support_complete' in this directory")
-            exit()
+            break
         case 1:
             print("There is 1 tech support file in this directory. Opening "+str(techSupports[0]))
             selectedTS = techSupports[0]
