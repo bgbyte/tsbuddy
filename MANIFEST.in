@@ -2,4 +2,5 @@ exclude .env
 exclude .tsbuddy_secrets
 exclude .tsbuddy_settings
 include src/tsbuddy/aos/ga_index.json
+include src/tsbuddy/log_analyzer/loglist-master.csv
 include src/ts_chat/system_prompt.txt
