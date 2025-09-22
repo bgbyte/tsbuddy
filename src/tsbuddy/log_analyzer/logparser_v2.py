@@ -150,7 +150,6 @@ def DirectQuery(conn,cursor):
     print(query)
     try:
         if query == "":
-            analysis_menu(conn,cursor)
             return
         cursor.execute(query)
         Output = cursor.fetchall()
@@ -174,8 +173,8 @@ def DirectQuery(conn,cursor):
                     try:
                         with pd.ExcelWriter(OutputFileName,engine="xlsxwriter", engine_kwargs={'options': {'strings_to_formulas': False}}) as writer:
                             print("Exporting data to file. This may take a moment.")
-                            Output = pd.read_sql(query, conn)
-                            Output.to_excel(writer, sheet_name="ConsolidatedLogs")
+                            OutputFile = pd.read_sql(query, conn)
+                            OutputFile.to_excel(writer, sheet_name="ConsolidatedLogs")
                             workbook = writer.book
                             worksheet = writer.sheets["ConsolidatedLogs"]
                             text_format = workbook.add_format({'num_format': '@'})
@@ -926,18 +925,13 @@ def first_load(conn,cursor,chassis_selection):
         selection = input("Do you want to check for older logs in the swlog_archive? y or n? [n] ") or "n"
         if selection == "y":
             validSelection = True
-            continue
+            return selection
         if selection == "n":
             validSelection = True
             analysis_menu(conn,cursor)
-            continue
+            return selection
         else:
             print("Invalid Selection")
-    if selection == "n":
-        context = "Full"
-        ExportXLSX(conn,cursor,context)
-    if selection == "y":
-        return selection
 
 def analysis_menu(conn,cursor):
     cursor.execute("select count(*) from Logs")
@@ -962,7 +956,7 @@ def analysis_menu(conn,cursor):
         print("[4] - Check for additional logs - Not implemented")
         print("[5] - Look for problems - WIP")
         print("[6] - Direct Query")
-        print("[7] - Change switch name for saved logs - Currently: "+PrefSwitchName)
+        print("[7] - Change switch name for saved logfiles - Currently: "+PrefSwitchName)
         print("[0] - Exit")
         selection = input("What would you like to do with the logs? [0] ") or "0"
         match selection:
@@ -980,6 +974,7 @@ def analysis_menu(conn,cursor):
             case "7":
                 ChangeSwitchName()
             case "0":
+                validSelection = True
                 break
             case _:
                 print("Invalid Selection")
@@ -1600,7 +1595,7 @@ def SearchTime(conn,cursor,NewestLog,OldestLog):
         print("[0] - Exit")
         #newline
         print("")
-        selection = input("What time range would you like to filter by?  ")
+        selection = input("What time range would you like to filter by? [0] ") or "0"
         match selection:
             case "1":
                 pass
@@ -1710,7 +1705,6 @@ def SearchKeyword(conn,cursor):
                                 SearchKeyword(conn,cursor)
                             case "n":
                                 ValidSelection2 = True
-                                analysis_menu(conn,cursor)
                             case _:
                                 print("Invalid input. Please enter 'y' or 'n'")
                 case "2":
@@ -1766,7 +1760,6 @@ def SearchKeyword(conn,cursor):
                                             SearchKeyword(conn,cursor)
                                         case "n":
                                             ValidSelection2 = True
-                                            analysis_menu(conn,cursor)
                                         case _:
                                             print("Invalid input. Please enter 'y' or 'n'")
                             case "2":
@@ -1774,7 +1767,6 @@ def SearchKeyword(conn,cursor):
                                 SearchKeyword(conn,cursor)
                             case "3":
                                 ValidSelection = True
-                                analysis_menu(conn,cursor)
                             case _:
                                 print("Invalid input.")
                 case "3":
@@ -1782,7 +1774,6 @@ def SearchKeyword(conn,cursor):
                     SearchKeyword(conn,cursor)
                 case "4":
                     ValidSelection = True
-                    analysis_menu(conn,cursor)
                 case _:
                     print("Invalid input.")
                 
@@ -1798,7 +1789,6 @@ def SearchKeyword(conn,cursor):
                     SearchKeyword(conn,cursor)
                 case "n":
                     ValidSelection = True
-                    analysis_menu(conn,cursor)
                 case _:
                     print("Invalid input, please input 'y' or 'n'")
 
@@ -1819,8 +1809,7 @@ def ExportXLSX(conn,cursor,context):
                     worksheet = writer.sheets["ConsolidatedLogs"]
                     text_format = workbook.add_format({'num_format': '@'})
                     worksheet.set_column("H:H", None, text_format)
-                print("Export complete. Your logs are in SwlogsParsed-tsbuddy.xlsx")
-                analysis_menu(conn,cursor)
+                print("Export complete. Your logs are in "+OutputFileName)
             except:
                 print("Unable to write the file. Check if a file named "+OutputFileName+" is already open")
         case _:
@@ -2614,6 +2603,7 @@ def local_logs(conn,cursor):
             return
         else:
             analysis_menu(conn,cursor)
+            return
 """
         for file in os.listdir(logdir+"/swlog_archive"):
             #print(file)
