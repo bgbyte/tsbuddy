@@ -1588,7 +1588,7 @@ def SearchTime(conn,cursor,NewestLog,OldestLog):
     ValidSelection = False
     while ValidSelection == False:
         print("The logs contain the time range of "+OldestLog+" to "+NewestLog)
-        print("[1] - Show all logs between a time range - Not implemented")
+        print("[1] - Show all logs between a time range - WIP")
         print("[2] - Show all logs for a specific day")
         print("[3] - Show all logs for a specific hour - Not implemented")
         print("[4] - Show all logs for a specific minute - Not implemented")
@@ -1598,7 +1598,79 @@ def SearchTime(conn,cursor,NewestLog,OldestLog):
         selection = input("What time range would you like to filter by? [0] ") or "0"
         match selection:
             case "1":
-                pass
+                ValidSubselection = False
+                while ValidSubselection == False:
+                    timerequested1 = input("What is first time in your search range? Please use part of the format yyyy-mm-dd hh:mm:ss:  ")
+                    if timerequested1 == "":
+                        ValidSelection == True
+                        return
+                    timerequested2 = input("What is second time in your search range? Please use part of the format yyyy-mm-dd hh:mm:ss:  ")
+                    if timerequested1 == timerequested2:
+                        print("Those are the same times, please insert two different times")
+                        continue
+                    PaddingTime = "2000-01-01 00:00:00"
+                    Time1Len = len(timerequested1)
+                    Time2Len = len(timerequested2)
+                    print(timerequested1)
+                    print(Time1Len)
+                    Time1Full = timerequested1+PaddingTime[Time1Len:19]
+                    print(Time1Full)
+                    Time2Full = timerequested2+PaddingTime[Time2Len:19]
+                    format_string = "%Y-%m-%d %H:%M:%S"
+                    Time1 = datetime.datetime.strptime(Time1Full,format_string)
+                    Time2 = datetime.datetime.strptime(Time2Full,format_string)
+                    print(Time1)
+                    print(Time2)
+                    command = ""
+                    try:
+                        if Time1 > Time2:
+                            cursor.execute("Select count(*) from Logs where TimeStamp >= '"+str(Time2)+"' and TimeStamp <= '"+str(Time1)+"'")
+                            TimeSwap = Time1
+                            Time1 = Time2
+                            Time2 = TimeSwap
+                        if Time2 > Time1:
+                            cursor.execute("Select count(*) from Logs where TimeStamp >= '"+str(Time1)+"' and TimeStamp <= '"+str(Time2)+"'")
+                    except:
+                        print("Unable to run the command. Check your syntax and try again.")
+                    count = CleanOutput(str(cursor.fetchall()))
+                    print(count)
+                    print("")
+                    print("There are "+str(count)+" logs between "+str(Time1)+" and "+str(Time2)+". What would you like to do?")
+                    print("[1] - Export logs to xlsx - Limit 1,000,000 rows")
+                    print("[2] - Show the number of logs by hour - Not implemented")                        
+                    print("[3] - Show the most common logs - Not implemented")
+                    print("[4] - Run another search by time - Not implemented")
+                    print("[0] - Return to Main Menu")
+                    Subselection = input("What would you like to do with the logs?")
+                    match Subselection:
+                        case "1":
+                            if PrefSwitchName != "None":
+                                OutputFileName = PrefSwitchName+"-SwlogsParsed-TimeRange-tsbuddy.xlsx"
+                            else:
+                                OutputFileName = "SwlogsParsed-TimeRange-tsbuddy.xlsx"
+                            try:
+                                with pd.ExcelWriter(OutputFileName,engine="xlsxwriter", engine_kwargs={'options': {'strings_to_formulas': False}}) as writer:
+                                    print("Exporting data to file. This may take a moment.")
+                                    Output = pd.read_sql("SELECT ChassisID, Filename, Timestamp, SwitchName, Source, AppID, SubApp, Priority, LogMessage from Logs where TimeStamp >= '"+str(Time1)+"' and TimeStamp <= '"+str(Time2)+"' order by timestamp desc", conn)
+                                    Output.to_excel(writer, sheet_name="ConsolidatedLogs")
+                                    workbook = writer.book
+                                    worksheet = writer.sheets["ConsolidatedLogs"]
+                                    text_format = workbook.add_format({'num_format': '@'})
+                                    worksheet.set_column("H:H", None, text_format)
+                                print("Export complete. Your logs are in "+OutputFileName)
+                                ValidSubselection = True
+                            except:
+                                print("Unable to write the file. Check if a file named "+OutputFileName+" is already open")
+                        case "2":
+                            pass
+                        case "3":
+                            pass
+                        case "4":
+                            pass
+                        case "0":
+                            ValidSubselection = True
+                            ValidSelection = True
+                            return
             case "2":
                 ValidSubselection = False
                 while ValidSubselection == False:
