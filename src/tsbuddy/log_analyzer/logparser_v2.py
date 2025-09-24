@@ -30,7 +30,7 @@ SEVEN_ZIP_PATH = r"C:\Program Files\7-Zip\7z.exe"
 #TODO: 9907s have per NI logs
 #TODO: Can we make 7zip silent? Or remove it - In progress
 #TODO: Add another TS? For comparing a timeline of multiple switches?
-    #Extra logs being added?
+    #Update Reboots to account for multiple TS
     #Error for same TS twice
 #TODO: Multiswitch time correlation? Anchor logs?
 #TODO: Log Count per day/hour/minute
