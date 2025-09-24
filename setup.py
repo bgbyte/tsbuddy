@@ -5,7 +5,7 @@ with open('README.md', 'r') as f:
 
 setup(
    name='tsbuddy',
-   version='0.0.30',
+   version='0.0.33',
    packages=find_packages(where='src'),
    package_dir={'': 'src'},
    install_requires=[
@@ -22,7 +22,7 @@ setup(
        'console_scripts': [
            'tslog2csv=tsbuddy.tslog2csv.tslog2csv:main',  # Run the main function in tsbuddy to convert tech_support.log to CSV
            'ts-extract=tsbuddy.extracttar.extract_ts_tar:main',  # Run the main function in extract_all to extract tar files
-           'ts-extract-legacy=tsbuddy.extracttar.legacy.extracttar:main',  # Run the main function in extracttar to extract tar files
+           'ts-extract-legacy=tsbuddy.extracttar.legacy.extracttar_7zip:main',  # Run the main function in extracttar to extract tar files
            'aosdl=tsbuddy.aos.aosdl:main',  # Run the main function in aosdl to download AOS
            'aosga=tsbuddy.aos.aosdl:lookup_ga_build',  # Run lookup_ga_build function
            'aosup=tsbuddy.aos.aosdl:aosup',  # Run AOS Upgrade function to prompt for directory name and reload option

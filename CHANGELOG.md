@@ -1,6 +1,6 @@
 # Changelog
 
-### 2025-09-20 [0.0.30]
+### 2025-09-20 [0.0.28]
 - Added LogAnalyzer v2 by @NathanielOrlina, currently depends on 7zip
 - Restructured the library to accomodate imports better
 - Added 'cd' as a menu option in the main tsbuddy menu
