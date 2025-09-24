@@ -23,18 +23,19 @@ SEVEN_ZIP_PATH = r"C:\Program Files\7-Zip\7z.exe"
 
 #
 #TODO
+#TODO: If all logs are in Epoch time
 #TODO: X logs before and after targetlog
 #TODO: Add LogMeaning
 #TODO: Integrate Tech Support downloader
 #TODO: 9907s have per NI logs
-#TODO: Can we make 7zip silent? Or remove it
+#TODO: Can we make 7zip silent? Or remove it - In progress
 #TODO: Add another TS? For comparing a timeline of multiple switches?
 #TODO: Log Count per day/hour/minute
 
 
 #Known issues:
-#I/O Error on program close
-#Main menu displays twice - Keyword, enter, export, exit, exit
+#I/O Error on program close - Fixed
+#Main menu displays twice - Keyword, enter, export, exit, exit - Fixed
 
 
 
