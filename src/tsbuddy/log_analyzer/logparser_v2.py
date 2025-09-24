@@ -960,7 +960,7 @@ def analysis_menu(conn,cursor):
         print("[1] - Export to xlsx - Limit 1,000,000 rows")
         print("[2] - Search for log messages by keyword")
         print("[3] - Filter by time - WIP")
-        print("[4] - Check for additional logs - WIP")
+        print("[4] - Add logs from another Switch")
         print("[5] - Look for problems - WIP")
         print("[6] - Direct Query")
         print("[7] - Change switch name for saved logfiles - Currently: "+PrefSwitchName)
