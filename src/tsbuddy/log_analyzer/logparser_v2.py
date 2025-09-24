@@ -30,6 +30,9 @@ SEVEN_ZIP_PATH = r"C:\Program Files\7-Zip\7z.exe"
 #TODO: 9907s have per NI logs
 #TODO: Can we make 7zip silent? Or remove it - In progress
 #TODO: Add another TS? For comparing a timeline of multiple switches?
+    #Extra logs being added?
+    #Error for same TS twice
+#TODO: Multiswitch time correlation? Anchor logs?
 #TODO: Log Count per day/hour/minute
 
 
@@ -101,7 +104,7 @@ SPBInitialized = False
 HealthInitialized = False
 ConnectivityInitialized = False
 
-
+TSImportedNumber = 0
 
 
 
@@ -143,7 +146,7 @@ def CleanOutput(string):
 
 def DirectQuery(conn,cursor):
     print("The table is named Logs")
-    print("Columns: id, ChassisID, Filename, Timestamp, SwitchName, Source, Model, AppID, Subapp, Priority, LogMessage")
+    print("Columns: id, TSCount, ChassisID, Filename, Timestamp, SwitchName, Source, Model, AppID, Subapp, Priority, LogMessage")
     print("Example: (select * from Logs where LogMessage like '%auth%' group by LogMessage order by Timestamp,Filename desc limit 5)")
     #New line
     print("")
@@ -905,7 +908,10 @@ def grab_logs(hosts,conn,cursor):
             
 
 def first_load(conn,cursor,chassis_selection):
-    cursor.execute("create table Logs(id integer primary key autoincrement, ChassisID Text, Filename Text, Timestamp Text, SwitchName Text, Source Text, Model Text, AppID Text, Subapp Text, Priority text, LogMessage text)")
+    try:
+        cursor.execute("create table Logs(id integer primary key autoincrement, TSCount Text, ChassisID Text, Filename Text, Timestamp Text, SwitchName Text, Source Text, Model Text, AppID Text, Subapp Text, Priority text, LogMessage text)")
+    except:
+        pass
     process_logs(conn,cursor,chassis_selection)
     cursor.execute("select count(*) from Logs")
     count = CleanOutput(str(cursor.fetchall()))
@@ -954,7 +960,7 @@ def analysis_menu(conn,cursor):
         print("[1] - Export to xlsx - Limit 1,000,000 rows")
         print("[2] - Search for log messages by keyword")
         print("[3] - Filter by time - WIP")
-        print("[4] - Check for additional logs - Not implemented")
+        print("[4] - Check for additional logs - WIP")
         print("[5] - Look for problems - WIP")
         print("[6] - Direct Query")
         print("[7] - Change switch name for saved logfiles - Currently: "+PrefSwitchName)
@@ -968,6 +974,10 @@ def analysis_menu(conn,cursor):
                 SearchKeyword(conn,cursor)
             case "3":
                 SearchTime(conn,cursor,NewestLog,OldestLog)
+            case "4":
+                validSelection = True
+                ImportAnother(conn,cursor)
+                break
             case "5":
                 LogAnalysis(conn,cursor)
             case "6":
@@ -1058,6 +1068,9 @@ def TimeDesyncFinder(conn,cursor):
                 counter += 1
         LastRightEdge = DesyncIDsSorted[-1]
         DesyncRightEdges.append(LastRightEdge)
+    else:
+        print("There are no desyncs in this capture, returning to menu")
+        return
     #print("There are "+str(len(DesyncLeftEdges))+" continuous ranges of logs in epoch time:")
     #print(DesyncLeftEdges)
     #print(DesyncRightEdges)
@@ -1518,7 +1531,10 @@ def LogAnalysis(conn,cursor):
                             try:
                                 with pd.ExcelWriter(OutputFileName,engine="xlsxwriter", engine_kwargs={'options': {'strings_to_formulas': False}}) as writer:
                                     print("Exporting data to file. This may take a moment.")
-                                    Output = pd.read_sql("select Logs.ChassisID,Logs.Filename,Logs.Timestamp,Logs.SwitchName,Logs.Source,Logs.Model,Logs.AppID,Logs.Subapp,Logs.Priority,Logs.LogMessage from Logs,Reboot where (((InStr([Logs].[LogMessage],[Reboot].[LogMessage]))>0)) order by Timestamp desc", conn)
+                                    if TSImportedNumber > 1:
+                                        Output = pd.read_sql("select Logs.TSCount,Logs.ChassisID,Logs.Filename,Logs.Timestamp,Logs.SwitchName,Logs.Source,Logs.Model,Logs.AppID,Logs.Subapp,Logs.Priority,Logs.LogMessage from Logs,Reboot where (((InStr([Logs].[LogMessage],[Reboot].[LogMessage]))>0)) order by Timestamp desc", conn)
+                                    else:
+                                        Output = pd.read_sql("select Logs.ChassisID,Logs.Filename,Logs.Timestamp,Logs.SwitchName,Logs.Source,Logs.Model,Logs.AppID,Logs.Subapp,Logs.Priority,Logs.LogMessage from Logs,Reboot where (((InStr([Logs].[LogMessage],[Reboot].[LogMessage]))>0)) order by Timestamp desc", conn)    
                                     Output.to_excel(writer, sheet_name="ConsolidatedLogs")
                                     workbook = writer.book
                                     worksheet = writer.sheets["ConsolidatedLogs"]
@@ -1568,8 +1584,10 @@ def LogAnalysis(conn,cursor):
                 try:
                     with pd.ExcelWriter(OutputFileName,engine="xlsxwriter", engine_kwargs={'options': {'strings_to_formulas': False}}) as writer:
                         print("Exporting data to file. This may take a moment.")
-                        Output = pd.read_sql("select Logs.ChassisID,Logs.Filename,Logs.Timestamp,Logs.SwitchName,Logs.Source,Logs.Model,Logs.AppID,Logs.Subapp,Logs.Priority,Logs.LogMessage from Logs,Analysis where (((InStr([Logs].[LogMessage],[Analysis].[LogMessage]))>0)) order by Timestamp desc", conn)
-                        #Output = pd.read_sql("select Logs.ChassisID,Logs.Filename,Logs.Timestamp,Logs.SwitchName,Logs.Source,Logs.Model,Logs.AppID,Logs.Subapp,Logs.Priority,Logs.LogMessage,Analysis.LogMeaning from Logs,Reboot where (((InStr([Logs].[LogMessage],[Reboot].[LogMessage]))>0)) order by Timestamp desc", conn)
+                        if TSImportedNumber > 1:
+                            Output = pd.read_sql("select Logs.TSCount,Logs.ChassisID,Logs.Filename,Logs.Timestamp,Logs.SwitchName,Logs.Source,Logs.Model,Logs.AppID,Logs.Subapp,Logs.Priority,Logs.LogMessage from Logs,Analysis where (((InStr([Logs].[LogMessage],[Analysis].[LogMessage]))>0)) order by Timestamp desc", conn)
+                        else:
+                            Output = pd.read_sql("select Logs.ChassisID,Logs.Filename,Logs.Timestamp,Logs.SwitchName,Logs.Source,Logs.Model,Logs.AppID,Logs.Subapp,Logs.Priority,Logs.LogMessage from Logs,Analysis where (((InStr([Logs].[LogMessage],[Analysis].[LogMessage]))>0)) order by Timestamp desc", conn)
                         Output.to_excel(writer, sheet_name="ConsolidatedLogs")
                         workbook = writer.book
                         worksheet = writer.sheets["ConsolidatedLogs"]
@@ -1652,7 +1670,10 @@ def SearchTime(conn,cursor,NewestLog,OldestLog):
                             try:
                                 with pd.ExcelWriter(OutputFileName,engine="xlsxwriter", engine_kwargs={'options': {'strings_to_formulas': False}}) as writer:
                                     print("Exporting data to file. This may take a moment.")
-                                    Output = pd.read_sql("SELECT ChassisID, Filename, Timestamp, SwitchName, Source, AppID, SubApp, Priority, LogMessage from Logs where TimeStamp >= '"+str(Time1)+"' and TimeStamp <= '"+str(Time2)+"' order by timestamp desc", conn)
+                                    if TSImportedNumber > 1:
+                                        Output = pd.read_sql("SELECT TScount,ChassisID, Filename, Timestamp, SwitchName, Source, AppID, SubApp, Priority, LogMessage from Logs where TimeStamp >= '"+str(Time1)+"' and TimeStamp <= '"+str(Time2)+"' order by timestamp desc", conn)
+                                    else:
+                                        Output = pd.read_sql("SELECT ChassisID, Filename, Timestamp, SwitchName, Source, AppID, SubApp, Priority, LogMessage from Logs where TimeStamp >= '"+str(Time1)+"' and TimeStamp <= '"+str(Time2)+"' order by timestamp desc", conn)
                                     Output.to_excel(writer, sheet_name="ConsolidatedLogs")
                                     workbook = writer.book
                                     worksheet = writer.sheets["ConsolidatedLogs"]
@@ -1815,7 +1836,10 @@ def SearchKeyword(conn,cursor):
                                 try:
                                     with pd.ExcelWriter(OutputFileName,engine="xlsxwriter", engine_kwargs={'options': {'strings_to_formulas': False}}) as writer:
                                         print("Exporting data to file. This may take a moment.")
-                                        Output = pd.read_sql("select ChassisID, Filename, Timestamp as FirstTimestamp, SwitchName, Source, AppID, SubApp, Priority, LogMessage from Logs where LogMessage like '%"+keyword+"%' group by LogMessage order by Timestamp,Filename desc limit 1048576", conn)
+                                        if TSImportedNumber > 1:
+                                            Output = pd.read_sql("select TSCount,ChassisID, Filename, Timestamp as FirstTimestamp, SwitchName, Source, AppID, SubApp, Priority, LogMessage from Logs where LogMessage like '%"+keyword+"%' group by LogMessage order by Timestamp,Filename desc limit 1048576", conn)
+                                        else:
+                                            Output = pd.read_sql("select ChassisID, Filename, Timestamp as FirstTimestamp, SwitchName, Source, AppID, SubApp, Priority, LogMessage from Logs where LogMessage like '%"+keyword+"%' group by LogMessage order by Timestamp,Filename desc limit 1048576", conn)
                                         Output.to_excel(writer, sheet_name="Logs with "+context)
                                         workbook = writer.book
                                         worksheet = writer.sheets["Logs with "+context]
@@ -1875,7 +1899,10 @@ def ExportXLSX(conn,cursor,context):
             try:
                 with pd.ExcelWriter(OutputFileName,engine="xlsxwriter", engine_kwargs={'options': {'strings_to_formulas': False}}) as writer:
                     print("Exporting data to file. This may take a moment.")
-                    Output = pd.read_sql("SELECT ChassisID, Filename, Timestamp, SwitchName, Source, AppID, SubApp, Priority, LogMessage from Logs order by Timestamp,Filename desc limit 1048576", conn)
+                    if TSImportedNumber > 1:
+                        Output = pd.read_sql("SELECT TSCount,ChassisID, Filename, Timestamp, SwitchName, Source, AppID, SubApp, Priority, LogMessage from Logs order by Timestamp,Filename desc limit 1048576", conn)
+                    else:
+                        Output = pd.read_sql("SELECT ChassisID, Filename, Timestamp, SwitchName, Source, AppID, SubApp, Priority, LogMessage from Logs order by Timestamp,Filename desc limit 1048576", conn)
                     #Output = pd.read_sql("SELECT Filename, Timestamp, SwitchName, Source, AppID, SubApp, Priority, LogMessage from Logs limit 1048576", conn)
                     Output.to_excel(writer, sheet_name="ConsolidatedLogs")
                     workbook = writer.book
@@ -1893,7 +1920,10 @@ def ExportXLSX(conn,cursor,context):
             try:
                 with pd.ExcelWriter(OutputFileName,engine="xlsxwriter", engine_kwargs={'options': {'strings_to_formulas': False}}) as writer:
                     print("Exporting data to file. This may take a moment.")
-                    Output = pd.read_sql("select ChassisID, Filename, Timestamp, SwitchName, Source, AppID, SubApp, Priority, LogMessage from Logs where LogMessage like '%"+context+"%' order by Timestamp,Filename desc limit 1048576", conn)
+                    if TSImportedNumber > 1:
+                        Output = pd.read_sql("select TScount,ChassisID, Filename, Timestamp, SwitchName, Source, AppID, SubApp, Priority, LogMessage from Logs where LogMessage like '%"+context+"%' order by Timestamp,Filename desc limit 1048576", conn)
+                    else:
+                        Output = pd.read_sql("select ChassisID, Filename, Timestamp, SwitchName, Source, AppID, SubApp, Priority, LogMessage from Logs where LogMessage like '%"+context+"%' order by Timestamp,Filename desc limit 1048576", conn)
                     Output.to_excel(writer, sheet_name="Logs with "+context)
                     workbook = writer.book
                     worksheet = writer.sheets["Logs with "+context]
@@ -2094,6 +2124,7 @@ def process_logs(conn,cursor,chassis_selection):
 
 def ReadandParse(LogByLine,conn,cursor,Filename,ChassisID):
     for line in LogByLine:
+        TSCount = TSImportedNumber
         #debug prints
         #print(len(line))
         #print(Filename)
@@ -2112,7 +2143,7 @@ def ReadandParse(LogByLine,conn,cursor,Filename,ChassisID):
         #Put all log fragments in LogMessage
         if partsSize < 6:
             line = line.replace("2025 ","")
-            cursor.execute("insert into Logs (ChassisID, Filename, LogMessage) values ('"+ChassisID+"','"+Filename+"','"+line+"')")
+            cursor.execute("insert into Logs (TSCount, ChassisID, Filename, LogMessage) values ('"+str(TSCount)+"','"+ChassisID+"','"+Filename+"','"+line+"')")
             continue
         #Format Timestamp as ISO8601 strings ("YYYY-MM-DD HH:MM:SS.SSS")
         Year = parts[0]
@@ -2167,7 +2198,7 @@ def ReadandParse(LogByLine,conn,cursor,Filename,ChassisID):
                         LogMessage = str(LogMessage)
                         LogMessage = LogMessage.replace("b'","")
                         LogMessage = LogMessage.replace("'","")
-                        cursor.execute("insert into Logs (Timestamp,SwitchName,Source,LogMessage,Filename,ChassisID) values ('"+Timestamp+"','"+SwitchName+"','"+Source+"','"+LogMessage+"','"+Filename+"','"+ChassisID+"')")
+                        cursor.execute("insert into Logs (TSCount,Timestamp,SwitchName,Source,LogMessage,Filename,ChassisID) values ('"+str(TSCount)+"','"+Timestamp+"','"+SwitchName+"','"+Source+"','"+LogMessage+"','"+Filename+"','"+ChassisID+"')")
                         continue
                 if partsSize > 7:
                     Subapp = parts[7]
@@ -2186,7 +2217,7 @@ def ReadandParse(LogByLine,conn,cursor,Filename,ChassisID):
                     LogMessage = str(LogMessage)
                     LogMessage = LogMessage.replace("b'","")
                     LogMessage = LogMessage.replace("'","")
-                cursor.execute("insert into Logs (Timestamp,SwitchName,Source,Appid,Subapp,Priority,LogMessage,Filename,ChassisID) values ('"+Timestamp+"','"+SwitchName+"','"+Source+"','"+Appid+"','"+Subapp+"','"+Priority+"','"+LogMessage+"','"+Filename+"','"+ChassisID+"')")
+                cursor.execute("insert into Logs (TSCount,Timestamp,SwitchName,Source,Appid,Subapp,Priority,LogMessage,Filename,ChassisID) values ('"+str(TSCount)+"','"+Timestamp+"','"+SwitchName+"','"+Source+"','"+Appid+"','"+Subapp+"','"+Priority+"','"+LogMessage+"','"+Filename+"','"+ChassisID+"')")
             case _:
                 Model = parts[6]
                 if Model == "ConsLog":
@@ -2202,7 +2233,7 @@ def ReadandParse(LogByLine,conn,cursor,Filename,ChassisID):
                     LogMessage = str(LogMessage)
                     LogMessage = LogMessage.replace("b'","")
                     LogMessage = LogMessage.replace("'","")
-                    cursor.execute("insert into Logs (Timestamp,SwitchName,Source,Model,LogMessage,Filename,ChassisID) values ('"+Timestamp+"','"+SwitchName+"','"+Source+"','"+Model+"','"+LogMessage+"','"+Filename+"','"+ChassisID+"')")
+                    cursor.execute("insert into Logs (TSCount,Timestamp,SwitchName,Source,Model,LogMessage,Filename,ChassisID) values ('"+str(TSCount)+"','"+Timestamp+"','"+SwitchName+"','"+Source+"','"+Model+"','"+LogMessage+"','"+Filename+"','"+ChassisID+"')")
                 else:
                     LogMessage = ""
                     LogPartsCounter = 5
@@ -2217,7 +2248,7 @@ def ReadandParse(LogByLine,conn,cursor,Filename,ChassisID):
                     LogMessage = LogMessage.replace("b'","")
                     LogMessage = LogMessage.replace("'","")
                     #print(Filename)
-                    cursor.execute("insert into Logs (Timestamp,SwitchName,Source,LogMessage,Filename,ChassisID) values ('"+Timestamp+"','"+SwitchName+"','"+Source+"','"+LogMessage+"','"+Filename+"','"+ChassisID+"')")
+                    cursor.execute("insert into Logs (TSCount,Timestamp,SwitchName,Source,LogMessage,Filename,ChassisID) values ('"+str(TSCount)+"','"+Timestamp+"','"+SwitchName+"','"+Source+"','"+LogMessage+"','"+Filename+"','"+ChassisID+"')")
     
     
 #Check
@@ -2698,9 +2729,63 @@ def local_logs(conn,cursor):
             analysis_menu(conn,cursor)
 """
 
-
+def ImportAnother(conn,cursor):
+    #Reset Globals
+    global SwlogFiles1
+    global SwlogFiles2
+    global SwlogFiles3
+    global SwlogFiles4
+    global SwlogFiles5
+    global SwlogFiles6
+    global SwlogFiles7
+    global SwlogFiles8
+    global ConsoleFiles
+    global SwlogDir1
+    global SwlogDir1B
+    global SwlogDir2B
+    global SwlogDir2
+    global SwlogDir3
+    global SwlogDir4
+    global SwlogDir5
+    global SwlogDir6
+    global SwlogDir7
+    global SwlogDir8
+    SwlogFiles1 = []
+    SwlogFiles2 = []
+    SwlogFiles3 = []
+    SwlogFiles4 = []
+    SwlogFiles5 = []
+    SwlogFiles6 = []
+    SwlogFiles7 = []
+    SwlogFiles8 = []
+    ConsoleFiles = []
+    SwlogDir1 = ""
+    SwlogDir1B = ""
+    SwlogDir2B = ""
+    SwlogDir2 = ""
+    SwlogDir3 = ""
+    SwlogDir4 = ""
+    SwlogDir5 = ""
+    SwlogDir6 = ""
+    SwlogDir7 = ""
+    SwlogDir8 = ""
+    global TSImportedNumber
+    TSImportedNumber += 1
+    hosts = collect_hosts()
+    if hosts != []:
+        #Erase existing log files in the directory
+        #for file in first_dir_list:
+        #    if 'swlog_chassis' in file:
+        #        os.remove(file)
+        #    if 'swlog_localConsole' in file:
+        #        os.remove(file)
+        grab_logs(hosts,conn,cursor)
+    else:
+        local_logs(conn,cursor)
 
 def main():
+    global TSImportedNumber
+    TSImportedNumber += 1
     with sqlite3.connect(':memory:') as conn:
         cursor = conn.cursor()
         hosts = collect_hosts()
