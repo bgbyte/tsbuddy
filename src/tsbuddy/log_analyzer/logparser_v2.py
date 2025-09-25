@@ -34,7 +34,11 @@ SEVEN_ZIP_PATH = r"C:\Program Files\7-Zip\7z.exe"
     #Error for same TS twice
 #TODO: Multiswitch time correlation? Anchor logs?
 #TODO: Log Count per day/hour/minute
-
+#TODO: Add Wireless Log Support
+    #This may be another program, or just a subsection of it
+        #Unsure if we can mix Switch and AP logs
+#TODO: There is the ability to change the log formatting to match a standard. Add support for it.
+    #Pending command
 
 #Known issues:
 #I/O Error on program close - Fixed
