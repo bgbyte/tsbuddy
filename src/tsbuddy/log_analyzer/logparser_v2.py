@@ -24,6 +24,7 @@ import tsbuddy
 #
 #TODO
 #TODO: If all logs are in Epoch time
+#TODO: Remove Normal Logs (Flashsync)
 #TODO: X logs before and after targetlog
 #TODO: Add LogMeaning
 #TODO: Integrate Tech Support downloader
@@ -39,6 +40,7 @@ import tsbuddy
         #Unsure if we can mix Switch and AP logs
 #TODO: There is the ability to change the log formatting to match a standard. Add support for it.
     #Pending command
+#TODO: Add GUI
 
 #Known issues:
 #I/O Error on program close - Fixed
@@ -998,6 +1000,7 @@ def analysis_menu(conn,cursor):
         OldestLog = CleanOutput(str(cursor.fetchall()))
     validSelection = False
     while validSelection == False:
+        print("")
         print("There are "+count+" logs ranging from "+OldestLog+" to "+NewestLog)
         if TimeDesync == True:
             print("There is a time desync present in the logs where the timestamp is much older than expected. Use 'Look for problems' and 'Locate time desyncs' to determine where")
@@ -1006,8 +1009,9 @@ def analysis_menu(conn,cursor):
         print("[3] - Filter by time - WIP")
         print("[4] - Add logs from another Switch")
         print("[5] - Look for problems - WIP")
-        print("[6] - Direct Query")
-        print("[7] - Change switch name for saved logfiles - Currently: "+PrefSwitchName)
+        print("[6] - Find most common logs")
+        print("[7] - Direct Query")
+        print("[8] - Change switch name for saved logfiles - Currently: "+PrefSwitchName)
         print("[0] - Exit")
         selection = input("What would you like to do with the logs? [0] ") or "0"
         match selection:
@@ -1025,8 +1029,10 @@ def analysis_menu(conn,cursor):
             case "5":
                 LogAnalysis(conn,cursor)
             case "6":
-                DirectQuery(conn,cursor)
+                CommonLog(conn,cursor)
             case "7":
+                DirectQuery(conn,cursor)
+            case "8":
                 ChangeSwitchName()
             case "0":
                 validSelection = True
@@ -1034,6 +1040,167 @@ def analysis_menu(conn,cursor):
             case _:
                 print("Invalid Selection")
 
+
+def CommonLog(conn,cursor):
+    ValidSelection = False
+    while ValidSelection == False:
+        print("")
+        print("[1] - All Logs")
+        print("[2] - Per Chassis")
+        print("[3] - For a given timerange - Not Implemented")
+        print("[0] - Return to main menu")
+        Selection = input("What filtering criteria do you want to use? [0]  ") or "0"
+        match Selection:
+            case "1":
+                cursor.execute("select count(*) from Logs group by logmessage order by count(*) desc")
+                output = cursor.fetchall()
+                ValidSubselection = False
+                while ValidSubselection == False:
+                    print("")
+                    print("There are "+str(len(output))+" unique logs.")
+                    print("[1] - Export to XLSX - Limit 1,000,000 rows")
+                    print("[2] - Display the most common logs in console")
+                    print("[0] - Return to previous menu")
+                    Subselection = input("What would you like to do with the unique logs? [0]  ") or "0"
+                    match Subselection:
+                        case "1":
+                            if PrefSwitchName != "None":
+                                OutputFileName = PrefSwitchName+"-SwlogsParsed-UniqueLogs-All-tsbuddy.xlsx"
+                            else:
+                                OutputFileName = "SwlogsParsed-UniqueLogs-All-tsbuddy.xlsx"
+                            try:
+                                with pd.ExcelWriter(OutputFileName,engine="xlsxwriter", engine_kwargs={'options': {'strings_to_formulas': False}}) as writer:
+                                    print("Exporting data to file. This may take a moment.")
+                                    Output = pd.read_sql("select count(*),logmessage from Logs group by logmessage order by count(*) desc",conn)
+                                    Output.to_excel(writer, sheet_name="ConsolidatedLogs")
+                                    workbook = writer.book
+                                    worksheet = writer.sheets["ConsolidatedLogs"]
+                                    text_format = workbook.add_format({'num_format': '@'})
+                                    worksheet.set_column("H:H", None, text_format)
+                                print("Export complete. Your logs are in "+OutputFileName)
+                            except:
+                                print("Unable to write the file. Check if a file named "+OutputFileName+" is already open")
+                        case "2":
+                            ValidCountSelection = False
+                            while ValidCountSelection == False:
+                                countselection = input("How many logs would you like to diplay in the console? There are "+str(len(output))+" total unique logs. [All]  ") or "All"
+                                if not int(countselection) and not "All":
+                                    print("Invalid number. Please insert a number")
+                                    continue
+                                if int(countselection) > len(output):
+                                    print("There are few logs than you are requesting. Printing all of them")
+                                    countselection = "All"
+                                if countselection == "All":
+                                    cursor.execute("select count(*),logmessage from Logs group by logmessage order by count(*) desc")
+                                    UniqueLogs = cursor.fetchall()
+                                    print("")
+                                    print("Log Count, Log Message")
+                                    print("----------------------")
+                                    for line in UniqueLogs:
+                                        line = str(line)
+                                        line = line.replace("(","")
+                                        line = line.replace(")","")
+                                        print(line)
+                                    ValidCountSelection = True
+                                else:
+                                    cursor.execute("select count(*),logmessage from Logs group by logmessage order by count(*) desc limit "+countselection)
+                                    UniqueLogs = cursor.fetchall()
+                                    print("")
+                                    print("Log Count, Log Message")
+                                    print("----------------------")
+                                    for line in UniqueLogs:
+                                        line = str(line)
+                                        line = line.replace("(","")
+                                        line = line.replace(")","")
+                                        print(line)
+                                    ValidCountSelection = True
+                        case "0":
+                            ValidSubselection = True
+            case "2":
+                cursor.execute("select chassisid,count(*) from Logs group by chassisid,logmessage order by count(*) desc")
+                output = cursor.fetchall()
+                ValidSubselection = False
+                while ValidSubselection == False:
+                    print("")
+                    print("There are "+str(len(output))+" unique logs across all chassis.")
+                    print("[1] - Export to XLSX - Limit 1,000,000 rows")
+                    print("[2] - Display the most common logs in console")
+                    print("[0] - Return to previous menu")
+                    Subselection = input("What would you like to do with the unique logs? [0]  ") or "0"
+                    match Subselection:
+                        case "1":
+                            if PrefSwitchName != "None":
+                                OutputFileName = PrefSwitchName+"-SwlogsParsed-UniqueLogs-PerChassis-tsbuddy.xlsx"
+                            else:
+                                OutputFileName = "SwlogsParsed-UniqueLogs-PerChassis-tsbuddy.xlsx"
+                            try:
+                                with pd.ExcelWriter(OutputFileName,engine="xlsxwriter", engine_kwargs={'options': {'strings_to_formulas': False}}) as writer:
+                                    print("Exporting data to file. This may take a moment.")
+                                    Output = pd.read_sql("select ChassisID,count(*),logmessage from Logs group by ChassisID,logmessage order by count(*) desc",conn)
+                                    Output.to_excel(writer, sheet_name="ConsolidatedLogs")
+                                    workbook = writer.book
+                                    worksheet = writer.sheets["ConsolidatedLogs"]
+                                    text_format = workbook.add_format({'num_format': '@'})
+                                    worksheet.set_column("H:H", None, text_format)
+                                print("Export complete. Your logs are in "+OutputFileName)
+                            except:
+                                print("Unable to write the file. Check if a file named "+OutputFileName+" is already open")
+                        case "2":
+                            ValidCountSelection = False
+                            while ValidCountSelection == False:
+                                countselection = input("How many logs would you like to diplay in the console? There are "+str(len(output))+" total unique logs. [All]  ") or "All"
+                                if not int(countselection) and not "All":
+                                    print("Invalid number. Please insert a number")
+                                    continue
+                                #FIX, this does not work. Looking for is number
+                                if int(countselection) > len(output):
+                                    print("There are few logs than you are requesting. Printing all of them")
+                                    countselection = "All"
+                                if countselection == "All":
+                                    cursor.execute("select chassisid from logs group by chassisid")
+                                    ChassisCount = len(cursor.fetchall())
+                                    counter = 1
+                                    while counter <= ChassisCount:
+                                        cursor.execute("select count(*),logmessage from Logs where chassisid = 'Chassis "+str(counter)+"'group by logmessage order by count(*) desc")
+                                        UniqueLogs = cursor.fetchall()
+                                        print("")
+                                        print("Chassis "+str(counter))
+                                        print("Log Count, Log Message")
+                                        print("----------------------")
+                                        for line in UniqueLogs:
+                                            line = str(line)
+                                            line = line.replace("(","")
+                                            line = line.replace(")","")
+                                            print(line)
+                                        counter += 1
+                                    ValidCountSelection = True
+                                else:
+                                    cursor.execute("select chassisid from logs group by chassisid")
+                                    ChassisCount = len(cursor.fetchall())
+                                    counter = 1
+                                    while counter <= ChassisCount:
+                                        cursor.execute("select count(*),logmessage from Logs where chassisid = 'Chassis "+str(counter)+"'group by logmessage order by count(*) desc limit "+countselection)
+                                        UniqueLogs = cursor.fetchall()
+                                        print("")
+                                        print("Chassis "+str(counter))
+                                        print("Log Count, Log Message")
+                                        print("----------------------")
+                                        for line in UniqueLogs:
+                                            line = str(line)
+                                            line = line.replace("(","")
+                                            line = line.replace(")","")
+                                            print(line)
+                                        counter += 1
+                                    ValidCountSelection = True
+                        case "0":
+                            ValidSubselection = True
+            case "3":
+                pass
+            case "0":
+                ValidSelection = True
+                return
+            case _:
+                print("Invalid Selection, please try again")
 
 def AnalysisInit(conn,cursor):
     print("Initializing log analysis")
