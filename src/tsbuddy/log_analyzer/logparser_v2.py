@@ -11,10 +11,10 @@ import subprocess
 from pathlib import Path
 import xlsxwriter
 import socket
-#import tsbuddy
+import tsbuddy
 
 
-SEVEN_ZIP_PATH = r"C:\Program Files\7-Zip\7z.exe"
+#SEVEN_ZIP_PATH = r"C:\Program Files\7-Zip\7z.exe"
 
 
 #
@@ -122,7 +122,6 @@ archive_checked = False
 def extract_tar_files(base_path='.'):
     """
     Recursively extracts all .tar files under the given base_path using 7-Zip.
-    """
     print("Extracting tar files with 7-Zip")
     for tar_file in Path(base_path).rglob('*.tar'):
         output_dir = tar_file.parent
@@ -135,8 +134,7 @@ def extract_tar_files(base_path='.'):
             str(tar_file)
         ], check=True)
     """
-    tsbuddy.extract.extract_all(base_path)
-    """
+    tsbuddy.extracttar.extract_archives(base_path)
 
 def CleanOutput(string):
 #Remove unneeded characters
@@ -217,6 +215,8 @@ def collect_hosts():
     while validIP == False:
         print("\nEnter device details for the switch you want the logs from. Press Enter without an IP to use a tech support file in the current directory")
         ip = input("Enter device IP: ").strip()
+        if ip == "AP":
+            return "AP"
         if not ip:
             validIP = True
             return hosts
@@ -230,6 +230,46 @@ def collect_hosts():
     hosts.append({"ip": ip, "username": username, "password": password})
     #print(hosts)
     return hosts
+
+def APLogFind(conn,cursor):
+    try:
+        cursor.execute("create table Logs(id integer primary key autoincrement, TSCount Text, ChassisID Text, Filename Text, Timestamp Text, SwitchName Text, Source Text, Model Text, AppID Text, Subapp Text, Priority text, LogMessage text)")
+    except:
+        pass
+    APLogFiles = []
+    for item in dir_list:
+        print(item)
+        if fnmatch.fnmatch(item, "*.log*"):
+            APLogFiles.append(item)
+        if fnmatch.fnmatch(item, "*.record*"):
+            APLogFiles.append(item)
+    for file in APLogFiles:
+        #print(file)
+        Filename = file
+        with open(file, 'rt', errors='ignore',encoding='utf-8') as file:
+            LogByLine = file.readlines()
+            APReadandParse(LogByLine,conn,cursor,Filename)
+    cursor.execute("select * from Logs")
+    Output = cursor.fetchall()
+    #for line in Output:
+    #    print(line)
+    try:
+        with pd.ExcelWriter("APLogTest.xlsx",engine="xlsxwriter", engine_kwargs={'options': {'strings_to_formulas': False}}) as writer:
+            print("Exporting data to file. This may take a moment.")
+            if TSImportedNumber > 1:
+                Output = pd.read_sql("select * from Logs", conn)
+            else:
+                Output = pd.read_sql("select * from Logs", conn)    
+                Output.to_excel(writer, sheet_name="ConsolidatedLogs")
+                workbook = writer.book
+                worksheet = writer.sheets["ConsolidatedLogs"]
+                text_format = workbook.add_format({'num_format': '@'})
+                worksheet.set_column("H:H", None, text_format)
+        print("Export complete. Your logs are in APLogTest.xlsx")
+    except:
+        print("Unable to write the file. Check if a file named APLogTest.xlsx is already open")
+    
+
 
 def grab_logs(hosts,conn,cursor):
     global SwlogDir1,SwlogDir1B,SwlogDir2,SwlogDir2B,SwlogDir3,SwlogDir4,SwlogDir5,SwlogDir6,SwlogDir7,SwlogDir8
@@ -2125,6 +2165,369 @@ def process_logs(conn,cursor,chassis_selection):
     """
     #
     
+def APReadandParse(LogByLine,conn,cursor,Filename):
+    TSCount = TSImportedNumber
+    match Filename:
+        case "iot-radio-manage.log":
+            for line in LogByLine:
+                #debug prints
+                #print(len(line))
+                #print(Filename)
+                #print(line)
+                #skip empty lines
+                if len(line) < 2:
+                    continue
+                #Remove null characters
+                line = line.replace('\0',"")
+                #Remove (epoch)
+                ###Regex does not work
+                #line = line.replace('\(.*\)', "")
+                ###Fix this
+                TimeStamp = line[0:19]
+                line = line.replace("  ", " ")
+                parts = line.split(" [")
+                TimeStamp = parts[0]
+                line2 = parts[1]
+                line2 = line2.replace("]", "")
+                parts2 = line2.split(" - ")
+                AppID = parts2[0]
+                SubApp = parts2[1]
+                LogMessage = parts2[2]
+                LogMessage = LogMessage.strip()
+                #single quotes break the function
+                LogMessage = LogMessage.replace("'","")
+                LogMessage = LogMessage.encode('utf-8')
+                LogMessage = str(LogMessage)
+                LogMessage = LogMessage.replace("b'","")
+                LogMessage = LogMessage.replace("'","")
+                cursor.execute("insert into Logs (TSCount, TimeStamp, Filename, AppID, SubApp, LogMessage) values ('"+str(TSCount)+"','"+TimeStamp+"','"+Filename+"','"+AppID+"','"+SubApp+"','"+LogMessage+"')")
+        case "cgi.log":
+            for line in LogByLine:
+                #debug prints
+                #print(len(line))
+                #print(Filename)
+                #print(line)
+                #skip empty lines
+                if len(line) < 2:
+                    continue
+                #Remove null characters
+                line = line.replace('\0',"")
+                line.replace("[","")
+                parts = line.split("]")
+                TimeStamp = parts[0]
+                LogMessage = parts[1]
+                #single quotes break the function
+                LogMessage = LogMessage.replace("'","")
+                LogMessage = LogMessage.encode('utf-8')
+                LogMessage = str(LogMessage)
+                LogMessage = LogMessage.replace("b'","")
+                LogMessage = LogMessage.replace("'","")
+                cursor.execute("insert into Logs (TSCount, TimeStamp, Filename, LogMessage) values ('"+str(TSCount)+"','"+TimeStamp+"','"+Filename+"','"+LogMessage+"')")
+        case "cert.log":
+            for line in LogByLine:
+                if len(line) < 2:
+                    continue
+                #Remove null characters
+                line = line.replace('\0',"")
+                LogMessage = line
+                #single quotes break the function
+                LogMessage = LogMessage.replace("'","")
+                LogMessage = LogMessage.encode('utf-8')
+                LogMessage = str(LogMessage)
+                LogMessage = LogMessage.replace("b'","")
+                LogMessage = LogMessage.replace("'","")
+                cursor.execute("insert into Logs (TSCount, Filename, LogMessage) values ('"+str(TSCount)+"','"+Filename+"','"+LogMessage+"')")
+        case "cert_manage.log":
+            TSCount = TSImportedNumber
+            TimeStampLines = []
+            LogMessageLines = []
+            LineCount = len(LogByLine)
+            Counter = 0
+            while Counter < LineCount:
+                #For even Counter, or Odd Lines
+                if Counter % 2 == 0:
+                    TimeStampLines.append(LogByLine[Counter])
+                else:
+                    LogMessageLines.append(LogByLine[Counter])
+                Counter += 1
+            LogCount = len(LogMessageLines)
+            Counter = 0
+            while Counter < LogCount:
+                TimeStampRaw = TimeStampLines[Counter]
+                LogMessage = LogMessageLines[Counter]
+                #Remove null characters
+                LogMessage = LogMessage.replace('\0',"")
+                #single quotes break the function
+                LogMessage = LogMessage.replace("'","")
+                #Remove {}
+                LogMessage = LogMessage.replace("{","")
+                LogMessage = LogMessage.replace("}","")
+                TimeStamp = TimeStampRaw.replace('\0',"")
+                TimeStamp = TimeStampRaw[1:20]
+                #print(TimeStamp)
+                #print(LogMessage)
+                cursor.execute("insert into Logs (TSCount, TimeStamp, Filename, LogMessage) values ('"+str(TSCount)+"','"+TimeStamp+"','"+Filename+"','"+LogMessage+"')")
+                Counter += 1
+        case "crontab.log":
+            TimeStamp_LogMessage_Split(LogByLine,conn,cursor,Filename)
+        case "check_nfqueue.record":
+            TimeStamp_LogMessage_Split(LogByLine,conn,cursor,Filename)
+        case "calog.log":
+            Epoch_AppID(LogByLine,conn,cursor,Filename)
+        case "activation_clientd.log":
+            Epoch_AppID(LogByLine,conn,cursor,Filename)
+        case "agm.log":
+            for line in LogByLine:
+                #debug prints
+                #print(len(line))
+                #print(Filename)
+                #print(line)
+                #skip empty lines
+                if len(line) < 2:
+                    continue
+                #Remove null characters
+                line = line.replace('\0',"")
+                parts = line.split(":  ")
+                TimeStamp = parts[0]
+                TimeStamp = TimeStamp.replace("[","")
+                TimeStamp = TimeStamp.replace("]","")
+                LogMessage = parts[1]
+                LogMessage = LogMessage.strip()
+                #single quotes break the function
+                LogMessage = LogMessage.replace("'","")
+                LogMessage = LogMessage.encode('utf-8')
+                LogMessage = str(LogMessage)
+                LogMessage = LogMessage.replace("b'","")
+                LogMessage = LogMessage.replace("'","")
+                cursor.execute("insert into Logs (TSCount, TimeStamp, Filename, LogMessage) values ('"+str(TSCount)+"','"+TimeStamp+"','"+Filename+"','"+LogMessage+"')")
+        case "ap_manage.log":
+            Epoch_AppID(LogByLine,conn,cursor,Filename)
+        case "ap_manage.log_back":
+            Epoch_AppID(LogByLine,conn,cursor,Filename)
+        case "arp-proxy.log":
+            for line in LogByLine:
+                #debug prints
+                #print(len(line))
+                #print(Filename)
+                #print(line)
+                #skip empty lines
+                if len(line) < 2:
+                    continue
+                #Remove null characters
+                line = line.replace('\0',"")
+                TimeStamp = line[0:27]
+                TimeStamp = TimeStamp.replace("[","")
+                TimeStamp = TimeStamp.replace("]","")
+                lineSize = len(line)
+                LogMessage = line[28:lineSize]
+                LogMessage = LogMessage.strip()
+                #single quotes break the function
+                LogMessage = LogMessage.replace("'","")
+                LogMessage = LogMessage.encode('utf-8')
+                LogMessage = str(LogMessage)
+                LogMessage = LogMessage.replace("b'","")
+                LogMessage = LogMessage.replace("'","")
+                cursor.execute("insert into Logs (TSCount, TimeStamp, Filename, LogMessage) values ('"+str(TSCount)+"','"+TimeStamp+"','"+Filename+"','"+LogMessage+"')")
+        case "baseguard.log":
+            for line in LogByLine:
+                #debug prints
+                #print(len(line))
+                #print(Filename)
+                #print(line)
+                #skip empty lines
+                if len(line) < 6:
+                    continue
+                #Remove null characters
+                line = line.replace('\0',"")
+                parts = line.split(":")
+                TimeStampRaw = parts[0]
+                Year = TimeStampRaw[0:4]
+                Month = TimeStampRaw[4:6]
+                Day = TimeStampRaw[6:8]
+                Hour = TimeStampRaw[8:10]
+                Minute = TimeStampRaw[10:12]
+                Second = TimeStampRaw[12:14]
+                TimeStamp = (Year+"-"+Month+"-"+Day+" "+Hour+":"+Minute+":"+Second)
+                LogMessage = parts[1]
+                LogMessage = LogMessage.strip()
+                #single quotes break the function
+                LogMessage = LogMessage.replace("'","")
+                LogMessage = LogMessage.encode('utf-8')
+                LogMessage = str(LogMessage)
+                LogMessage = LogMessage.replace("b'","")
+                LogMessage = LogMessage.replace("'","")
+                cursor.execute("insert into Logs (TSCount, TimeStamp, Filename, LogMessage) values ('"+str(TSCount)+"','"+TimeStamp+"','"+Filename+"','"+LogMessage+"')")
+        case "chan_util.log":
+            TimeStampLines = []
+            InterfaceLines = []
+            ChannelLines = []
+            UtilizationLines = []
+            NoiseLines = []
+            for line in LogByLine:
+                 #skip empty lines
+                if len(line) < 2:
+                    continue
+                if len(TimeStampLines) == len(NoiseLines):
+                    parts = line.split(" ")
+                    Year = parts[4]
+                    Month = parts[1]
+                    match Month:
+                        case "Jan":
+                            Month = "01"
+                        case "Feb":
+                            Month = "02"
+                        case "Mar":
+                            Month = "03"
+                        case "Apr":
+                            Month = "04"    
+                        case "May":
+                            Month = "05"
+                        case "Jun":
+                            Month = "06"
+                        case "Jul":
+                            Month = "07"
+                        case "Aug":
+                            Month = "08"
+                        case "Sep":
+                            Month = "09"
+                        case "Oct":
+                            Month = "10"
+                        case "Nov":
+                            Month = "11"
+                        case "Dec":
+                            Month = "12"
+                    Date = parts[2]
+                    if len(Date) == 1:
+                        Date = "0"+str(Date)
+                    Time = parts[3]
+                    Timestamp = str(Year)+"-"+Month+"-"+str(Date)+" "+str(Time)
+                    TimeStampLines.append(Timestamp)
+                    continue
+                if len(TimeStampLines) > len(InterfaceLines):
+                    line = CleanOutput(line)
+                    line = line.replace("\n","")
+                    InterfaceLines.append(line)
+                    continue
+                if len(InterfaceLines) > len(ChannelLines):
+                    line = CleanOutput(line)
+                    line = line.replace("\n","")
+                    ChannelLines.append(line)
+                    continue
+                if len(ChannelLines) > len(UtilizationLines):
+                    line = CleanOutput(line)
+                    line = line.replace("\n","")
+                    UtilizationLines.append(line)
+                    continue
+                if len(UtilizationLines) > len(NoiseLines):
+                    line = CleanOutput(line)
+                    line = line.replace("\n","")
+                    NoiseLines.append(line)
+                    continue
+            Counter = 0
+            while Counter < len(NoiseLines):
+                TimeStamp = TimeStampLines[Counter]
+                LogMessage = InterfaceLines[Counter]+ChannelLines[Counter]+UtilizationLines[Counter]+NoiseLines[Counter]
+                cursor.execute("insert into Logs (TSCount, TimeStamp, Filename, LogMessage) values ('"+str(TSCount)+"','"+TimeStamp+"','"+Filename+"','"+LogMessage+"')")
+                Counter += 1
+        case _:
+            print(Filename+" does not match any of the parsers currently written")
+
+
+def Epoch_AppID(LogByLine,conn,cursor,Filename):
+    TSCount = TSImportedNumber
+    for line in LogByLine:
+        #debug prints
+        #print(len(line))
+        #print(Filename)
+        #print(line)
+        #skip empty lines
+        if len(line) < 2:
+            continue
+        #Remove null characters
+        line = line.replace('\0',"")
+        #Remove (epoch)
+        ###Regex does not work
+        #line = line.replace('\(.*\)', "")
+        ###Fix this
+        line = line.replace("  ", " ")
+        parts = line.split(" ")
+        TimeStamp = line[0:19]
+        AppID = parts[2]
+        AppID = AppID.replace("[","")
+        AppID = AppID.replace("]","")
+        LogPartsCounter = 4
+        partsSize = len(parts)
+        LogMessage = ""
+        while LogPartsCounter < partsSize:
+            LogMessage += parts[LogPartsCounter]+" "
+            LogPartsCounter += 1
+        LogMessage = LogMessage.strip()
+        #single quotes break the function
+        LogMessage = LogMessage.replace("'","")
+        LogMessage = LogMessage.encode('utf-8')
+        LogMessage = str(LogMessage)
+        LogMessage = LogMessage.replace("b'","")
+        LogMessage = LogMessage.replace("'","")
+        cursor.execute("insert into Logs (TSCount, TimeStamp, Filename, AppID, LogMessage) values ('"+str(TSCount)+"','"+TimeStamp+"','"+Filename+"','"+AppID+"','"+LogMessage+"')")
+
+def TimeStamp_LogMessage_Split(LogByLine,conn,cursor,Filename):
+    TSCount = TSImportedNumber
+    TimeStampLines = []
+    LogMessageLines = []
+    LineCount = len(LogByLine)
+    Counter = 0
+    while Counter < LineCount:
+        #For even Counter, or Odd Lines
+        if Counter % 2 == 0:
+            TimeStampLines.append(LogByLine[Counter])
+        else:
+            LogMessageLines.append(LogByLine[Counter])
+        Counter += 1
+    LogCount = len(LogMessageLines)
+    Counter = 0
+    while Counter < LogCount:
+        TimeStampRaw = TimeStampLines[Counter]
+        LogMessage = LogMessageLines[Counter]
+        parts = TimeStampRaw.split(" ")
+        Year = parts[4]
+        Month = parts[1]
+        match Month:
+            case "Jan":
+                Month = "01"
+            case "Feb":
+                Month = "02"
+            case "Mar":
+                Month = "03"
+            case "Apr":
+                Month = "04"    
+            case "May":
+                Month = "05"
+            case "Jun":
+                Month = "06"
+            case "Jul":
+                Month = "07"
+            case "Aug":
+                Month = "08"
+            case "Sep":
+                Month = "09"
+            case "Oct":
+                Month = "10"
+            case "Nov":
+                Month = "11"
+            case "Dec":
+                Month = "12"
+        Date = parts[2]
+        if len(Date) == 1:
+            Date = "0"+str(Date)
+        Time = parts[3]
+        Timestamp = str(Year)+"-"+Month+"-"+str(Date)+" "+str(Time)
+        #Remove null characters
+        LogMessage = LogMessage.replace('\0',"")
+        Timestamp = TimeStamp.replace('\0',"")
+        cursor.execute("insert into Logs (TSCount, TimeStamp, Filename, LogMessage) values ('"+str(TSCount)+"','"+TimeStamp+"','"+Filename+"','"+LogMessage+"')")
+        Counter += 1
+
+                
 
 def ReadandParse(LogByLine,conn,cursor,Filename,ChassisID):
     for line in LogByLine:
@@ -2793,6 +3196,9 @@ def main():
     with sqlite3.connect(':memory:') as conn:
         cursor = conn.cursor()
         hosts = collect_hosts()
+        if hosts == "AP":
+            APLogFind(conn,cursor)
+            return
         if hosts != []:
             #Erase existing log files in the directory
             for file in first_dir_list:
