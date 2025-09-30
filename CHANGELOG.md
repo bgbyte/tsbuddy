@@ -1,5 +1,9 @@
 # Changelog
 
+### 2025-09-30 [0.0.34]
+- LogAnalyzer no longer depends on 7zip
+- LogAnalyzer supports adding multiple tech support files for analysis
+
 ### 2025-09-20 [0.0.28]
 - Added LogAnalyzer v2 by @NathanielOrlina, currently depends on 7zip
 - Restructured the library to accomodate imports better
