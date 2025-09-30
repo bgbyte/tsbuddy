@@ -1206,7 +1206,7 @@ def AnalysisInit(conn,cursor):
     print("Initializing log analysis")
     cursor.execute("create table Analysis(id integer primary key autoincrement, Source text, Category text, LogMessage text, LogMeaning text)")
     src_dir = os.path.dirname(os.path.abspath(__file__))
-    with open(src_dir+"/loglist-master.csv", "rt") as DefFile:
+    with open(src_dir+"/loglist-master.csv", "rt",errors='ignore') as DefFile:
         LogDefinitions = DefFile.readlines()
         for log in LogDefinitions:
             log = log.strip()
@@ -2444,29 +2444,7 @@ def APReadandParse(LogByLine,conn,cursor,Filename):
         case "activation_clientd.log":
             Epoch_AppID(LogByLine,conn,cursor,Filename)
         case "agm.log":
-            for line in LogByLine:
-                #debug prints
-                #print(len(line))
-                #print(Filename)
-                #print(line)
-                #skip empty lines
-                if len(line) < 2:
-                    continue
-                #Remove null characters
-                line = line.replace('\0',"")
-                parts = line.split(":  ")
-                TimeStamp = parts[0]
-                TimeStamp = TimeStamp.replace("[","")
-                TimeStamp = TimeStamp.replace("]","")
-                LogMessage = parts[1]
-                LogMessage = LogMessage.strip()
-                #single quotes break the function
-                LogMessage = LogMessage.replace("'","")
-                LogMessage = LogMessage.encode('utf-8')
-                LogMessage = str(LogMessage)
-                LogMessage = LogMessage.replace("b'","")
-                LogMessage = LogMessage.replace("'","")
-                cursor.execute("insert into Logs (TSCount, TimeStamp, Filename, LogMessage) values ('"+str(TSCount)+"','"+TimeStamp+"','"+Filename+"','"+LogMessage+"')")
+            Bracket_TimeStamp_LogMessage(LogByLine,conn,cursor,Filename)
         case "ap_manage.log":
             Epoch_AppID(LogByLine,conn,cursor,Filename)
         case "ap_manage.log_back":
@@ -2596,9 +2574,141 @@ def APReadandParse(LogByLine,conn,cursor,Filename):
                 LogMessage = InterfaceLines[Counter]+ChannelLines[Counter]+UtilizationLines[Counter]+NoiseLines[Counter]
                 cursor.execute("insert into Logs (TSCount, TimeStamp, Filename, LogMessage) values ('"+str(TSCount)+"','"+TimeStamp+"','"+Filename+"','"+LogMessage+"')")
                 Counter += 1
+        case "check_snmpv3_status.log":
+            TimeStamp_LogMessage(LogByLine,conn,cursor,Filename)
+        case "clienttrack.log":
+            Bracket_TimeStamp_LogMessage(LogByLine,conn,cursor,Filename)
+        case "collect_log_manager.log":
+            counter = 0
+            Lines = len(LogByLine)
+            while counter < Lines:
+                line = LogByLine[counter]
+                #debug prints
+                #print(len(line))
+                #print(Filename)
+                #print(line)
+                #skip empty lines
+                if len(line) < 2:
+                    continue
+                #Remove null characters
+                line = line.replace('\0',"")
+                parts = line.split(": ")
+                TimeStamp = parts[0]
+                TimeStamp = TimeStamp.replace("[","")
+                TimeStamp = TimeStamp.replace("]","")
+                LogMessage = parts[1]
+                LogMessage = LogMessage.strip()
+                if LogMessage == "ubus_proc_upload_snapshot msg={":
+                    PathLine = LogByLine[counter+1].strip()
+                    PasswordLine = LogByLine[counter+2].strip()
+                    UsernameLine = LogByLine[counter+3].strip()
+                    LogMessage = LogMessage+PathLine+PasswordLine+UsernameLine+"}"
+                    #single quotes break the function
+                    LogMessage = LogMessage.replace("'","")
+                    ogMessage = LogMessage.encode('utf-8')
+                    LogMessage = str(LogMessage)
+                    LogMessage = LogMessage.replace("b'","")
+                    LogMessage = LogMessage.replace("'","")
+                    cursor.execute("insert into Logs (TSCount, TimeStamp, Filename, LogMessage) values ('"+str(TSCount)+"','"+TimeStamp+"','"+Filename+"','"+LogMessage+"')")
+                    counter += 5
+                else:
+                    #single quotes break the function
+                    LogMessage = LogMessage.replace("'","")
+                    LogMessage = LogMessage.encode('utf-8')
+                    LogMessage = str(LogMessage)
+                    LogMessage = LogMessage.replace("b'","")
+                    LogMessage = LogMessage.replace("'","")
+                    cursor.execute("insert into Logs (TSCount, TimeStamp, Filename, LogMessage) values ('"+str(TSCount)+"','"+TimeStamp+"','"+Filename+"','"+LogMessage+"')")
+                    counter += 1
+        case "configd.log":
+            counter = 0
+            lines = len(LogByLine)
+            while counter < lines:
+                line = LogByLine[counter]
+                #debug prints
+                #print(len(line))
+                #print(Filename)
+                #print(line)
+                #skip empty lines
+                if len(line) < 2:
+                    continue
+                #Remove null characters
+                line = line.replace('\0',"")
+                #Remove (epoch)
+                ###Regex does not work
+                #line = line.replace('\(.*\)', "")
+                ###Fix this
+                line = line.replace("  ", " ")
+                parts = line.split(" ")
+                TimeStamp = line[0:19]
+                AppID = parts[2]
+                AppID = AppID.replace("[","")
+                AppID = AppID.replace("]","")
+                LogPartsCounter = 4
+                partsSize = len(parts)
+                LogMessage = ""
+                while LogPartsCounter < partsSize:
+                    LogMessage += parts[LogPartsCounter]+" "
+                    LogPartsCounter += 1
+                LogMessage = LogMessage.strip()
+                if LogMessage == "The modified config is:" or LogMessage == "call_userconfig_reload with message:":
+                    LogMessage += LogByLine[counter+1].strip()
+                    counter += 2
+                    LogMessage = LogMessage.replace("'","")
+                    LogMessage = LogMessage.encode('utf-8')
+                    LogMessage = str(LogMessage)
+                    LogMessage = LogMessage.replace("b'","")
+                    LogMessage = LogMessage.replace("'","")
+                    cursor.execute("insert into Logs (TSCount, TimeStamp, Filename, AppID, LogMessage) values ('"+str(TSCount)+"','"+TimeStamp+"','"+Filename+"','"+AppID+"','"+LogMessage+"')")
+                else:
+                    #single quotes break the function
+                    LogMessage = LogMessage.replace("'","")
+                    LogMessage = LogMessage.encode('utf-8')
+                    LogMessage = str(LogMessage)
+                    LogMessage = LogMessage.replace("b'","")
+                    LogMessage = LogMessage.replace("'","")
+                    cursor.execute("insert into Logs (TSCount, TimeStamp, Filename, AppID, LogMessage) values ('"+str(TSCount)+"','"+TimeStamp+"','"+Filename+"','"+AppID+"','"+LogMessage+"')")
+                    counter += 1
+        case "core-mon-app-restore-syslog.txt":
+            for line in LogbyLine:
+                line = line.strip()
+                parts = line.split(" : ")
+                LogMessage = parts[1]
+                LogMessage = LogMessage.replace("'","")
+                LogMessage = LogMessage.encode('utf-8')
+                LogMessage = str(LogMessage)
+                LogMessage = LogMessage.replace("b'","")
+                LogMessage = LogMessage.replace("'","")
+
+                fiiiix
         case _:
             print(Filename+" does not match any of the parsers currently written")
 
+def Bracket_TimeStamp_LogMessage(LogByLine,conn,cursor,Filename):
+    TSCount = TSImportedNumber
+    for line in LogByLine:
+        #debug prints
+        #print(len(line))
+        #print(Filename)
+        #print(line)
+        #skip empty lines
+        if len(line) < 2:
+            continue
+        #Remove null characters
+        line = line.replace('\0',"")
+        parts = line.split(": ")
+        TimeStamp = parts[0]
+        TimeStamp = TimeStamp.replace("[","")
+        TimeStamp = TimeStamp.replace("]","")
+        LogMessage = parts[1]
+        LogMessage = LogMessage.strip()
+        #single quotes break the function
+        LogMessage = LogMessage.replace("'","")
+        LogMessage = LogMessage.encode('utf-8')
+        LogMessage = str(LogMessage)
+        LogMessage = LogMessage.replace("b'","")
+        LogMessage = LogMessage.replace("'","")
+        cursor.execute("insert into Logs (TSCount, TimeStamp, Filename, LogMessage) values ('"+str(TSCount)+"','"+TimeStamp+"','"+Filename+"','"+LogMessage+"')")
 
 def Epoch_AppID(LogByLine,conn,cursor,Filename):
     TSCount = TSImportedNumber
@@ -2636,6 +2746,18 @@ def Epoch_AppID(LogByLine,conn,cursor,Filename):
         LogMessage = LogMessage.replace("b'","")
         LogMessage = LogMessage.replace("'","")
         cursor.execute("insert into Logs (TSCount, TimeStamp, Filename, AppID, LogMessage) values ('"+str(TSCount)+"','"+TimeStamp+"','"+Filename+"','"+AppID+"','"+LogMessage+"')")
+
+def TimeStamp_LogMessage(LogByLine,conn,cursor,Filename):
+    TSCount = TSImportedNumber
+    for line in LogByLine:
+        Parts = line.split(" - ")
+        TimeStamp = Parts[0]
+        LogMessage = Parts[1]
+        #Remove null characters
+        LogMessage = LogMessage.replace('\0',"")
+        TimeStamp = TimeStamp.replace('\0',"")
+        cursor.execute("insert into Logs (TSCount, TimeStamp, Filename, LogMessage) values ('"+str(TSCount)+"','"+TimeStamp+"','"+Filename+"','"+LogMessage+"')")
+
 
 def TimeStamp_LogMessage_Split(LogByLine,conn,cursor,Filename):
     TSCount = TSImportedNumber
@@ -2754,6 +2876,8 @@ def ReadandParse(LogByLine,conn,cursor,Filename,ChassisID):
         Timestamp = str(Year)+"-"+Month+"-"+str(Date)+" "+str(Time)
         SwitchName = parts[4]
         Source = parts[5]
+        #print(Filename)
+        #print(line)
         #parser for different sources
         match Source:
             case "swlogd":
@@ -3056,10 +3180,11 @@ def local_logs(conn,cursor):
                         continue
                     if fnmatch.fnmatch(file, "*.gz"):
                         gzipcount += 1
-                        with gzip.open(SwlogDir1+"/swlog_archive/"+file, "rt") as log:
+                        with gzip.open(SwlogDir1+"/swlog_archive/"+file, "rt",errors='ignore') as log:
                             #print(log)
-                            ArchiveLogByLine = log.readlines()
                             Filename = str(file)
+                            #print("STARTING NEW FILE: "+Filename)
+                            ArchiveLogByLine = log.readlines()
                             ChassisID = "Chassis 1"
                             ReadandParse(ArchiveLogByLine,conn,cursor,Filename,ChassisID)
         if (chassis_selection == "2" or chassis_selection == "all") and SwlogDir2 != "":
@@ -3070,7 +3195,7 @@ def local_logs(conn,cursor):
                         continue
                     if fnmatch.fnmatch(file, "*.gz"):
                         gzipcount += 1
-                        with gzip.open(SwlogDir2+"/swlog_archive/"+file, "rt") as log:
+                        with gzip.open(SwlogDir2+"/swlog_archive/"+file, "rt",errors='ignore') as log:
                             #print(log)
                             ArchiveLogByLine = log.readlines()
                             Filename = str(file)
@@ -3084,7 +3209,7 @@ def local_logs(conn,cursor):
                         continue
                     if fnmatch.fnmatch(file, "*.gz"):
                         gzipcount += 1
-                        with gzip.open(SwlogDir3+"/swlog_archive/"+file, "rt") as log:
+                        with gzip.open(SwlogDir3+"/swlog_archive/"+file, "rt",errors='ignore') as log:
                             #print(log)
                             ArchiveLogByLine = log.readlines()
                             Filename = str(file)
@@ -3098,7 +3223,7 @@ def local_logs(conn,cursor):
                         continue
                     if fnmatch.fnmatch(file, "*.gz"):
                         gzipcount += 1
-                        with gzip.open(SwlogDir4+"/swlog_archive/"+file, "rt") as log:
+                        with gzip.open(SwlogDir4+"/swlog_archive/"+file, "rt",errors='ignore') as log:
                             #print(log)
                             ArchiveLogByLine = log.readlines()
                             Filename = str(file)
@@ -3112,7 +3237,7 @@ def local_logs(conn,cursor):
                         continue
                     if fnmatch.fnmatch(file, "*.gz"):
                         gzipcount += 1
-                        with gzip.open(SwlogDir5+"/swlog_archive/"+file, "rt") as log:
+                        with gzip.open(SwlogDir5+"/swlog_archive/"+file, "rt",errors='ignore') as log:
                             #print(log)
                             ArchiveLogByLine = log.readlines()
                             Filename = str(file)
@@ -3126,7 +3251,7 @@ def local_logs(conn,cursor):
                         continue
                     if fnmatch.fnmatch(file, "*.gz"):
                         gzipcount += 1
-                        with gzip.open(SwlogDir6+"/swlog_archive/"+file, "rt") as log:
+                        with gzip.open(SwlogDir6+"/swlog_archive/"+file, "rt",errors='ignore') as log:
                             #print(log)
                             ArchiveLogByLine = log.readlines()
                             Filename = str(file)
@@ -3140,7 +3265,7 @@ def local_logs(conn,cursor):
                         continue
                     if fnmatch.fnmatch(file, "*.gz"):
                         gzipcount += 1
-                        with gzip.open(SwlogDir7+"/swlog_archive/"+file, "rt") as log:
+                        with gzip.open(SwlogDir7+"/swlog_archive/"+file, "rt",errors='ignore') as log:
                             #print(log)
                             ArchiveLogByLine = log.readlines()
                             Filename = str(file)
@@ -3154,7 +3279,7 @@ def local_logs(conn,cursor):
                         continue
                     if fnmatch.fnmatch(file, "*.gz"):
                         gzipcount += 1
-                        with gzip.open(SwlogDir8+"/swlog_archive/"+file, "rt") as log:
+                        with gzip.open(SwlogDir8+"/swlog_archive/"+file, "rt",errors='ignore') as log:
                             #print(log)
                             ArchiveLogByLine = log.readlines()
                             Filename = str(file)
