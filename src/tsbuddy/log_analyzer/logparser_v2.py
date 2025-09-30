@@ -11,7 +11,7 @@ import subprocess
 from pathlib import Path
 import xlsxwriter
 import socket
-import tsbuddy
+from tsbuddy import extracttar
 
 
 #SEVEN_ZIP_PATH = r"C:\Program Files\7-Zip\7z.exe"
@@ -136,7 +136,7 @@ def extract_tar_files(base_path='.'):
             str(tar_file)
         ], check=True)
     """
-    tsbuddy.extracttar.extract_archives(base_path)
+    extracttar.extract_archives(base_path)
 
 def CleanOutput(string):
 #Remove unneeded characters
@@ -2673,12 +2673,7 @@ def APReadandParse(LogByLine,conn,cursor,Filename):
             for line in LogbyLine:
                 line = line.strip()
                 parts = line.split(" : ")
-                LogMessage = parts[1]
-                LogMessage = LogMessage.replace("'","")
-                LogMessage = LogMessage.encode('utf-8')
-                LogMessage = str(LogMessage)
-                LogMessage = LogMessage.replace("b'","")
-                LogMessage = LogMessage.replace("'","")
+                
 
                 fiiiix
         case _:
@@ -2969,7 +2964,7 @@ def local_logs(conn,cursor):
     match len(techSupports):
         case 0:
             print("There are no files or directories containing 'tech_support_complete' in this directory")
-            exit()
+            quit()
         case 1:
             print("There is 1 tech support file in this directory. Opening "+str(techSupports[0]))
             selectedTS = techSupports[0]
