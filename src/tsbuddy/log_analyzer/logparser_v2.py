@@ -12,6 +12,7 @@ from pathlib import Path
 import xlsxwriter
 import socket
 from tsbuddy import extracttar
+import time
 
 
 #SEVEN_ZIP_PATH = r"C:\Program Files\7-Zip\7z.exe"
@@ -78,6 +79,28 @@ The total number of logs is $count, ranging from $Newest_Time to $Oldest_Time"
 """
 
 
+"""
+Analysis draft.
+Select "Look for Problems>Find Root Cause"
+"Please enter a timeframe for the issue. Leave this blank if there is not a known timeframe"
+select count(*),LogMessage from logs where Timestamp (if applicable) group by LogMessage order by count(*) desc limit 500
+for LogMessage in output:
+    Categorize
+    category.append()
+Find largest category that isn't "unused"
+"The logs primarily consist of +category+ logs. Running analysis for +category
+Autorun "Look of Problems>Category"
+
+"""
+
+
+
+
+
+
+
+
+
 SwlogFiles1 = []
 SwlogFiles2 = []
 SwlogFiles3 = []
@@ -99,6 +122,7 @@ SwlogDir6 = ""
 SwlogDir7 = ""
 SwlogDir8 = ""
 
+ReturnDataforAI = False
 PrefSwitchName = "None"
 
 AnalysisInitialized = False
@@ -219,6 +243,8 @@ def collect_hosts():
         ip = input("Enter device IP: ").strip()
         if ip == "AP":
             return "AP"
+        if ip == "AI":
+            return "AI"
         if not ip:
             validIP = True
             return hosts
@@ -244,6 +270,8 @@ def APLogFind(conn,cursor):
         if fnmatch.fnmatch(item, "*.log*"):
             APLogFiles.append(item)
         if fnmatch.fnmatch(item, "*.record*"):
+            APLogFiles.append(item)
+        if fnmatch.fnmatch(item, "*.txt*"):
             APLogFiles.append(item)
     for file in APLogFiles:
         #print(file)
@@ -986,7 +1014,22 @@ def first_load(conn,cursor,chassis_selection):
         else:
             print("Invalid Selection")
 
+def ReturnforAI(conn,cursor):
+    with pd.ExcelWriter("LogOutputforAI.xlsx",engine="xlsxwriter", engine_kwargs={'options': {'strings_to_formulas': False}}) as writer:
+        print("Exporting data to file. This may take a moment.")
+        Output = pd.read_sql("select count(*),logmessage from Logs group by logmessage order by count(*) desc",conn)
+        Output.to_excel(writer, sheet_name="ConsolidatedLogs")
+        workbook = writer.book
+        worksheet = writer.sheets["ConsolidatedLogs"]
+        text_format = workbook.add_format({'num_format': '@'})
+        worksheet.set_column("H:H", None, text_format)
+    return LogOutputforAI.xlsx
+
+
 def analysis_menu(conn,cursor):
+    if ReturnDataforAI == True:
+        OutputforAI = ReturnforAI(conn,cursor)
+        return OutputforAI
     cursor.execute("select count(*) from Logs")
     count = CleanOutput(str(cursor.fetchall()))
     cursor.execute("select Timestamp from Logs order by Timestamp desc limit 1")
@@ -1012,6 +1055,7 @@ def analysis_menu(conn,cursor):
         print("[6] - Find most common logs")
         print("[7] - Direct Query")
         print("[8] - Change switch name for saved logfiles - Currently: "+PrefSwitchName)
+        print("[AI] - Return the result for AI analysis")
         print("[0] - Exit")
         selection = input("What would you like to do with the logs? [0] ") or "0"
         match selection:
@@ -1204,8 +1248,13 @@ def CommonLog(conn,cursor):
 
 def AnalysisInit(conn,cursor):
     print("Initializing log analysis")
-    cursor.execute("create table Analysis(id integer primary key autoincrement, Source text, Category text, LogMessage text, LogMeaning text)")
+    cursor.execute("alter table Logs add LogMeaning text")
+    cursor.execute("alter table Logs add Category text")
+    #cursor.execute("create table Analysis(id integer primary key autoincrement, Source text, Category text, LogMessage text, LogMeaning text)")
     src_dir = os.path.dirname(os.path.abspath(__file__))
+    data = pd.read_csv(src_dir+"/loglist-master.csv")
+    data.to_sql('Analysis', conn, index=True)
+    """
     with open(src_dir+"/loglist-master.csv", "rt",errors='ignore') as DefFile:
         LogDefinitions = DefFile.readlines()
         for log in LogDefinitions:
@@ -1217,8 +1266,9 @@ def AnalysisInit(conn,cursor):
             LogMeaning = parts[3]
             #print("insert into Analysis(Source,Category,LogMessage,LogMeaning) values ('"+Source+"','"+Category+"','"+LogMessage+"','"+LogMeaning+"')")
             cursor.execute("insert into Analysis(Source,Category,LogMessage,LogMeaning) values ('"+Source+"','"+Category+"','"+LogMessage+"','"+LogMeaning+"')")
+    """
     #Remove the header row
-    cursor.execute("delete from Analysis where id = 0")
+    #cursor.execute("delete from Analysis where id = 0")
     global AnalysisInitialized
     AnalysisInitialized = True
 
@@ -1321,7 +1371,7 @@ def LogAnalysis(conn,cursor):
         print("[6] - Health - Not Implemented")
         print("[7] - Connectivity - Not Implemented")
         print("[8] - Locate time desyncs - WIP")
-        print("[All] - Check for all known problem logs - Long Operation")
+        print("[All] - Analyze all known logs - Long Operation")
         print("[0] - Return to Main Menu")
         selection = input("What would you like to look for? [0]  ") or "0"
         match selection:
@@ -1474,7 +1524,7 @@ def LogAnalysis(conn,cursor):
                         #If logs are more than 5 minutes apart
                         if TimeDiff >= datetime.timedelta(minutes=5):
                             #print("Reboot event!")
-                            Chassis2RebootEvent.append(Time1)
+                            Chassis2RebootEvent.append(Time2)
                         counter += 1
                     if len(Chassis2RebootEvent) == 1:
                         print("Chassis 2 rebooted 1 time. Here is when the reboot happened:")
@@ -1786,20 +1836,160 @@ def LogAnalysis(conn,cursor):
             case "8":
                 TimeDesyncFinder(conn,cursor)
             case "All":
-                if AnalysisInitialized == False:
-                    AnalysisInit(conn,cursor)
+                AllKnownLogs(conn,cursor)
+            case "0":
+                ValidSelection = True
+                return
+            case _:
+                print("Invalid Selection")
+
+def AllKnownLogs(conn,cursor):
+    if AnalysisInitialized == False:
+        AnalysisInit(conn,cursor)
+###This whole thing can be done better if we can compare all Logs.LogMessage against Analysis.LogMessage in SQL. This must support wildcards.
+    cursor.execute("select LogMessage,Category,LogMeaning from Analysis")
+    AnalysisOutput = cursor.fetchall()
+    #Count of categories
+    CategoryList = ["Reboot","Critical","Hardware","Connectivity","Health","SPB","VC","Interface","Upgrades","General","MACLearning","Unused","STP","Security","Unclear","Unknown"]
+    RebootCount = 0
+    CriticalCount = 0
+    HardwareCount = 0
+    ConnectivityCount = 0
+    HealthCount = 0
+    SPBCount = 0
+    VCCount = 0
+    InterfaceCount = 0
+    UpgradesCount = 0
+    GeneralCount = 0
+    MACLearningCount = 0
+    UnusedCount = 0
+    STPCount = 0
+    SecurityCount = 0
+    UnclearCount = 0
+    UnknownCount = 0
+    #
+    Category = []
+    LogDictionary = []
+    LogMeaning = []
+    for line in AnalysisOutput:
+        Message = line[0]
+        Meaning = line[2]
+        Message.strip()
+        Meaning.strip()
+        #print(Message)
+        #print(Meaning)
+        Category.append(line[1])
+        LogDictionary.append(Message)
+        LogMeaning.append(Meaning)
+    counter = 0
+    DictionaryLength = len(LogDictionary)
+    while counter < DictionaryLength:
+        query = "update Logs set LogMeaning = '"+LogMeaning[counter]+"', Category = '"+Category[counter]+"' where LogMessage like '%"+LogDictionary[counter]+"%'"
+        #print(query)
+        cursor.execute(query)
+        #cursor.execute("update Logs (LogMeaning, Category) values ("+LogMeaning[counter]+", "+Category[counter]+") where LogMessage like '%"+LogDictionary[counter]+"%'")
+        counter += 1
+    cursor.execute("update Logs set Category = 'Unknown' where Category is NULL")
+    for category in CategoryList:
+        cursor.execute("select count(*) from Logs where category like '%"+category+"%'")
+        line = cursor.fetchall()
+        match category:
+            case "Reboot":
+                RebootCount += int(CleanOutput(str(line[0])))
+            case "Critical":
+                CriticalCount += int(CleanOutput(str(line[0])))
+            case "Hardware":
+                HardwareCount += int(CleanOutput(str(line[0])))
+            case "Connectivity":
+                ConnectivityCount += int(CleanOutput(str(line[0])))
+            case "Health":
+                HealthCount += int(CleanOutput(str(line[0])))
+            case "SPB":
+                SPBCount += int(CleanOutput(str(line[0])))
+            case "VC":
+                VCCount += int(CleanOutput(str(line[0])))
+            case "Interface":
+                InterfaceCount += int(CleanOutput(str(line[0])))
+            case "Upgrades":
+                UpgradesCount += int(CleanOutput(str(line[0])))
+            case "General":
+                GeneralCount += int(CleanOutput(str(line[0])))
+            case "MACLearning":
+                MACLearningCount += int(CleanOutput(str(line[0])))
+            case "Unused":
+                UnusedCount += int(CleanOutput(str(line[0])))
+            case "STP":
+                STPCount += int(CleanOutput(str(line[0])))
+            case "Security":
+                SecurityCount += int(CleanOutput(str(line[0])))
+            case "Unclear":
+                UnclearCount += int(CleanOutput(str(line[0])))
+            case "Unknown":
+                UnknownCount += int(CleanOutput(str(line[0])))
+    AllCategoryCounts = {UnclearCount: "Unclear", RebootCount: "Reboot", CriticalCount: "Critical", HardwareCount: "Hardware", ConnectivityCount: "Connectivity", HealthCount: "Health", SPBCount: "SPB", VCCount: "VC", InterfaceCount: "Interface", UpgradesCount: "Upgrades", GeneralCount: "General", MACLearningCount: "MAC Learning", UnusedCount: "Unused", STPCount: "STP", SecurityCount: "Security", UnknownCount: "Unknown"}
+    AllCategoryCountsSorted = dict(sorted(AllCategoryCounts.items(),reverse=True))
+    KeysInterator = iter(AllCategoryCountsSorted.keys())
+    ValuesInterator = iter(AllCategoryCountsSorted.values())
+    Category1 = next(ValuesInterator)
+    Count1 = next(KeysInterator)
+    while Category1 == "Unknown" or Category1 == "Unused":
+        Category1 = next(ValuesInterator)
+        Count1 = next(KeysInterator)
+    Category2 = next(ValuesInterator)
+    Count2 = next(KeysInterator)
+    while Category2 == "Unknown" or Category2 == "Unused":
+        Category2 = next(ValuesInterator)
+        Count2 = next(KeysInterator)
+    Category3 = next(ValuesInterator)
+    Count3 = next(KeysInterator)
+    while Category3 == "Unknown" or Category3 == "Unused":
+        Category3 = next(ValuesInterator)
+        Count3 = next(KeysInterator)
+    print(AllCategoryCountsSorted)
+    cursor.execute("select count(*) from Logs")
+    AllLogCount = CleanOutput(str(cursor.fetchall()))
+    print("")
+    print("Out of all of the "+AllLogCount+" logs,")
+    print("The category with the most logs is "+Category1+" with "+str(Count1)+" logs")
+    print("The category with the next most logs is "+Category2+" with "+str(Count2)+" logs")
+    print("The category with the third most logs is "+Category3+" with "+str(Count3)+" logs")
+    print("It is recommended to run the Analysis tool for "+Category1)
+    print("*Note that some logs will fall under several categories")
+    print("")
+    print("There are "+str(CriticalCount)+" Critical logs.")
+    if CriticalCount > 0:
+        print("It is recommended to view any Critical logs")
+    cursor.execute("select LogMeaning from Logs where LogMeaning is not null")
+    Output = cursor.fetchall()
+    print(Output)
+    cursor.execute("select count(*) from Logs where LogMeaning is not null")
+    Output = cursor.fetchall()
+    #print(Output)
+    KnownLogCount = CleanOutput(str(Output))
+    ValidSubSelection = False
+    while ValidSubSelection == False:
+        print("There are "+KnownLogCount+" logs with a known explanation.")
+        print("[1] - Export to XLSX - Limit 1,000,000 Rows")
+        print("[2] - Display Critical logs in the console")
+        print("[3] - Run an Analysis on "+Category1)
+        print("[4] - Run an Analysis on "+Category2)
+        print("[5] - Run an Analysis on "+Category3)
+        print("[0] - Return to Analysis Menu")
+        SubSelection = input("What would you like to do with the logs? [0]  ") or "0"
+        match SubSelection:
+            case "1":
                 if PrefSwitchName != "None":
-                    OutputFileName = PrefSwitchName+"-SwlogsParsed-LogAnalysis-All-tsbuddy.xlsx"
+                    OutputFileName = PrefSwitchName+"-SwlogsParsed-AllKnownLogs-tsbuddy.xlsx"
                 else:
-                    OutputFileName = "SwlogsParsed-LogAnalysis-All-tsbuddy.xlsx"
+                    OutputFileName = "SwlogsParsed-AllKnownLogs-tsbuddy.xlsx"
                 try:
                     with pd.ExcelWriter(OutputFileName,engine="xlsxwriter", engine_kwargs={'options': {'strings_to_formulas': False}}) as writer:
                         print("Exporting data to file. This may take a moment.")
                         if TSImportedNumber > 1:
-                            Output = pd.read_sql("select Logs.TSCount,Logs.ChassisID,Logs.Filename,Logs.Timestamp,Logs.SwitchName,Logs.Source,Logs.Model,Logs.AppID,Logs.Subapp,Logs.Priority,Logs.LogMessage from Logs,Analysis where (((InStr([Logs].[LogMessage],[Analysis].[LogMessage]))>0)) order by Timestamp desc", conn)
+                            FileOutput = pd.read_sql("select TSCount,ChassisID,Timestamp,Category,LogMessage,LogMeaning from Logs where LogMeaning is not Null order by Timestamp", conn)
                         else:
-                            Output = pd.read_sql("select Logs.ChassisID,Logs.Filename,Logs.Timestamp,Logs.SwitchName,Logs.Source,Logs.Model,Logs.AppID,Logs.Subapp,Logs.Priority,Logs.LogMessage from Logs,Analysis where (((InStr([Logs].[LogMessage],[Analysis].[LogMessage]))>0)) order by Timestamp desc", conn)
-                        Output.to_excel(writer, sheet_name="ConsolidatedLogs")
+                            FileOutput = pd.read_sql("select ChassisID,Timestamp,Category,LogMessage,LogMeaning from Logs where LogMeaning is not Null order by Timestamp", conn)
+                        FileOutput.to_excel(writer, sheet_name="ConsolidatedLogs")
                         workbook = writer.book
                         worksheet = writer.sheets["ConsolidatedLogs"]
                         text_format = workbook.add_format({'num_format': '@'})
@@ -1807,11 +1997,294 @@ def LogAnalysis(conn,cursor):
                     print("Export complete. Your logs are in "+OutputFileName)
                 except:
                     print("Unable to write the file. Check if a file named "+OutputFileName+" is already open")
+            case "2":
+                ValidCountSelection = False
+                while ValidCountSelection == False:
+                    countselection = input("How many logs would you like to diplay in the console? There are "+str(CriticalCount)+" total Critical logs. [All]  ") or "All"
+                    if countselection == "All":
+                        countselection = CriticalCount
+                    if not str(countselection).isnumeric():
+                        print("Invalid number. Please insert a number")
+                        continue
+                    if int(countselection) > CriticalCount:
+                        print("There are few logs than you are requesting. Printing all of them")
+                        countselection = CriticalCount
+                    else:
+                        cursor.execute("select ChassisID,TimeStamp,LogMessage,LogMeaning from Logs where category like '%Critical%' order by Timestamp limit "+str(countselection))
+                        CriticalLogs = cursor.fetchall()
+                        print("")
+                        print("ChassisID, Timestamp, LogMessage, LogMeaning")
+                        print("----------------------")
+                        for line in CriticalLogs:
+                            line = str(line)
+                            line = line.replace("(","")
+                            line = line.replace(")","")
+                            print(line)
+                        ValidCountSelection = True
+            case "3":
+                pass
+            case "0":
+                ValidSubSelection = True
+                return
+    """
+    MatchedCount = []
+    MatchedLogs = []
+    MatchedCategories = []
+    MatchedMeanings = []
+    while counter < DictionaryLength:
+        query = "select count(*),LogMessage from Logs where LogMessage like '%"+LogDictionary[counter]+"%' group by LogMessage"
+        #print(query)
+        cursor.execute(query)
+        LoopOutput = cursor.fetchall()
+        #print(str(len(LoopOutput)))
+        if len(LoopOutput) > 0:
+            for line in LoopOutput:
+                MatchedCount.append(line[0])
+                MatchedLogs.append(line[1])
+                MatchedCategories.append(CleanOutput(str(Category[counter])))
+                MatchedMeanings.append(CleanOutput(str(LogMeaning[counter])))
+                if "Reboot" in Category[counter]:
+                    RebootCount += int(line[0])
+                if "Critical" in Category[counter]:
+                    CriticalCount += int(line[0])
+                if "Hardware" in Category[counter]:
+                    HardwareCount += int(line[0])
+                if "Connectivity" in Category[counter]:
+                    ConnectivityCount += int(line[0])
+                if "Health" in Category[counter]:
+                    HealthCount += int(line[0])
+                if "SPB" in Category[counter]:
+                    SPBCount += int(line[0])
+                if "VC" in Category[counter]:
+                    VCCount += int(line[0])
+                if "Interface" in Category[counter]:
+                    InterfaceCount += int(line[0])
+                if "Upgrades" in Category[counter]:
+                    UpgradesCount += int(line[0])
+                if "General" in Category[counter]:
+                    GeneralCount += int(line[0])
+                if "MACLearning" in Category[counter]:
+                    MACLearningCount += int(line[0])
+                if "Unused" in Category[counter]:
+                    UnusedCount += int(line[0])
+                if "STP" in Category[counter]:
+                    STPCount += int(line[0])
+                if "Security" in Category[counter]:
+                    SecurityCount += int(line[0])
+                if "Unclear" in Category[counter]:
+                    UnclearCount += int(line[0])
+                else:
+                    UnknownCount += int(line[0])
+                    counter += 1
+    AllCategoryCounts = {UnclearCount: "Unclear", RebootCount: "Reboot", CriticalCount: "Critical", HardwareCount: "Hardware", ConnectivityCount: "Connectivity", HealthCount: "Health", SPBCount: "SPB", VCCount: "VC", InterfaceCount: "Interface", UpgradesCount: "Upgrades", GeneralCount: "General", MACLearningCount: "MAC Learning", UnusedCount: "Unused", STPCount: "STP", SecurityCount: "Security", UnknownCount: "Unknown"}
+    AllCategoryCountsSorted = dict(sorted(AllCategoryCounts.items(),reverse=True))
+    KeysInterator = iter(AllCategoryCountsSorted.keys())
+    ValuesInterator = iter(AllCategoryCountsSorted.values())
+    Category1 = next(ValuesInterator)
+    Count1 = next(KeysInterator)
+    while Category1 == "Unknown" or Category1 == "Unused":
+        Category1 = next(ValuesInterator)
+        Count1 = next(KeysInterator)
+    Category2 = next(ValuesInterator)
+    Count2 = next(KeysInterator)
+    while Category2 == "Unknown" or Category2 == "Unused":
+        Category2 = next(ValuesInterator)
+        Count2 = next(KeysInterator)
+    Category3 = next(ValuesInterator)
+    Count3 = next(KeysInterator)
+    while Category3 == "Unknown" or Category3 == "Unused":
+        Category3 = next(ValuesInterator)
+        Count3 = next(KeysInterator)
+    #print(AllCategoryCountsSorted)
+    cursor.execute("select count(*) from Logs")
+    AllLogCount = CleanOutput(str(cursor.fetchall()))
+    print("")
+    print("Out of all of the "+AllLogCount+" logs,")
+    print("The category with the most logs is "+Category1+" with "+str(Count1)+" logs")
+    print("The category with the next most logs is "+Category2+" with "+str(Count2)+" logs")
+    print("The category with the third most logs is "+Category3+" with "+str(Count3)+" logs")
+    print("It is recommended to run the Analysis tool for "+Category1)
+    print("Note that some logs will fall under several categories")
+    print("")
+    print("There are "+str(CriticalCount)+" critical logs.")
+    if CriticalCount > 0:
+        print("It is recommended to view any critical logs")
+    FullOutput = []
+    counter = 0
+    while counter < len(MatchedLogs):
+        FullOutput.append(str(MatchedCount[counter])+" events - "+str(MatchedCategories[counter])+" - "+str(MatchedLogs[counter])+" - "+str(MatchedMeanings[counter]))
+        counter += 1
+    ValidSubSelection = False
+    while ValidSubSelection == False:
+        print("There are "+str(len(MatchedLogs))+" unique logs with a known explanation. Log Meanings have been added to each log.")
+        print("[1] - Export to XLSX - Limit 1,000,000 Rows")
+        print("[2] - Display in console")
+        print("[3] - View critical logs")
+        print("[0] - Return to Analysis Menu")
+        SubSelection = input("What would you like to do with the logs? [0]  ") or "0"
+        match SubSelection:
+            case "1":
+                if PrefSwitchName != "None":
+                    OutputFileName = PrefSwitchName+"-SwlogsParsed-LogAnalysis-All-tsbuddy.xlsx"
+                else:
+                    OutputFileName = "SwlogsParsed-LogAnalysis-All-tsbuddy.xlsx"
+                try:
+                    with pd.ExcelWriter(OutputFileName,engine="xlsxwriter", engine_kwargs={'options': {'strings_to_formulas': False}}) as writer:
+                        DataDict = {'Count': MatchedCount, 'Category': MatchedCategories, 'LogMessage': MatchedLogs, 'LogMeaning': MatchedMeanings}
+                        print("Exporting data to file. This may take a moment.")
+                        Filedata = pd.DataFrame(DataDict)
+                        Filedata.to_excel(writer, sheet_name="ConsolidatedLogs")
+                        workbook = writer.book
+                        worksheet = writer.sheets["ConsolidatedLogs"]
+                        text_format = workbook.add_format({'num_format': '@'})
+                        worksheet.set_column("H:H", None, text_format)
+                    print("Export complete. Your logs are in "+OutputFileName)
+                except:
+                    print("Unable to write the file. Check if a file named "+OutputFileName+" is already open")
+            case "2":
+                for line in FullOutput:
+                    print(line)
+            case "3":
+                CategoryLogs(conn,cursor,"Critical")
+            case "0":
+                ValidSubSelection = True
+                return
+"""
+"""
+                cursor.execute("select Logs.TSCount,Logs.ChassisID,Logs.Filename,Logs.Timestamp,Logs.SwitchName,Logs.Source,Logs.Model,Logs.AppID,Logs.Subapp,Logs.Priority,Logs.LogMessage from Logs,Analysis where (((InStr([Logs].[LogMessage],[Analysis].[LogMessage]))>0))")
+                Output = cursor.fetchall()
+                ValidSubSelection = False
+                while ValidSubSelection == False:
+                    print("There are "+str(len(Output))+" logs with a known explanation.")
+                    print("[1] - Export to XLSX - Limit 1,000,000 Rows")
+                    print("[2] - Display in console")
+                    print("[3] - Categorize the logs")
+                    print("[0] - Return to Analysis Menu")
+                    SubSelection = input("What would you like to do with the logs? [0]  ") or "0"
+                    match SubSelection:
+                        case "1":
+                            if PrefSwitchName != "None":
+                                OutputFileName = PrefSwitchName+"-SwlogsParsed-LogAnalysis-All-tsbuddy.xlsx"
+                            else:
+                                OutputFileName = "SwlogsParsed-LogAnalysis-All-tsbuddy.xlsx"
+                            try:
+                                with pd.ExcelWriter(OutputFileName,engine="xlsxwriter", engine_kwargs={'options': {'strings_to_formulas': False}}) as writer:
+                                    print("Exporting data to file. This may take a moment.")
+                                    if TSImportedNumber > 1:
+                                        FileOutput = pd.read_sql("select Logs.TSCount,Logs.ChassisID,Logs.Filename,Logs.Timestamp,Logs.SwitchName,Logs.Source,Logs.Model,Logs.AppID,Logs.Subapp,Logs.Priority,Logs.LogMessage from Logs,Analysis where (((InStr([Logs].[LogMessage],[Analysis].[LogMessage]))>0)) order by Timestamp desc", conn)
+                                    else:
+                                        FileOutput = pd.read_sql("select Logs.ChassisID,Logs.Filename,Logs.Timestamp,Logs.SwitchName,Logs.Source,Logs.Model,Logs.AppID,Logs.Subapp,Logs.Priority,Logs.LogMessage from Logs,Analysis where (((InStr([Logs].[LogMessage],[Analysis].[LogMessage]))>0)) order by Timestamp desc", conn)
+                                    FileOutput.to_excel(writer, sheet_name="ConsolidatedLogs")
+                                    workbook = writer.book
+                                    worksheet = writer.sheets["ConsolidatedLogs"]
+                                    text_format = workbook.add_format({'num_format': '@'})
+                                    worksheet.set_column("H:H", None, text_format)
+                                print("Export complete. Your logs are in "+OutputFileName)
+                            except:
+                                print("Unable to write the file. Check if a file named "+OutputFileName+" is already open")
+                        case "2":
+                            for line in Output:
+                                print(line)
+                            print("")
+                        case "3":
+                            pass
+                        case "0":
+                            ValidSubSelection = True
+                            return
+                """
+
+def CategoryLogs(conn,cursor,category):
+    cursor.execute("select LogMessage,LogMeaning from Analysis where Category like '%"+category+"%'")
+    Definitions = cursor.fetchall()
+    LogDictionary = []
+    LogMeaning = []
+    for line in Definitions:
+        LogDictionary.append(line[0])
+        LogMeaning.append(line[1])
+    MatchedLogs = []
+    counter = 0
+    query = ""
+    while counter < len(LogDictionary):
+        query = query+"(select TSCount,ChassisID,Timestamp,LogMessage from Logs where LogMessage like '%"+LogDictionary[counter]+"%')"
+        counter += 1
+        if counter < len(LogDictionary):
+            query += " UNION "
+    cursor.execute(query)
+    LoopOutput = cursor.fetchall()
+    if len(LoopOutput) > 0:
+        for line in LoopOutput:
+            line.append(LogMeaning[counter])
+            MatchedLogs.append(line)
+        counter += 1
+    ValidSelection = False
+    while ValidSelection == False:
+        print("There are "+str(len(MatchedLogs))+" "+category+" logs.")
+        print("[1] - Export to XLSX - Limit 1,000,000 Rows")
+        print("[2] - Display in console")
+        if category != "Critical" and category != "Unused" and category != "Unknown" and category != "Unclear":
+            print("[3] - Analyze these logs for problems")
+        print("[0] - Return to Analysis Menu - WIP")
+        Selection = input("What would you like to do with the logs? [0]  ") or "0"
+        match Selection:
+            case "1":
+                if PrefSwitchName != "None":
+                    OutputFileName = PrefSwitchName+"-SwlogsParsed-CriticalLogs-tsbuddy.xlsx"
+                else:
+                    OutputFileName = "SwlogsParsed-CriticalLogs-All-tsbuddy.xlsx"
+                try:
+                    with pd.ExcelWriter(OutputFileName,engine="xlsxwriter", engine_kwargs={'options': {'strings_to_formulas': False}}) as writer:
+                        DataDict = {'TSCount': MatchedCount, 'ChassisID': MatchedCategories, 'Timestamp': MatchedLogs, 'LogMessage': MatchedMeanings}
+                        print("Exporting data to file. This may take a moment.")
+                        Filedata = pd.DataFrame(DataDict)
+                        Filedata.to_excel(writer, sheet_name="ConsolidatedLogs")
+                        workbook = writer.book
+                        worksheet = writer.sheets["ConsolidatedLogs"]
+                        text_format = workbook.add_format({'num_format': '@'})
+                        worksheet.set_column("H:H", None, text_format)
+                    print("Export complete. Your logs are in "+OutputFileName)
+                except:
+                    print("Unable to write the file. Check if a file named "+OutputFileName+" is already open")
+            case "2":
+                ValidCountSelection = False
+                while ValidCountSelection == False:
+                    countselection = input("How many logs would you like to diplay in the console? There are "+str(len(output))+" total unique logs. [All]  ") or "All"
+                """
+                    if not int(countselection) and not "All":
+                                    print("Invalid number. Please insert a number")
+                                    continue
+                                if int(countselection) > len(output):
+                                    print("There are few logs than you are requesting. Printing all of them")
+                                    countselection = "All"
+                                if countselection == "All":
+                                    cursor.execute("select count(*),logmessage from Logs group by logmessage order by count(*) desc")
+                                    UniqueLogs = cursor.fetchall()
+                                    print("")
+                                    print("Log Count, Log Message")
+                                    print("----------------------")
+                                    for line in UniqueLogs:
+                                        line = str(line)
+                                        line = line.replace("(","")
+                                        line = line.replace(")","")
+                                        print(line)
+                                    ValidCountSelection = True
+                                else:
+                                    cursor.execute("select count(*),logmessage from Logs group by logmessage order by count(*) desc limit "+countselection)
+                                    UniqueLogs = cursor.fetchall()
+                                    print("")
+                                    print("Log Count, Log Message")
+                                    print("----------------------")
+                                    for line in UniqueLogs:
+                                        line = str(line)
+                                        line = line.replace("(","")
+                                        line = line.replace(")","")
+                                        print(line)
+                                    ValidCountSelection = True
+                """
+            case "3":
+                pass
             case "0":
                 ValidSelection = True
                 return
-            case _:
-                print("Invalid Selection")
 
 #############WIP
 def SearchTime(conn,cursor,NewestLog,OldestLog):
@@ -2670,12 +3143,33 @@ def APReadandParse(LogByLine,conn,cursor,Filename):
                     cursor.execute("insert into Logs (TSCount, TimeStamp, Filename, AppID, LogMessage) values ('"+str(TSCount)+"','"+TimeStamp+"','"+Filename+"','"+AppID+"','"+LogMessage+"')")
                     counter += 1
         case "core-mon-app-restore-syslog.txt":
-            for line in LogbyLine:
+            for line in LogByLine:
+                #skip empty lines
+                fiiiiiix
+                if len(line) < 2:
+                    continue
+                line = line.replace('\0',"")
                 line = line.strip()
-                parts = line.split(" : ")
-                
-
-                fiiiix
+                parts = line.split(" ")
+                TimeStamp = parts[0]+" "+parts[1]
+                AppID = parts[2]
+                SubApp = parts[3]
+                Priority = parts[4]
+                SwitchName = parts[5]+" "+parts[6]
+                LogPartsCounter = 8
+                partsSize = len(parts)
+                LogMessage = ""
+                while LogPartsCounter < partsSize:
+                    LogMessage += parts[LogPartsCounter]+" "
+                    LogPartsCounter += 1
+                LogMessage = LogMessage.strip()
+                #single quotes break the function
+                LogMessage = LogMessage.replace("'","")
+                LogMessage = LogMessage.encode('utf-8')
+                LogMessage = str(LogMessage)
+                LogMessage = LogMessage.replace("b'","")
+                LogMessage = LogMessage.replace("'","")
+                cursor.execute("insert into Logs (TSCount, TimeStamp, Filename, AppID, SubApp, Priority, SwitchName, LogMessage) values ('"+str(TSCount)+"','"+TimeStamp+"','"+Filename+"','"+AppID+"','"+SubApp+"','"+Priority+"','"+SwitchName+"','"+LogMessage+"')")
         case _:
             print(Filename+" does not match any of the parsers currently written")
 
@@ -2953,6 +3447,8 @@ def local_logs(conn,cursor):
     global SwlogDir1,SwlogDir1B,SwlogDir2,SwlogDir2B,SwlogDir3,SwlogDir4,SwlogDir5,SwlogDir6,SwlogDir7,SwlogDir8
     techSupports = []
     techSupportTimes = []
+    global dir_list
+    dir_list = os.listdir()
     #Search for a TechSupport in the current directory
     for item in dir_list:
         if fnmatch.fnmatch(item, "*tech_support_complete*"):
@@ -2971,7 +3467,7 @@ def local_logs(conn,cursor):
         case _:
             validSelection = False
             while validSelection == False:
-                print("There are "+str(len(techSupports)+1)+" tech support files or directories:")
+                print("There are "+str(len(techSupports))+" tech support files or directories:")
                 counter = 0
                 for listing in techSupports:
                     print("["+str(counter+1)+"] "+str(techSupports[counter])+" - "+str(techSupportTimes[counter]))
@@ -3486,6 +3982,8 @@ def main():
         if hosts == "AP":
             APLogFind(conn,cursor)
             return
+        if hosts == "AI":
+            AI(["Interfaces","TimeDesyncs"],"None")
         if hosts != []:
             #Erase existing log files in the directory
             for file in first_dir_list:
@@ -3496,6 +3994,7 @@ def main():
             grab_logs(hosts,conn,cursor)
         else:
             local_logs(conn,cursor)
+        return conn,cursor
 
 
 
@@ -3503,7 +4002,18 @@ def main():
             #first_load(conn,cursor)
         #If there's logs at all
         
-
+def AI(keywords,TimeRange):
+    global ReturnDataforAI
+    ReturnDataforAI = True
+    print("Yup, that's AI")
+    conn,cursor = main()
+    for keyword in keywords:
+        match keyword:
+            case "Reboots":
+                Reb
+            case "TimeDesyncs":
+                Analysis = TimeDesyncFinder(conn,cursor)
+    return ReturnforAI
 
 
 
