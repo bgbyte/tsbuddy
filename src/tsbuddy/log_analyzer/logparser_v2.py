@@ -1376,445 +1376,7 @@ def LogAnalysis(conn,cursor):
         selection = input("What would you like to look for? [0]  ") or "0"
         match selection:
             case "1":
-                print("Checking the logs for reboots")
-                AnyReboots = False
-                if RebootsInitialized == False:
-                    CategoryInit(conn,cursor,"Reboot")
-                cursor.execute("select Logs.ID,Logs.ChassisID,Logs.Timestamp from Logs,Reboot where (((InStr([Logs].[LogMessage],[Reboot].[LogMessage]))>0)) order by Logs.ChassisID,Logs.Timestamp")
-                Output = cursor.fetchall()
-                #print(Output)
-                Chassis1ListTime = []
-                Chassis2ListTime = []
-                Chassis3ListTime = []
-                Chassis4ListTime = []
-                Chassis5ListTime = []
-                Chassis6ListTime = []
-                Chassis7ListTime = []
-                Chassis8ListTime = []
-                Chassis1ListID = []
-                Chassis2ListID = []
-                Chassis3ListID = []
-                Chassis4ListID = []
-                Chassis5ListID = []
-                Chassis6ListID = []
-                Chassis7ListID = []
-                Chassis8ListID = []
-                for line in Output:
-                    #print(line)
-                    line = str(line)
-                    line = line.replace("[", "")
-                    line = line.replace("]", "")
-                    line = line.replace("(", "")
-                    line = line.replace(")", "")
-                    line = line.replace("' ", "")
-                    line = line.replace("'", "")
-                    parts = line.split(",")
-                    #print(parts)
-                    ID = parts[0].strip()
-                    ChassisID = parts[1].strip()
-                    Timestamp = parts [2].strip()
-                    #print("ID: "+ID)
-                    #print("ChassisID: "+ChassisID)
-                    #print("Timestamp: "+Timestamp)
-                    match ChassisID:
-                        case "Chassis 1":
-                            Chassis1ListTime.append(Timestamp)
-                            Chassis1ListID.append(ID)
-                        case "Chassis 2":
-                            Chassis2ListTime.append(Timestamp)
-                            Chassis2ListID.append(ID)
-                        case "Chassis 3":
-                            Chassis3ListTime.append(Timestamp)
-                            Chassis3ListID.append(ID)
-                        case "Chassis 4":
-                            Chassis4ListTime.append(Timestamp)
-                            Chassis4ListID.append(ID)
-                        case "Chassis 5":
-                            Chassis5ListTime.append(Timestamp)
-                            Chassis5ListID.append(ID)
-                        case "Chassis 6":
-                            Chassis6ListTime.append(Timestamp)
-                            Chassis6ListID.append(ID)
-                        case "Chassis 7":
-                            Chassis7ListTime.append(Timestamp)
-                            Chassis7ListID.append(ID)
-                        case "Chassis 8":
-                            Chassis8ListTime.append(Timestamp)
-                            Chassis8ListID.append(ID)
-
-                #print(len(Chassis1ListTime))
-                #print(len(Chassis2ListTime))
-                #print(len(Chassis3ListTime))
-                #print(len(Chassis4ListTime))
-                #print(len(Chassis5ListTime))
-                #print(len(Chassis6ListTime))
-                #print(len(Chassis7ListTime))
-                #print(len(Chassis8ListTime))
-                Chassis1RebootEvent = []
-                Chassis2RebootEvent = []
-                Chassis3RebootEvent = []
-                Chassis4RebootEvent = []
-                Chassis5RebootEvent = []
-                Chassis6RebootEvent = []
-                Chassis7RebootEvent = []
-                Chassis8RebootEvent = []
-                format_string = "%Y-%m-%d %H:%M:%S"
-                if Chassis1ListTime != []:
-                    AnyReboots = True
-                    FirstReboot = Chassis1ListTime[0]
-                    Chassis1RebootEvent.append(FirstReboot)
-                    counter = 0
-                    while counter+1 < len(Chassis1ListTime):
-                        #print("counter = "+str(counter))
-                        #print("Chassis1ListTime size: "+str(len(Chassis1ListTime)))
-                        Time1 = Chassis1ListTime[counter]
-                        Time2 = Chassis1ListTime[counter+1]
-                        #print(Time1)
-                        #print(Time2)
-                        #remove subseconds
-                        parts1 = Time1.split(".")
-                        Time1 = parts1[0]
-                        parts2 = Time2.split(".")
-                        Time2 = parts2[0]
-                        Time1 = datetime.datetime.strptime(Time1,format_string)
-                        Time2 = datetime.datetime.strptime(Time2,format_string)
-                        TimeDiff = Time2-Time1
-                        #print(Time1)
-                        #print(Time2)
-                        #print(TimeDiff)
-                        #If logs are more than 5 minutes apart
-                        if TimeDiff >= datetime.timedelta(minutes=5):
-                            #print("Reboot event!")
-                            Chassis1RebootEvent.append(Time1)
-                        counter += 1
-                    if len(Chassis1RebootEvent) == 1:
-                        print("Chassis 1 rebooted 1 time. Here is when the reboot happened:")
-                    else:
-                        print("Chassis 1 rebooted "+str(len(Chassis1RebootEvent))+" times. Here is when the reboots happened:")
-                    TimeDesync = False
-                    for line in Chassis1RebootEvent:
-                        print(line)
-                        if ("1970" or "1969") in str(line):
-                            TimeDesync = True
-                    if TimeDesync == True:
-                        print("Warning: There is a time desync present in the logs where the timestamp reads 1970 or 1969. Use 'Look for problems' and 'Locate time desyncs' to determine where")
-                if Chassis2ListTime != []:
-                    AnyReboots = True
-                    FirstReboot = Chassis2ListTime[0]
-                    Chassis2RebootEvent.append(FirstReboot)
-                    counter = 0
-                    while counter+1 < len(Chassis2ListTime):
-                        #print("counter = "+str(counter))
-                        #print("Chassis2ListTime size: "+str(len(Chassis2ListTime)))
-                        Time1 = Chassis2ListTime[counter]
-                        Time2 = Chassis2ListTime[counter+1]
-                        #print(Time1)
-                        #print(Time2)
-                        #remove subseconds
-                        parts1 = Time1.split(".")
-                        Time1 = parts1[0]
-                        parts2 = Time2.split(".")
-                        Time2 = parts2[0]
-                        Time1 = datetime.datetime.strptime(Time1,format_string)
-                        Time2 = datetime.datetime.strptime(Time2,format_string)
-                        TimeDiff = Time2-Time1
-                        #print(Time1)
-                        #print(Time2)
-                        #print(TimeDiff)
-                        #If logs are more than 5 minutes apart
-                        if TimeDiff >= datetime.timedelta(minutes=5):
-                            #print("Reboot event!")
-                            Chassis2RebootEvent.append(Time2)
-                        counter += 1
-                    if len(Chassis2RebootEvent) == 1:
-                        print("Chassis 2 rebooted 1 time. Here is when the reboot happened:")
-                    else:
-                        print("Chassis 2 rebooted "+str(len(Chassis2RebootEvent))+" times. Here is when the reboots happened:")
-                    TimeDesync = False
-                    for line in Chassis2RebootEvent:
-                        print(line)
-                        if ("1970" or "1969") in str(line):
-                            TimeDesync = True
-                    if TimeDesync == True:
-                        print("Warning: There is a time desync present in the logs where the timestamp reads 1970 or 1969. Use 'Look for problems' and 'Locate time desyncs' to determine where")
-                if Chassis3ListTime != []:
-                    AnyReboots = True
-                    FirstReboot = Chassis3ListTime[0]
-                    Chassis3RebootEvent.append(FirstReboot)
-                    counter = 0
-                    while counter+1 < len(Chassis3ListTime):
-                        #print("counter = "+str(counter))
-                        #print("Chassis3ListTime size: "+str(len(Chassis3ListTime)))
-                        Time1 = Chassis3ListTime[counter]
-                        Time2 = Chassis3ListTime[counter+1]
-                        #print(Time1)
-                        #print(Time2)
-                        #remove subseconds
-                        parts1 = Time1.split(".")
-                        Time1 = parts1[0]
-                        parts2 = Time2.split(".")
-                        Time2 = parts2[0]
-                        Time1 = datetime.datetime.strptime(Time1,format_string)
-                        Time2 = datetime.datetime.strptime(Time2,format_string)
-                        TimeDiff = Time2-Time1
-                        #print(Time1)
-                        #print(Time2)
-                        #print(TimeDiff)
-                        #If logs are more than 5 minutes apart
-                        if TimeDiff >= datetime.timedelta(minutes=5):
-                            #print("Reboot event!")
-                            Chassis3RebootEvent.append(Time1)
-                        counter += 1
-                    if len(Chassis3RebootEvent) == 1:
-                        print("Chassis 3 rebooted 1 time. Here is when the reboot happened:")
-                    else:
-                        print("Chassis 3 rebooted "+str(len(Chassis3RebootEvent))+" times. Here is when the reboots happened:")
-                    TimeDesync = False
-                    for line in Chassis3RebootEvent:
-                        print(line)
-                        if ("1970" or "1969") in str(line):
-                            TimeDesync = True
-                    if TimeDesync == True:
-                        print("Warning: There is a time desync present in the logs where the timestamp reads 1970 or 1969. Use 'Look for problems' and 'Locate time desyncs' to determine where")
-                if Chassis4ListTime != []:
-                    AnyReboots = True
-                    FirstReboot = Chassis4ListTime[0]
-                    Chassis4RebootEvent.append(FirstReboot)
-                    counter = 0
-                    while counter+1 < len(Chassis4ListTime):
-                        #print("counter = "+str(counter))
-                        #print("Chassis4ListTime size: "+str(len(Chassis4ListTime)))
-                        Time1 = Chassis4ListTime[counter]
-                        Time2 = Chassis4ListTime[counter+1]
-                        #print(Time1)
-                        #print(Time2)
-                        #remove subseconds
-                        parts1 = Time1.split(".")
-                        Time1 = parts1[0]
-                        parts2 = Time2.split(".")
-                        Time2 = parts2[0]
-                        Time1 = datetime.datetime.strptime(Time1,format_string)
-                        Time2 = datetime.datetime.strptime(Time2,format_string)
-                        TimeDiff = Time2-Time1
-                        #print(Time1)
-                        #print(Time2)
-                        #print(TimeDiff)
-                        #If logs are more than 5 minutes apart
-                        if TimeDiff >= datetime.timedelta(minutes=5):
-                            #print("Reboot event!")
-                            Chassis4RebootEvent.append(Time1)
-                        counter += 1
-                    if len(Chassis4RebootEvent) == 1:
-                        print("Chassis 4 rebooted 1 time. Here is when the reboot happened:")
-                    else:
-                        print("Chassis 4 rebooted "+str(len(Chassis4RebootEvent))+" times. Here is when the reboots happened:")
-                    TimeDesync = False
-                    for line in Chassis4RebootEvent:
-                        print(line)
-                        if ("1970" or "1969") in str(line):
-                            TimeDesync = True
-                    if TimeDesync == True:
-                        print("Warning: There is a time desync present in the logs where the timestamp reads 1970 or 1969. Use 'Look for problems' and 'Locate time desyncs' to determine where")
-                if Chassis5ListTime != []:
-                    AnyReboots = True
-                    FirstReboot = Chassis5ListTime[0]
-                    Chassis5RebootEvent.append(FirstReboot)
-                    counter = 0
-                    while counter+1 < len(Chassis5ListTime):
-                        #print("counter = "+str(counter))
-                        #print("Chassis5ListTime size: "+str(len(Chassis5ListTime)))
-                        Time1 = Chassis5ListTime[counter]
-                        Time2 = Chassis5ListTime[counter+1]
-                        #print(Time1)
-                        #print(Time2)
-                        #remove subseconds
-                        parts1 = Time1.split(".")
-                        Time1 = parts1[0]
-                        parts2 = Time2.split(".")
-                        Time2 = parts2[0]
-                        Time1 = datetime.datetime.strptime(Time1,format_string)
-                        Time2 = datetime.datetime.strptime(Time2,format_string)
-                        TimeDiff = Time2-Time1
-                        #print(Time1)
-                        #print(Time2)
-                        #print(TimeDiff)
-                        #If logs are more than 5 minutes apart
-                        if TimeDiff >= datetime.timedelta(minutes=5):
-                            #print("Reboot event!")
-                            Chassis5RebootEvent.append(Time1)
-                        counter += 1
-                    if len(Chassis5RebootEvent) == 1:
-                        print("Chassis 5 rebooted 1 time. Here is when the reboot happened:")
-                    else:
-                        print("Chassis 5 rebooted "+str(len(Chassis5RebootEvent))+" times. Here is when the reboots happened:")
-                    TimeDesync = False
-                    for line in Chassis5RebootEvent:
-                        print(line)
-                        if ("1970" or "1969") in str(line):
-                            TimeDesync = True
-                    if TimeDesync == True:
-                        print("Warning: There is a time desync present in the logs where the timestamp reads 1970 or 1969. Use 'Look for problems' and 'Locate time desyncs' to determine where")
-                if Chassis6ListTime != []:
-                    AnyReboots = True
-                    FirstReboot = Chassis6ListTime[0]
-                    Chassis6RebootEvent.append(FirstReboot)
-                    counter = 0
-                    while counter+1 < len(Chassis6ListTime):
-                        #print("counter = "+str(counter))
-                        #print("Chassis6ListTime size: "+str(len(Chassis6ListTime)))
-                        Time1 = Chassis6ListTime[counter]
-                        Time2 = Chassis6ListTime[counter+1]
-                        #print(Time1)
-                        #print(Time2)
-                        #remove subseconds
-                        parts1 = Time1.split(".")
-                        Time1 = parts1[0]
-                        parts2 = Time2.split(".")
-                        Time2 = parts2[0]
-                        Time1 = datetime.datetime.strptime(Time1,format_string)
-                        Time2 = datetime.datetime.strptime(Time2,format_string)
-                        TimeDiff = Time2-Time1
-                        #print(Time1)
-                        #print(Time2)
-                        #print(TimeDiff)
-                        #If logs are more than 5 minutes apart
-                        if TimeDiff >= datetime.timedelta(minutes=5):
-                            #print("Reboot event!")
-                            Chassis6RebootEvent.append(Time1)
-                        counter += 1
-                    if len(Chassis6RebootEvent) == 1:
-                        print("Chassis 6 rebooted 1 time. Here is when the reboot happened:")
-                    else:
-                        print("Chassis 6 rebooted "+str(len(Chassis6RebootEvent))+" times. Here is when the reboots happened:")
-                    TimeDesync = False
-                    for line in Chassis6RebootEvent:
-                        print(line)
-                        if ("1970" or "1969") in str(line):
-                            TimeDesync = True
-                    if TimeDesync == True:
-                        print("Warning: There is a time desync present in the logs where the timestamp reads 1970 or 1969. Use 'Look for problems' and 'Locate time desyncs' to determine where")
-                if Chassis7ListTime != []:
-                    AnyReboots = True
-                    FirstReboot = Chassis7ListTime[0]
-                    Chassis7RebootEvent.append(FirstReboot)
-                    counter = 0
-                    while counter+1 < len(Chassis7ListTime):
-                        #print("counter = "+str(counter))
-                        #print("Chassis7ListTime size: "+str(len(Chassis7ListTime)))
-                        Time1 = Chassis7ListTime[counter]
-                        Time2 = Chassis7ListTime[counter+1]
-                        #print(Time1)
-                        #print(Time2)
-                        #remove subseconds
-                        parts1 = Time1.split(".")
-                        Time1 = parts1[0]
-                        parts2 = Time2.split(".")
-                        Time2 = parts2[0]
-                        Time1 = datetime.datetime.strptime(Time1,format_string)
-                        Time2 = datetime.datetime.strptime(Time2,format_string)
-                        TimeDiff = Time2-Time1
-                        #print(Time1)
-                        #print(Time2)
-                        #print(TimeDiff)
-                        #If logs are more than 5 minutes apart
-                        if TimeDiff >= datetime.timedelta(minutes=5):
-                            #print("Reboot event!")
-                            Chassis7RebootEvent.append(Time1)
-                        counter += 1
-                    if len(Chassis7RebootEvent) == 1:
-                        print("Chassis 7 rebooted 1 time. Here is when the reboot happened:")
-                    else:
-                        print("Chassis 7 rebooted "+str(len(Chassis7RebootEvent))+" times. Here is when the reboots happened:")
-                    TimeDesync = False
-                    for line in Chassis7RebootEvent:
-                        print(line)
-                        if ("1970" or "1969") in str(line):
-                            TimeDesync = True
-                    if TimeDesync == True:
-                        print("Warning: There is a time desync present in the logs where the timestamp reads 1970 or 1969. Use 'Look for problems' and 'Locate time desyncs' to determine where")
-                if Chassis8ListTime != []:
-                    AnyReboots = True
-                    FirstReboot = Chassis8ListTime[0]
-                    Chassis8RebootEvent.append(FirstReboot)
-                    counter = 0
-                    while counter+1 < len(Chassis8ListTime):
-                        #print("counter = "+str(counter))
-                        #print("Chassis8ListTime size: "+str(len(Chassis8ListTime)))
-                        Time1 = Chassis8ListTime[counter]
-                        Time2 = Chassis8ListTime[counter+1]
-                        #print(Time1)
-                        #print(Time2)
-                        #remove subseconds
-                        parts1 = Time1.split(".")
-                        Time1 = parts1[0]
-                        parts2 = Time2.split(".")
-                        Time2 = parts2[0]
-                        Time1 = datetime.datetime.strptime(Time1,format_string)
-                        Time2 = datetime.datetime.strptime(Time2,format_string)
-                        TimeDiff = Time2-Time1
-                        #print(Time1)
-                        #print(Time2)
-                        #print(TimeDiff)
-                        #If logs are more than 5 minutes apart
-                        if TimeDiff >= datetime.timedelta(minutes=5):
-                            #print("Reboot event!")
-                            Chassis8RebootEvent.append(Time1)
-                        counter += 1
-                    if len(Chassis8RebootEvent) == 1:
-                        print("Chassis 8 rebooted 1 time. Here is when the reboot happened:")
-                    else:
-                        print("Chassis 8 rebooted "+str(len(Chassis8RebootEvent))+" times. Here is when the reboots happened:")
-                    TimeDesync = False
-                    for line in Chassis8RebootEvent:
-                        print(line)
-                        if ("1970" or "1969") in str(line):
-                            TimeDesync = True
-                    if TimeDesync == True:
-                        print("Warning: There is a time desync present in the logs where the timestamp reads 1970 or 1969. Use 'Look for problems' and 'Locate time desyncs' to determine where")
-                ValidSubSelection = False
-                if AnyReboots == False:
-                    print("There are no reboots in the logs. Returning to Analysis menu.")
-                    ValidSubSelection = True
-                while ValidSubSelection == False:
-                    print("[1] - Export reboot logs to xlsx - Limit 1,000,000 rows")
-                    print("[2] - Display reboot logs")
-                    print("[3] - Show logs around each reboot - Not Implemented")
-                    print("[4] - Look for reboot reason - Not Implemented")
-                    print("[0] - Go back")
-                    selection = input("What would you like to do? [0] ") or "0"
-                    match selection:
-                        case "1":
-                            if PrefSwitchName != "None":
-                                OutputFileName = PrefSwitchName+"-SwlogsParsed-LogAnalysis-Reboots-tsbuddy.xlsx"
-                            else:
-                                OutputFileName = "SwlogsParsed-LogAnalysis-Reboots-tsbuddy.xlsx"
-                ###### After option select    
-                            try:
-                                with pd.ExcelWriter(OutputFileName,engine="xlsxwriter", engine_kwargs={'options': {'strings_to_formulas': False}}) as writer:
-                                    print("Exporting data to file. This may take a moment.")
-                                    if TSImportedNumber > 1:
-                                        Output = pd.read_sql("select Logs.TSCount,Logs.ChassisID,Logs.Filename,Logs.Timestamp,Logs.SwitchName,Logs.Source,Logs.Model,Logs.AppID,Logs.Subapp,Logs.Priority,Logs.LogMessage from Logs,Reboot where (((InStr([Logs].[LogMessage],[Reboot].[LogMessage]))>0)) order by Timestamp desc", conn)
-                                    else:
-                                        Output = pd.read_sql("select Logs.ChassisID,Logs.Filename,Logs.Timestamp,Logs.SwitchName,Logs.Source,Logs.Model,Logs.AppID,Logs.Subapp,Logs.Priority,Logs.LogMessage from Logs,Reboot where (((InStr([Logs].[LogMessage],[Reboot].[LogMessage]))>0)) order by Timestamp desc", conn)    
-                                    Output.to_excel(writer, sheet_name="ConsolidatedLogs")
-                                    workbook = writer.book
-                                    worksheet = writer.sheets["ConsolidatedLogs"]
-                                    text_format = workbook.add_format({'num_format': '@'})
-                                    worksheet.set_column("H:H", None, text_format)
-                                print("Export complete. Your logs are in "+OutputFileName)
-                            except:
-                                print("Unable to write the file. Check if a file named "+OutputFileName+" is already open")
-                        case "2":
-                            cursor.execute("select Logs.ChassisID,Logs.Filename,Logs.Timestamp,Logs.SwitchName,Logs.Source,Logs.Model,Logs.AppID,Logs.Subapp,Logs.Priority,Logs.LogMessage from Logs,Reboot where (((InStr([Logs].[LogMessage],[Reboot].[LogMessage]))>0)) order by Timestamp desc")
-                            Output = cursor.fetchall()
-                            for line in Output:
-                                print(line)
-                        case "3":
-                            pass
-                        case "4":
-                            pass
-                        case "0":
-                            ValidSubSelection = True
+                RebootAnalysis(conn,cursor)
             case "2":
                 if VCInitialized == False:
                     CategoryInit(conn,cursor,"VC")
@@ -1842,6 +1404,447 @@ def LogAnalysis(conn,cursor):
                 return
             case _:
                 print("Invalid Selection")
+
+def RebootAnalysis(conn,cursor):
+    print("Checking the logs for reboots")
+    AnyReboots = False
+    if RebootsInitialized == False:
+        CategoryInit(conn,cursor,"Reboot")
+    cursor.execute("select Logs.ID,Logs.ChassisID,Logs.Timestamp from Logs,Reboot where (((InStr([Logs].[LogMessage],[Reboot].[LogMessage]))>0)) order by Logs.ChassisID,Logs.Timestamp")
+    Output = cursor.fetchall()
+    #print(Output)
+    Chassis1ListTime = []
+    Chassis2ListTime = []
+    Chassis3ListTime = []
+    Chassis4ListTime = []
+    Chassis5ListTime = []
+    Chassis6ListTime = []
+    Chassis7ListTime = []
+    Chassis8ListTime = []
+    Chassis1ListID = []
+    Chassis2ListID = []
+    Chassis3ListID = []
+    Chassis4ListID = []
+    Chassis5ListID = []
+    Chassis6ListID = []
+    Chassis7ListID = []
+    Chassis8ListID = []
+    for line in Output:
+        #print(line)
+        line = str(line)
+        line = line.replace("[", "")
+        line = line.replace("]", "")
+        line = line.replace("(", "")
+        line = line.replace(")", "")
+        line = line.replace("' ", "")
+        line = line.replace("'", "")
+        parts = line.split(",")
+        #print(parts)
+        ID = parts[0].strip()
+        ChassisID = parts[1].strip()
+        Timestamp = parts [2].strip()
+        #print("ID: "+ID)
+        #print("ChassisID: "+ChassisID)
+        #print("Timestamp: "+Timestamp)
+        match ChassisID:
+            case "Chassis 1":
+                Chassis1ListTime.append(Timestamp)
+                Chassis1ListID.append(ID)
+            case "Chassis 2":
+                Chassis2ListTime.append(Timestamp)
+                Chassis2ListID.append(ID)
+            case "Chassis 3":
+                Chassis3ListTime.append(Timestamp)
+                Chassis3ListID.append(ID)
+            case "Chassis 4":
+                Chassis4ListTime.append(Timestamp)
+                Chassis4ListID.append(ID)
+            case "Chassis 5":
+                Chassis5ListTime.append(Timestamp)
+                Chassis5ListID.append(ID)
+            case "Chassis 6":
+                Chassis6ListTime.append(Timestamp)
+                Chassis6ListID.append(ID)
+            case "Chassis 7":
+                Chassis7ListTime.append(Timestamp)
+                Chassis7ListID.append(ID)
+            case "Chassis 8":
+                Chassis8ListTime.append(Timestamp)
+                Chassis8ListID.append(ID)
+
+    #print(len(Chassis1ListTime))
+    #print(len(Chassis2ListTime))
+    #print(len(Chassis3ListTime))
+    #print(len(Chassis4ListTime))
+    #print(len(Chassis5ListTime))
+    #print(len(Chassis6ListTime))
+    #print(len(Chassis7ListTime))
+    #print(len(Chassis8ListTime))
+    Chassis1RebootEvent = []
+    Chassis2RebootEvent = []
+    Chassis3RebootEvent = []
+    Chassis4RebootEvent = []
+    Chassis5RebootEvent = []
+    Chassis6RebootEvent = []
+    Chassis7RebootEvent = []
+    Chassis8RebootEvent = []
+    format_string = "%Y-%m-%d %H:%M:%S"
+    if Chassis1ListTime != []:
+        AnyReboots = True
+        FirstReboot = Chassis1ListTime[0]
+        Chassis1RebootEvent.append(FirstReboot)
+        counter = 0
+        while counter+1 < len(Chassis1ListTime):
+            #print("counter = "+str(counter))
+            #print("Chassis1ListTime size: "+str(len(Chassis1ListTime)))
+            Time1 = Chassis1ListTime[counter]
+            Time2 = Chassis1ListTime[counter+1]
+            #print(Time1)
+            #print(Time2)
+            #remove subseconds
+            parts1 = Time1.split(".")
+            Time1 = parts1[0]
+            parts2 = Time2.split(".")
+            Time2 = parts2[0]
+            Time1 = datetime.datetime.strptime(Time1,format_string)
+            Time2 = datetime.datetime.strptime(Time2,format_string)
+            TimeDiff = Time2-Time1
+            #print(Time1)
+            #print(Time2)
+            #print(TimeDiff)
+            #If logs are more than 5 minutes apart
+            if TimeDiff >= datetime.timedelta(minutes=5):
+                #print("Reboot event!")
+                Chassis1RebootEvent.append(Time1)
+            counter += 1
+        if len(Chassis1RebootEvent) == 1:
+            print("Chassis 1 rebooted 1 time. Here is when the reboot happened:")
+        else:
+            print("Chassis 1 rebooted "+str(len(Chassis1RebootEvent))+" times. Here is when the reboots happened:")
+        TimeDesync = False
+        for line in Chassis1RebootEvent:
+            print(line)
+            if ("1970" or "1969") in str(line):
+                TimeDesync = True
+        if TimeDesync == True:
+            print("Warning: There is a time desync present in the logs where the timestamp reads 1970 or 1969. Use 'Look for problems' and 'Locate time desyncs' to determine where")
+    if Chassis2ListTime != []:
+        AnyReboots = True
+        FirstReboot = Chassis2ListTime[0]
+        Chassis2RebootEvent.append(FirstReboot)
+        counter = 0
+        while counter+1 < len(Chassis2ListTime):
+            #print("counter = "+str(counter))
+            #print("Chassis2ListTime size: "+str(len(Chassis2ListTime)))
+            Time1 = Chassis2ListTime[counter]
+            Time2 = Chassis2ListTime[counter+1]
+            #print(Time1)
+            #print(Time2)
+            #remove subseconds
+            parts1 = Time1.split(".")
+            Time1 = parts1[0]
+            parts2 = Time2.split(".")
+            Time2 = parts2[0]
+            Time1 = datetime.datetime.strptime(Time1,format_string)
+            Time2 = datetime.datetime.strptime(Time2,format_string)
+            TimeDiff = Time2-Time1
+            #print(Time1)
+            #print(Time2)
+            #print(TimeDiff)
+            #If logs are more than 5 minutes apart
+            if TimeDiff >= datetime.timedelta(minutes=5):
+                #print("Reboot event!")
+                Chassis2RebootEvent.append(Time2)
+            counter += 1
+        if len(Chassis2RebootEvent) == 1:
+            print("Chassis 2 rebooted 1 time. Here is when the reboot happened:")
+        else:
+            print("Chassis 2 rebooted "+str(len(Chassis2RebootEvent))+" times. Here is when the reboots happened:")
+        TimeDesync = False
+        for line in Chassis2RebootEvent:
+            print(line)
+            if ("1970" or "1969") in str(line):
+                TimeDesync = True
+        if TimeDesync == True:
+            print("Warning: There is a time desync present in the logs where the timestamp reads 1970 or 1969. Use 'Look for problems' and 'Locate time desyncs' to determine where")
+    if Chassis3ListTime != []:
+        AnyReboots = True
+        FirstReboot = Chassis3ListTime[0]
+        Chassis3RebootEvent.append(FirstReboot)
+        counter = 0
+        while counter+1 < len(Chassis3ListTime):
+            #print("counter = "+str(counter))
+            #print("Chassis3ListTime size: "+str(len(Chassis3ListTime)))
+            Time1 = Chassis3ListTime[counter]
+            Time2 = Chassis3ListTime[counter+1]
+            #print(Time1)
+            #print(Time2)
+            #remove subseconds
+            parts1 = Time1.split(".")
+            Time1 = parts1[0]
+            parts2 = Time2.split(".")
+            Time2 = parts2[0]
+            Time1 = datetime.datetime.strptime(Time1,format_string)
+            Time2 = datetime.datetime.strptime(Time2,format_string)
+            TimeDiff = Time2-Time1
+            #print(Time1)
+            #print(Time2)
+            #print(TimeDiff)
+            #If logs are more than 5 minutes apart
+            if TimeDiff >= datetime.timedelta(minutes=5):
+                #print("Reboot event!")
+                Chassis3RebootEvent.append(Time1)
+            counter += 1
+        if len(Chassis3RebootEvent) == 1:
+            print("Chassis 3 rebooted 1 time. Here is when the reboot happened:")
+        else:
+            print("Chassis 3 rebooted "+str(len(Chassis3RebootEvent))+" times. Here is when the reboots happened:")
+        TimeDesync = False
+        for line in Chassis3RebootEvent:
+            print(line)
+            if ("1970" or "1969") in str(line):
+                TimeDesync = True
+        if TimeDesync == True:
+            print("Warning: There is a time desync present in the logs where the timestamp reads 1970 or 1969. Use 'Look for problems' and 'Locate time desyncs' to determine where")
+    if Chassis4ListTime != []:
+        AnyReboots = True
+        FirstReboot = Chassis4ListTime[0]
+        Chassis4RebootEvent.append(FirstReboot)
+        counter = 0
+        while counter+1 < len(Chassis4ListTime):
+            #print("counter = "+str(counter))
+            #print("Chassis4ListTime size: "+str(len(Chassis4ListTime)))
+            Time1 = Chassis4ListTime[counter]
+            Time2 = Chassis4ListTime[counter+1]
+            #print(Time1)
+            #print(Time2)
+            #remove subseconds
+            parts1 = Time1.split(".")
+            Time1 = parts1[0]
+            parts2 = Time2.split(".")
+            Time2 = parts2[0]
+            Time1 = datetime.datetime.strptime(Time1,format_string)
+            Time2 = datetime.datetime.strptime(Time2,format_string)
+            TimeDiff = Time2-Time1
+            #print(Time1)
+            #print(Time2)
+            #print(TimeDiff)
+            #If logs are more than 5 minutes apart
+            if TimeDiff >= datetime.timedelta(minutes=5):
+                #print("Reboot event!")
+                Chassis4RebootEvent.append(Time1)
+            counter += 1
+        if len(Chassis4RebootEvent) == 1:
+            print("Chassis 4 rebooted 1 time. Here is when the reboot happened:")
+        else:
+            print("Chassis 4 rebooted "+str(len(Chassis4RebootEvent))+" times. Here is when the reboots happened:")
+        TimeDesync = False
+        for line in Chassis4RebootEvent:
+            print(line)
+            if ("1970" or "1969") in str(line):
+                TimeDesync = True
+        if TimeDesync == True:
+            print("Warning: There is a time desync present in the logs where the timestamp reads 1970 or 1969. Use 'Look for problems' and 'Locate time desyncs' to determine where")
+    if Chassis5ListTime != []:
+        AnyReboots = True
+        FirstReboot = Chassis5ListTime[0]
+        Chassis5RebootEvent.append(FirstReboot)
+        counter = 0
+        while counter+1 < len(Chassis5ListTime):
+            #print("counter = "+str(counter))
+            #print("Chassis5ListTime size: "+str(len(Chassis5ListTime)))
+            Time1 = Chassis5ListTime[counter]
+            Time2 = Chassis5ListTime[counter+1]
+            #print(Time1)
+            #print(Time2)
+            #remove subseconds
+            parts1 = Time1.split(".")
+            Time1 = parts1[0]
+            parts2 = Time2.split(".")
+            Time2 = parts2[0]
+            Time1 = datetime.datetime.strptime(Time1,format_string)
+            Time2 = datetime.datetime.strptime(Time2,format_string)
+            TimeDiff = Time2-Time1
+            #print(Time1)
+            #print(Time2)
+            #print(TimeDiff)
+            #If logs are more than 5 minutes apart
+            if TimeDiff >= datetime.timedelta(minutes=5):
+                #print("Reboot event!")
+                Chassis5RebootEvent.append(Time1)
+            counter += 1
+        if len(Chassis5RebootEvent) == 1:
+            print("Chassis 5 rebooted 1 time. Here is when the reboot happened:")
+        else:
+            print("Chassis 5 rebooted "+str(len(Chassis5RebootEvent))+" times. Here is when the reboots happened:")
+        TimeDesync = False
+        for line in Chassis5RebootEvent:
+            print(line)
+            if ("1970" or "1969") in str(line):
+                TimeDesync = True
+        if TimeDesync == True:
+            print("Warning: There is a time desync present in the logs where the timestamp reads 1970 or 1969. Use 'Look for problems' and 'Locate time desyncs' to determine where")
+    if Chassis6ListTime != []:
+        AnyReboots = True
+        FirstReboot = Chassis6ListTime[0]
+        Chassis6RebootEvent.append(FirstReboot)
+        counter = 0
+        while counter+1 < len(Chassis6ListTime):
+            #print("counter = "+str(counter))
+            #print("Chassis6ListTime size: "+str(len(Chassis6ListTime)))
+            Time1 = Chassis6ListTime[counter]
+            Time2 = Chassis6ListTime[counter+1]
+            #print(Time1)
+            #print(Time2)
+            #remove subseconds
+            parts1 = Time1.split(".")
+            Time1 = parts1[0]
+            parts2 = Time2.split(".")
+            Time2 = parts2[0]
+            Time1 = datetime.datetime.strptime(Time1,format_string)
+            Time2 = datetime.datetime.strptime(Time2,format_string)
+            TimeDiff = Time2-Time1
+            #print(Time1)
+            #print(Time2)
+            #print(TimeDiff)
+            #If logs are more than 5 minutes apart
+            if TimeDiff >= datetime.timedelta(minutes=5):
+                #print("Reboot event!")
+                Chassis6RebootEvent.append(Time1)
+            counter += 1
+        if len(Chassis6RebootEvent) == 1:
+            print("Chassis 6 rebooted 1 time. Here is when the reboot happened:")
+        else:
+            print("Chassis 6 rebooted "+str(len(Chassis6RebootEvent))+" times. Here is when the reboots happened:")
+        TimeDesync = False
+        for line in Chassis6RebootEvent:
+            print(line)
+            if ("1970" or "1969") in str(line):
+                TimeDesync = True
+        if TimeDesync == True:
+            print("Warning: There is a time desync present in the logs where the timestamp reads 1970 or 1969. Use 'Look for problems' and 'Locate time desyncs' to determine where")
+    if Chassis7ListTime != []:
+        AnyReboots = True
+        FirstReboot = Chassis7ListTime[0]
+        Chassis7RebootEvent.append(FirstReboot)
+        counter = 0
+        while counter+1 < len(Chassis7ListTime):
+            #print("counter = "+str(counter))
+            #print("Chassis7ListTime size: "+str(len(Chassis7ListTime)))
+            Time1 = Chassis7ListTime[counter]
+            Time2 = Chassis7ListTime[counter+1]
+            #print(Time1)
+            #print(Time2)
+            #remove subseconds
+            parts1 = Time1.split(".")
+            Time1 = parts1[0]
+            parts2 = Time2.split(".")
+            Time2 = parts2[0]
+            Time1 = datetime.datetime.strptime(Time1,format_string)
+            Time2 = datetime.datetime.strptime(Time2,format_string)
+            TimeDiff = Time2-Time1
+            #print(Time1)
+            #print(Time2)
+            #print(TimeDiff)
+            #If logs are more than 5 minutes apart
+            if TimeDiff >= datetime.timedelta(minutes=5):
+                #print("Reboot event!")
+                Chassis7RebootEvent.append(Time1)
+            counter += 1
+        if len(Chassis7RebootEvent) == 1:
+            print("Chassis 7 rebooted 1 time. Here is when the reboot happened:")
+        else:
+            print("Chassis 7 rebooted "+str(len(Chassis7RebootEvent))+" times. Here is when the reboots happened:")
+        TimeDesync = False
+        for line in Chassis7RebootEvent:
+            print(line)
+            if ("1970" or "1969") in str(line):
+                TimeDesync = True
+        if TimeDesync == True:
+            print("Warning: There is a time desync present in the logs where the timestamp reads 1970 or 1969. Use 'Look for problems' and 'Locate time desyncs' to determine where")
+    if Chassis8ListTime != []:
+        AnyReboots = True
+        FirstReboot = Chassis8ListTime[0]
+        Chassis8RebootEvent.append(FirstReboot)
+        counter = 0
+        while counter+1 < len(Chassis8ListTime):
+            #print("counter = "+str(counter))
+            #print("Chassis8ListTime size: "+str(len(Chassis8ListTime)))
+            Time1 = Chassis8ListTime[counter]
+            Time2 = Chassis8ListTime[counter+1]
+            #print(Time1)
+            #print(Time2)
+            #remove subseconds
+            parts1 = Time1.split(".")
+            Time1 = parts1[0]
+            parts2 = Time2.split(".")
+            Time2 = parts2[0]
+            Time1 = datetime.datetime.strptime(Time1,format_string)
+            Time2 = datetime.datetime.strptime(Time2,format_string)
+            TimeDiff = Time2-Time1
+            #print(Time1)
+            #print(Time2)
+            #print(TimeDiff)
+            #If logs are more than 5 minutes apart
+            if TimeDiff >= datetime.timedelta(minutes=5):
+                #print("Reboot event!")
+                Chassis8RebootEvent.append(Time1)
+            counter += 1
+        if len(Chassis8RebootEvent) == 1:
+            print("Chassis 8 rebooted 1 time. Here is when the reboot happened:")
+        else:
+            print("Chassis 8 rebooted "+str(len(Chassis8RebootEvent))+" times. Here is when the reboots happened:")
+        TimeDesync = False
+        for line in Chassis8RebootEvent:
+            print(line)
+            if ("1970" or "1969") in str(line):
+                TimeDesync = True
+        if TimeDesync == True:
+            print("Warning: There is a time desync present in the logs where the timestamp reads 1970 or 1969. Use 'Look for problems' and 'Locate time desyncs' to determine where")
+    ValidSubSelection = False
+    if AnyReboots == False:
+        print("There are no reboots in the logs. Returning to Analysis menu.")
+        ValidSubSelection = True
+    while ValidSubSelection == False:
+        print("[1] - Export reboot logs to xlsx - Limit 1,000,000 rows")
+        print("[2] - Display reboot logs")
+        print("[3] - Show logs around each reboot - Not Implemented")
+        print("[4] - Look for reboot reason - Not Implemented")
+        print("[0] - Go back")
+        selection = input("What would you like to do? [0] ") or "0"
+        match selection:
+            case "1":
+                if PrefSwitchName != "None":
+                    OutputFileName = PrefSwitchName+"-SwlogsParsed-LogAnalysis-Reboots-tsbuddy.xlsx"
+                else:
+                    OutputFileName = "SwlogsParsed-LogAnalysis-Reboots-tsbuddy.xlsx"
+                ###### After option select    
+                try:
+                    with pd.ExcelWriter(OutputFileName,engine="xlsxwriter", engine_kwargs={'options': {'strings_to_formulas': False}}) as writer:
+                        print("Exporting data to file. This may take a moment.")
+                        if TSImportedNumber > 1:
+                            Output = pd.read_sql("select Logs.TSCount,Logs.ChassisID,Logs.Filename,Logs.Timestamp,Logs.SwitchName,Logs.Source,Logs.Model,Logs.AppID,Logs.Subapp,Logs.Priority,Logs.LogMessage from Logs,Reboot where (((InStr([Logs].[LogMessage],[Reboot].[LogMessage]))>0)) order by Timestamp desc", conn)
+                        else:
+                            Output = pd.read_sql("select Logs.ChassisID,Logs.Filename,Logs.Timestamp,Logs.SwitchName,Logs.Source,Logs.Model,Logs.AppID,Logs.Subapp,Logs.Priority,Logs.LogMessage from Logs,Reboot where (((InStr([Logs].[LogMessage],[Reboot].[LogMessage]))>0)) order by Timestamp desc", conn)    
+                        Output.to_excel(writer, sheet_name="ConsolidatedLogs")
+                        workbook = writer.book
+                        worksheet = writer.sheets["ConsolidatedLogs"]
+                        text_format = workbook.add_format({'num_format': '@'})
+                        worksheet.set_column("H:H", None, text_format)
+                    print("Export complete. Your logs are in "+OutputFileName)
+                except:
+                    print("Unable to write the file. Check if a file named "+OutputFileName+" is already open")
+            case "2":
+                cursor.execute("select Logs.ChassisID,Logs.Filename,Logs.Timestamp,Logs.SwitchName,Logs.Source,Logs.Model,Logs.AppID,Logs.Subapp,Logs.Priority,Logs.LogMessage from Logs,Reboot where (((InStr([Logs].[LogMessage],[Reboot].[LogMessage]))>0)) order by Timestamp desc")
+                Output = cursor.fetchall()
+                for line in Output:
+                    print(line)
+            case "3":
+                pass
+            case "4":
+                pass
+            case "0":
+                ValidSubSelection = True
 
 def AllKnownLogs(conn,cursor):
     if AnalysisInitialized == False:
@@ -1959,15 +1962,13 @@ def AllKnownLogs(conn,cursor):
     print("There are "+str(CriticalCount)+" Critical logs.")
     if CriticalCount > 0:
         print("It is recommended to view any Critical logs")
-    cursor.execute("select LogMeaning from Logs where LogMeaning is not null")
-    Output = cursor.fetchall()
-    print(Output)
     cursor.execute("select count(*) from Logs where LogMeaning is not null")
     Output = cursor.fetchall()
     #print(Output)
     KnownLogCount = CleanOutput(str(Output))
     ValidSubSelection = False
     while ValidSubSelection == False:
+        print("")
         print("There are "+KnownLogCount+" logs with a known explanation.")
         print("[1] - Export to XLSX - Limit 1,000,000 Rows")
         print("[2] - Display Critical logs in the console")

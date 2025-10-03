@@ -1,7 +1,7 @@
 ﻿Source,Category,LogMessage,LogMeaning
 Console,Reboot,Reboot,Keyword Check
 Console,Reboot,reboot,Keyword Check
-Swlog,Reboot-Critical,BusyBox,This is the first log that appears in the console during switch bootup
+Swlog,Reboot-Critical,syslogd started: BusyBox,This is the first log that appears in the console during switch bootup
 Console,Reboot-Critical,Chassis Supervision: CMM has reached the ready state,This log indicates that the switch has booted successfully and should begin passing traffic
 Console,Reboot-Hardware,Power Supply % Up,A Power Supply is online. It is common to see Power Supply events during a bootup
 Console,Reboot-Hardware,Power Supply % inserted,A Power Supply has been connected. It is common to see Power Supply events during a bootup
@@ -22,7 +22,7 @@ swlog,Health,rising above,The switch is entering a high CPU status
 Console,Reboot-Health,PowerSupply status changed,A power event has occurred on one of the power supplies
 swlog,Reboot-Health,ps % change,A power event has occurred on one of the power supplies
 swlog,General,CLI log,A command was inputted into the switch by a user
-swlog,Interface-MACLearning,"Unknown VP value,  flush per VP ignore",A MAC address is being flushed from the MAC table as the result of an interface change
+swlog,Interface-MACLearning,"Unknown VP value, flush per VP ignore",A MAC address is being flushed from the MAC table as the result of an interface change
 swlog,Unused,repeated % times,TrapAbsorptionTrap
 swlog,Interface-VC,"LINKSTS gport %, state 1",An interface on another switch in the VC has come up. gport is the hex for the interface
 swlog,Interface-VC,"LINKSTS gport %, state 0",An interface on another switch in the VC has gone down. gport is the hex for the interface
@@ -40,7 +40,7 @@ swlog,Interface-STP,stpnimsg_processMsgFromPM: PM_LINK_STATUS_MSGID gPort=% link
 swlog,Interface,pmnHALLinkStatusCallback% LINKSTS % DOWN,"An interface has gone down, the interface is clearly listed"
 swlog,Interface,pmnHALLinkStatusCallback% LINKSTS % UP,"An interface has come up, the interface is clearly listed"
 swlog,Interface,esmSetRateLimit,Configuration is being applied to an interface. Typically part of an interface coming online. The interface is not listed
-swlog,unknown,flow_index vrf 0 vlan 23 group 239.255.255.250 host 0.0.0.0 dest 0.0.0.0 orig 0.0.0.0 ipmc:3 (failed),Unable to learn about this log. Cases imply it may be a sign of corruption
+swlog,unknown,flow_index vrf % vlan % group % host 0.0.0.0 dest 0.0.0.0 orig 0.0.0.0 ipmc:% (failed),Unable to learn about this log. Cases imply it may be a sign of corruption
 swlog,VC-Critical,bootMgrVCMTopoDataEventHandler:slot split status event,A VC Split has occurred.
 swlog,VC,bootMgrVCMTopoDataEventHandler: neighbor % valid 1,"A switch has found its VC neighbor. Neighbor 0 is the 1st VFL, Neighbor 2 is the 2nd VFL. Chassis ID not present in this log"
 swlog,VC-Interface-Unclear,lpRxProcessReport %: Report Command Successful Decode 0,This appears to be related to VFL interface changes. Nathan does not know
@@ -52,3 +52,4 @@ swlog,General-Security,Login by ,"A user has logged in. The username, source IP 
 swlog,Unused-Unclear,myChassisID,Appears to be associated with the VC bootup process
 swlog,Unused-Unclear,Access isValid,Appears to be associated with the VC bootup process
 swlog,Critical,TCAM_RET_NOT_FOUND,TCAM errors may be a sign of a hardware failure or a software bug. It is recommended to open a case with support
+swlog,Hardware-Interface,CSLIB_EVENT_SFP_INSERTED,An SFP has been connected to the switch. The interface is not listed
