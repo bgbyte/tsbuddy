@@ -1518,12 +1518,16 @@ def InterfaceAnalysis(conn,cursor):
 			Filename = line[3]
 			LogMessage = line[4]
 			#print(LogMessage)
+			Parts = LogMessage.split(" operationally ")
+			Status = Parts[1]
+			"""
 			Parts = LogMessage.split(" ")
 			Interface = Parts[3]
 			if Parts[4] == "Alias":
 				Status = Parts[7]
 			else:
 				Status = Parts[5]
+			"""
 			if Status == "up":
 				Status = "UP"
 			if Status == "down":
