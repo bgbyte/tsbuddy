@@ -428,6 +428,10 @@ Please ensure your code adheres to any existing style guidelines and includes te
 
 ## Changelog
 
+### 2025-09-30
+- LogAnalyzer no longer depends on 7zip
+- LogAnalyzer supports adding multiple tech support files for analysis
+
 ### 2025-09-20
 - Added LogAnalyzer v2 by @NathanielOrlina, currently depends on 7zip
 - Restructured the library to accomodate imports better
