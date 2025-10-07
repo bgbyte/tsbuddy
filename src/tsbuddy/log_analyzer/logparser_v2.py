@@ -1380,18 +1380,19 @@ def TimeDesyncFinder(conn,cursor):
 
 #############WIP
 def LogAnalysis(conn,cursor):
-	if AnalysisInitialized == False:
-		AnalysisInit(conn,cursor)
+#	if AnalysisInitialized == False:
+#		AnalysisInit(conn,cursor)
 	ValidSelection = False
 	while ValidSelection == False:
 		print("[1] - Reboots")
 		print("[2] - VC Issues - Not Implemented")
-		print("[3] - Interface Status - Not Implemented")
+		print("[3] - Interface Status")
 		print("[4] - OSPF - Not Implemented")
 		print("[5] - SPB - Not Implemented")
 		print("[6] - Health - Not Implemented")
 		print("[7] - Connectivity - Not Implemented")
 		print("[8] - Locate time desyncs - WIP")
+		print("[9] - Critical Logs - Not Implemented")
 		print("[All] - Analyze all known logs - Long Operation")
 		print("[0] - Return to Main Menu")
 		selection = input("What would you like to look for? [0]  ") or "0"
@@ -1412,6 +1413,8 @@ def LogAnalysis(conn,cursor):
 				AnalysisSelector(conn,cursor,"Connectivity")
 			case "8":
 				TimeDesyncFinder(conn,cursor)
+			case "9":
+				AnalysisSelector(conn,cursor,"Critical")
 			case "All":
 				AllKnownLogs(conn,cursor)
 			case "0":
@@ -1558,7 +1561,7 @@ def InterfaceAnalysis(conn,cursor):
 		print("[2] - Show all flap logs for a particular interface - Not Implemented")
 		print("[3] - Show interface flaps for a given time period - Not Implemented")
 		print("[0] - Return to Analysis Menu")
-		Selection = input("What would you like to do with the Interface logs? Currently: Number of Flaps per interface. [0]  ") or "0"
+		Selection = input("What would you like to do with the Number of Flaps per Interface logs? [0]  ") or "0"
 		match Selection:
 			case "1":
 				if PrefSwitchName != "None":
@@ -1610,9 +1613,9 @@ def InterfaceAnalysis(conn,cursor):
 							while ValidSubSelection == False:
 								print("There are "+str(len(Output))+" flap logs for that interface")
 								print("[1] - Export to XLSX, limit 1,000,000 rows")
-								print("[2] - Display logs in console")
-								print("[3] - Filter the logs by timestamp")
-								print("[4] - Show how long the interface down was for")
+								print("[2] - Display logs in console - Not Implemented")
+								print("[3] - Filter the logs by timestamp - Not Implemented")
+								print("[4] - Show how long the interface down was for - Not Implemented")
 								print("[0] - Return to Interface analysis menu")
 								ValidSubSelection = input("What would you like to do with the logs for "+InterfaceSelection+"? [0]  ")
 								match ValidSubSelection:
@@ -1640,8 +1643,35 @@ def RebootAnalysis(conn,cursor):
 	if AnalysisInitialized == False:
 		AnalysisInit(conn,cursor)
 		AnalysisInitialized = True
+	global RebootsInitialized
+	if RebootsInitialized == False:
+		RebootsInitialized = True
+		cursor.execute("select LogMessage,Category,LogMeaning from Analysis where category like '%Reboot%'")
+		AnalysisOutput = cursor.fetchall()
+		LogDictionary = []
+		LogMeaning = []
+		for line in AnalysisOutput:
+			Message = line[0]
+			Meaning = line[2]
+			Message.strip()
+			Meaning.strip()
+			#print(Message)
+			#print(Meaning)
+			LogDictionary.append(Message)
+			LogMeaning.append(Meaning)
+		counter = 0
+		DictionaryLength = len(LogDictionary)
+		while counter < DictionaryLength:
+			query = "update Logs set LogMeaning = '"+LogMeaning[counter]+"', Category = 'Reboot' where LogMessage like '%"+LogDictionary[counter]+"%'"
+			#print(query)
+			cursor.execute(query)
+			#cursor.execute("update Logs (LogMeaning, Category) values ("+LogMeaning[counter]+", "+Category[counter]+") where LogMessage like '%"+LogDictionary[counter]+"%'")
+			counter += 1
 	AnyReboots = False
+	"""
 	cursor.execute("select Logs.ID,Logs.ChassisID,Logs.Timestamp from Logs,Reboot where (((InStr([Logs].[LogMessage],[Reboot].[LogMessage]))>0)) order by Logs.ChassisID,Logs.Timestamp")
+	"""
+	cursor.execute("select ID,ChassisID,Timestamp from Logs where Category like '%Reboot%' order by ChassisID,Timestamp")
 	Output = cursor.fetchall()
 	#print(Output)
 	Chassis1ListTime = []
@@ -2532,7 +2562,7 @@ def SearchTime(conn,cursor,NewestLog,OldestLog):
 	ValidSelection = False
 	while ValidSelection == False:
 		print("The logs contain the time range of "+OldestLog+" to "+NewestLog)
-		print("[1] - Show all logs between a time range - WIP")
+		print("[1] - Show all logs between a time range")
 		print("[2] - Show all logs for a specific day")
 		print("[3] - Show all logs for a specific hour - Not implemented")
 		print("[4] - Show all logs for a specific minute - Not implemented")
@@ -2555,16 +2585,16 @@ def SearchTime(conn,cursor,NewestLog,OldestLog):
 					PaddingTime = "2000-01-01 00:00:00"
 					Time1Len = len(timerequested1)
 					Time2Len = len(timerequested2)
-					print(timerequested1)
-					print(Time1Len)
+					#print(timerequested1)
+					#print(Time1Len)
 					Time1Full = timerequested1+PaddingTime[Time1Len:19]
-					print(Time1Full)
+					#print(Time1Full)
 					Time2Full = timerequested2+PaddingTime[Time2Len:19]
 					format_string = "%Y-%m-%d %H:%M:%S"
 					Time1 = datetime.datetime.strptime(Time1Full,format_string)
 					Time2 = datetime.datetime.strptime(Time2Full,format_string)
-					print(Time1)
-					print(Time2)
+					#print(Time1)
+					#print(Time2)
 					command = ""
 					try:
 						if Time1 > Time2:
@@ -2605,7 +2635,6 @@ def SearchTime(conn,cursor,NewestLog,OldestLog):
 									text_format = workbook.add_format({'num_format': '@'})
 									worksheet.set_column("H:H", None, text_format)
 								print("Export complete. Your logs are in "+OutputFileName)
-								ValidSubselection = True
 							except:
 								print("Unable to write the file. Check if a file named "+OutputFileName+" is already open")
 						case "2":
@@ -2707,7 +2736,7 @@ def SearchKeyword(conn,cursor):
 			print("[1] Export to XLSX - Limit 1,000,000 rows")
 			print("[2] Find unique logs")
 			print("[3] Run another search")
-			print("[4] Return to main menu")
+			print("[0] Return to main menu")
 			#####Add a "refine further"
 			selection = input("What would you like to do with these logs? [1]") or "1"
 			match selection:
@@ -2794,7 +2823,7 @@ def SearchKeyword(conn,cursor):
 				case "3":
 					ValidSelection = True
 					SearchKeyword(conn,cursor)
-				case "4":
+				case "0":
 					ValidSelection = True
 				case _:
 					print("Invalid input.")

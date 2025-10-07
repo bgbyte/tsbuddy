@@ -17,7 +17,7 @@ Console,VC,VC Takeover,A VC Topology change is taking place
 Console,Interface,operationally up,An interface has come up. The interface is clearly listed in the log
 Console,Interface,operationally down,An interface has gone down. The interface is clearly listed in the log
 swlog,Upgrades,Booting up with,Displays the directory and image to be used in the next boot
-swlog,Health,Buffer list is empty,Out of Memory
+swlog,"Health,Critical",Buffer list is empty,Out of Memory
 swlog,Health,rising above,The switch is entering a high CPU status
 Console,Reboot-Health,PowerSupply status changed,A power event has occurred on one of the power supplies
 swlog,Reboot-Health,ps % change,A power event has occurred on one of the power supplies
