@@ -135,6 +135,7 @@ OSPFInitialized = False
 SPBInitialized = False
 HealthInitialized = False
 ConnectivityInitialized = False
+CriticalInitialized = False
 AllLogsInitialized = False
 
 
@@ -1461,6 +1462,109 @@ def AnalysisSelector(conn,cursor,category):
 			UnknownAnalysis(conn,cursor)
 
 
+def CriticalAnalysis(conn,cursor):
+	print("Checking the logs for Interface issues")
+	global AnalysisInitialized
+	if AnalysisInitialized == False:
+		AnalysisInit(conn,cursor)
+		AnalysisInitialized = True
+	global CriticalInitialized
+	if CriticalInitialized == False:
+		CriticalInitialized = True
+		cursor.execute("select LogMessage,Category,LogMeaning from Analysis where category like '%Critical%'")
+		AnalysisOutput = cursor.fetchall()
+		LogDictionary = []
+		LogMeaning = []
+		for line in AnalysisOutput:
+			Message = line[0]
+			Meaning = line[2]
+			Message.strip()
+			Meaning.strip()
+			#print(Message)
+			#print(Meaning)
+			LogDictionary.append(Message)
+			LogMeaning.append(Meaning)
+		counter = 0
+		DictionaryLength = len(LogDictionary)
+		while counter < DictionaryLength:
+			query = "update Logs set LogMeaning = '"+LogMeaning[counter]+"', Category = 'Critical' where LogMessage like '%"+LogDictionary[counter]+"%'"
+			#print(query)
+			cursor.execute(query)
+			#cursor.execute("update Logs (LogMeaning, Category) values ("+LogMeaning[counter]+", "+Category[counter]+") where LogMessage like '%"+LogDictionary[counter]+"%'")
+			counter += 1
+	cursor.execute("select count(*) from Logs where Category like '%Critical%'")
+	Output = cursor.fetchall()
+	count = CleanOutput(str(Output))
+	ValidSelection = False
+	while ValidSelection == False:
+		print("")
+		print("There are "+count+" Critical logs")
+		print("")
+		print("[1] - Export to XLSX - Limit 1,000,000 Rows")
+		print("[2] - Display Critical logs in the console")
+		print("[0] - Return to Analysis Menu")
+		Selection = input("What would you like to do with the logs? [0]  ") or "0"
+		match Selection:
+			case "1":
+				if PrefSwitchName != "None":
+					OutputFileName = PrefSwitchName+"-SwlogsParsed-LogAnalysis-CriticalLogs-tsbuddy.xlsx"
+				else:
+					OutputFileName = "SwlogsParsed-LogAnalysis-CriticalLogs-tsbuddy.xlsx"
+				try:
+					with pd.ExcelWriter(OutputFileName,engine="xlsxwriter", engine_kwargs={'options': {'strings_to_formulas': False}}) as writer:
+						print("Exporting data to file. This may take a moment.")
+						if TSImportedNumber > 1:
+							Output = pd.read_sql("select tscount,ChassisID,Timestamp,LogMessage,LogMeaning from Logs where category like '%Critical%' order by timestamp", conn)
+						else:
+							Output = pd.read_sql("select ChassisID,Timestamp,LogMessage,LogMeaning from Logs where category like '%Critical%' order by timestamp", conn)	
+						Output.to_excel(writer, sheet_name="ConsolidatedLogs")
+						workbook = writer.book
+						worksheet = writer.sheets["ConsolidatedLogs"]
+						text_format = workbook.add_format({'num_format': '@'})
+						worksheet.set_column("H:H", None, text_format)
+					print("Export complete. Your logs are in "+OutputFileName)
+				except:
+					print("Unable to write the file. Check if a file named "+OutputFileName+" is already open")
+			case "2":
+				ValidCountSelection = False
+				while ValidCountSelection == False:
+					countselection = input("How many logs would you like to diplay in the console? There are "+count+" total Critical logs. [All]  ") or "All"
+					if countselection == "All":
+						countselection = int(count)
+					if not str(countselection).isnumeric():
+						print("Invalid number. Please insert a number")
+						continue
+					if int(countselection) > int(count):
+						print("There are few logs than you are requesting. Printing all of them")
+						cursor.execute("select ChassisID,TimeStamp,LogMessage,LogMeaning from Logs where category like '%Critical%' order by Timestamp")
+						CriticalLogs = cursor.fetchall()
+						print("")
+						print("ChassisID, Timestamp, LogMessage, LogMeaning")
+						print("----------------------")
+						for line in CriticalLogs:
+							line = str(line)
+							line = line.replace("(","")
+							line = line.replace(")","")
+							print(line)
+						ValidCountSelection = True
+					else:
+						cursor.execute("select ChassisID,TimeStamp,LogMessage,LogMeaning from Logs where category like '%Critical%' order by Timestamp limit "+str(countselection))
+						CriticalLogs = cursor.fetchall()
+						print("")
+						print("ChassisID, Timestamp, LogMessage, LogMeaning")
+						print("----------------------")
+						for line in CriticalLogs:
+							line = str(line)
+							line = line.replace("(","")
+							line = line.replace(")","")
+							print(line)
+						ValidCountSelection = True
+			case "0":
+				ValidSelection = True
+			case _:
+				print("Invalid selection")
+
+
 def InterfaceAnalysis(conn,cursor):
 	print("Checking the logs for Interface issues")
 	global AnalysisInitialized
@@ -2112,9 +2216,6 @@ def AllKnownLogs(conn,cursor):
 	if AnalysisInitialized == False:
 		AnalysisInit(conn,cursor)
 		AnalysisInitialized = True
-###This whole thing can be done better if we can compare all Logs.LogMessage against Analysis.LogMessage in SQL. This must support wildcards.
-	cursor.execute("select LogMessage,Category,LogMeaning from Analysis")
-	AnalysisOutput = cursor.fetchall()
 	#Count of categories
 	CategoryList = ["Reboot","Critical","Hardware","Connectivity","Health","SPB","VC","Interface","Upgrades","General","MACLearning","Unused","STP","Security","Unclear","Unknown"]
 	RebootCount = 0
@@ -2133,29 +2234,44 @@ def AllKnownLogs(conn,cursor):
 	SecurityCount = 0
 	UnclearCount = 0
 	UnknownCount = 0
-	#
-	Category = []
-	LogDictionary = []
-	LogMeaning = []
-	for line in AnalysisOutput:
-		Message = line[0]
-		Meaning = line[2]
-		Message.strip()
-		Meaning.strip()
-		#print(Message)
-		#print(Meaning)
-		Category.append(line[1])
-		LogDictionary.append(Message)
-		LogMeaning.append(Meaning)
-	counter = 0
-	DictionaryLength = len(LogDictionary)
-	while counter < DictionaryLength:
-		query = "update Logs set LogMeaning = '"+LogMeaning[counter]+"', Category = '"+Category[counter]+"' where LogMessage like '%"+LogDictionary[counter]+"%'"
-		#print(query)
-		cursor.execute(query)
-		#cursor.execute("update Logs (LogMeaning, Category) values ("+LogMeaning[counter]+", "+Category[counter]+") where LogMessage like '%"+LogDictionary[counter]+"%'")
-		counter += 1
-	cursor.execute("update Logs set Category = 'Unknown' where Category is NULL")
+###This whole thing can be done better if we can compare all Logs.LogMessage against Analysis.LogMessage in SQL. This must support wildcards.
+	#Initialize all Categories
+	global AllLogsInitialized
+	if AllLogsInitialized == False:
+		AllLogsInitialized = True
+		RebootsInitialized = True
+		VCInitialized = True
+		InterfaceInitialized = True
+		OSPFInitialized = True
+		SPBInitialized = True
+		HealthInitialized = True
+		ConnectivityInitialized = True
+		CriticalInitialized = True
+		cursor.execute("select LogMessage,Category,LogMeaning from Analysis")
+		AnalysisOutput = cursor.fetchall()
+		Category = []
+		LogDictionary = []
+		LogMeaning = []
+		for line in AnalysisOutput:
+			Message = line[0]
+			Meaning = line[2]
+			Message.strip()
+			Meaning.strip()
+			#print(Message)
+			#print(Meaning)
+			Category.append(line[1])
+			LogDictionary.append(Message)
+			LogMeaning.append(Meaning)
+		counter = 0
+		DictionaryLength = len(LogDictionary)
+		while counter < DictionaryLength:
+			query = "update Logs set LogMeaning = '"+LogMeaning[counter]+"', Category = '"+Category[counter]+"' where LogMessage like '%"+LogDictionary[counter]+"%'"
+			#print(query)
+			cursor.execute(query)
+			#cursor.execute("update Logs (LogMeaning, Category) values ("+LogMeaning[counter]+", "+Category[counter]+") where LogMessage like '%"+LogDictionary[counter]+"%'")
+			counter += 1
+		cursor.execute("update Logs set Category = 'Unknown' where Category is NULL")
+	#Group by category
 	for category in CategoryList:
 		cursor.execute("select count(*) from Logs where category like '%"+category+"%'")
 		line = cursor.fetchall()
@@ -2262,29 +2378,7 @@ def AllKnownLogs(conn,cursor):
 				except:
 					print("Unable to write the file. Check if a file named "+OutputFileName+" is already open")
 			case "2":
-				ValidCountSelection = False
-				while ValidCountSelection == False:
-					countselection = input("How many logs would you like to diplay in the console? There are "+str(CriticalCount)+" total Critical logs. [All]  ") or "All"
-					if countselection == "All":
-						countselection = CriticalCount
-					if not str(countselection).isnumeric():
-						print("Invalid number. Please insert a number")
-						continue
-					if int(countselection) > CriticalCount:
-						print("There are few logs than you are requesting. Printing all of them")
-						countselection = CriticalCount
-					else:
-						cursor.execute("select ChassisID,TimeStamp,LogMessage,LogMeaning from Logs where category like '%Critical%' order by Timestamp limit "+str(countselection))
-						CriticalLogs = cursor.fetchall()
-						print("")
-						print("ChassisID, Timestamp, LogMessage, LogMeaning")
-						print("----------------------")
-						for line in CriticalLogs:
-							line = str(line)
-							line = line.replace("(","")
-							line = line.replace(")","")
-							print(line)
-						ValidCountSelection = True
+				AnalysisSelector(conn,cursor,"Critical")
 			case "3":
 				ValidSubSelection = True
 				AnalysisSelector(conn,cursor,Category1)
