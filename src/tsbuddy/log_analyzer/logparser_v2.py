@@ -1393,7 +1393,7 @@ def LogAnalysis(conn,cursor):
 		print("[6] - Health - Not Implemented")
 		print("[7] - Connectivity - Not Implemented")
 		print("[8] - Locate time desyncs - WIP")
-		print("[9] - Critical Logs - Not Implemented")
+		print("[9] - Critical Logs")
 		print("[All] - Analyze all known logs - Long Operation")
 		print("[0] - Return to Main Menu")
 		selection = input("What would you like to look for? [0]  ") or "0"
