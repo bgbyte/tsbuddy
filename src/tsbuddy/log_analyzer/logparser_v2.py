@@ -1880,7 +1880,7 @@ def RebootAnalysis(conn,cursor):
 			#If logs are more than 5 minutes apart
 			if TimeDiff >= datetime.timedelta(minutes=5):
 				#print("Reboot event!")
-				Chassis1RebootEvent.append(Time1)
+				Chassis1RebootEvent.append(Time2)
 			counter += 1
 		if len(Chassis1RebootEvent) == 1:
 			print("Chassis 1 rebooted 1 time. Here is when the reboot happened:")
@@ -1958,7 +1958,7 @@ def RebootAnalysis(conn,cursor):
 			#If logs are more than 5 minutes apart
 			if TimeDiff >= datetime.timedelta(minutes=5):
 				#print("Reboot event!")
-				Chassis3RebootEvent.append(Time1)
+				Chassis3RebootEvent.append(Time2)
 			counter += 1
 		if len(Chassis3RebootEvent) == 1:
 			print("Chassis 3 rebooted 1 time. Here is when the reboot happened:")
@@ -1997,7 +1997,7 @@ def RebootAnalysis(conn,cursor):
 			#If logs are more than 5 minutes apart
 			if TimeDiff >= datetime.timedelta(minutes=5):
 				#print("Reboot event!")
-				Chassis4RebootEvent.append(Time1)
+				Chassis4RebootEvent.append(Time2)
 			counter += 1
 		if len(Chassis4RebootEvent) == 1:
 			print("Chassis 4 rebooted 1 time. Here is when the reboot happened:")
@@ -2036,7 +2036,7 @@ def RebootAnalysis(conn,cursor):
 			#If logs are more than 5 minutes apart
 			if TimeDiff >= datetime.timedelta(minutes=5):
 				#print("Reboot event!")
-				Chassis5RebootEvent.append(Time1)
+				Chassis5RebootEvent.append(Time2)
 			counter += 1
 		if len(Chassis5RebootEvent) == 1:
 			print("Chassis 5 rebooted 1 time. Here is when the reboot happened:")
@@ -2075,7 +2075,7 @@ def RebootAnalysis(conn,cursor):
 			#If logs are more than 5 minutes apart
 			if TimeDiff >= datetime.timedelta(minutes=5):
 				#print("Reboot event!")
-				Chassis6RebootEvent.append(Time1)
+				Chassis6RebootEvent.append(Time2)
 			counter += 1
 		if len(Chassis6RebootEvent) == 1:
 			print("Chassis 6 rebooted 1 time. Here is when the reboot happened:")
@@ -2114,7 +2114,7 @@ def RebootAnalysis(conn,cursor):
 			#If logs are more than 5 minutes apart
 			if TimeDiff >= datetime.timedelta(minutes=5):
 				#print("Reboot event!")
-				Chassis7RebootEvent.append(Time1)
+				Chassis7RebootEvent.append(Time2)
 			counter += 1
 		if len(Chassis7RebootEvent) == 1:
 			print("Chassis 7 rebooted 1 time. Here is when the reboot happened:")
@@ -2153,7 +2153,7 @@ def RebootAnalysis(conn,cursor):
 			#If logs are more than 5 minutes apart
 			if TimeDiff >= datetime.timedelta(minutes=5):
 				#print("Reboot event!")
-				Chassis8RebootEvent.append(Time1)
+				Chassis8RebootEvent.append(Time2)
 			counter += 1
 		if len(Chassis8RebootEvent) == 1:
 			print("Chassis 8 rebooted 1 time. Here is when the reboot happened:")
@@ -2188,9 +2188,9 @@ def RebootAnalysis(conn,cursor):
 					with pd.ExcelWriter(OutputFileName,engine="xlsxwriter", engine_kwargs={'options': {'strings_to_formulas': False}}) as writer:
 						print("Exporting data to file. This may take a moment.")
 						if TSImportedNumber > 1:
-							Output = pd.read_sql("select Logs.TSCount,Logs.ChassisID,Logs.Filename,Logs.Timestamp,Logs.SwitchName,Logs.Source,Logs.Model,Logs.AppID,Logs.Subapp,Logs.Priority,Logs.LogMessage from Logs,Reboot where (((InStr([Logs].[LogMessage],[Reboot].[LogMessage]))>0)) order by Timestamp", conn)
+							Output = pd.read_sql("select TSCount,ChassisID,Filename,Timestamp,SwitchName,Source,Model,AppID,Subapp,Priority,LogMessage from Logs where category like '%Reboot%' order by Timestamp", conn)
 						else:
-							Output = pd.read_sql("select Logs.ChassisID,Logs.Filename,Logs.Timestamp,Logs.SwitchName,Logs.Source,Logs.Model,Logs.AppID,Logs.Subapp,Logs.Priority,Logs.LogMessage from Logs,Reboot where (((InStr([Logs].[LogMessage],[Reboot].[LogMessage]))>0)) order by Timestamp", conn)	
+							Output = pd.read_sql("select ChassisID,Filename,Timestamp,SwitchName,Source,Model,AppID,Subapp,Priority,LogMessage from Logs where category like '%Reboot%' order by Timestamp", conn)
 						Output.to_excel(writer, sheet_name="ConsolidatedLogs")
 						workbook = writer.book
 						worksheet = writer.sheets["ConsolidatedLogs"]
@@ -2200,7 +2200,7 @@ def RebootAnalysis(conn,cursor):
 				except:
 					print("Unable to write the file. Check if a file named "+OutputFileName+" is already open")
 			case "2":
-				cursor.execute("select Logs.ChassisID,Logs.Filename,Logs.Timestamp,Logs.SwitchName,Logs.Source,Logs.Model,Logs.AppID,Logs.Subapp,Logs.Priority,Logs.LogMessage from Logs,Reboot where (((InStr([Logs].[LogMessage],[Reboot].[LogMessage]))>0)) order by Timestamp")
+				cursor.execute("select TSCount,ChassisID,Filename,Timestamp,SwitchName,Source,Model,AppID,Subapp,Priority,LogMessage from Logs where category like '%Reboot%' order by Timestamp")
 				Output = cursor.fetchall()
 				for line in Output:
 					print(line)
