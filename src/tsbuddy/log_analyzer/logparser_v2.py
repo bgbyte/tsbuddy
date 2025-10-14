@@ -24,9 +24,8 @@ import time
 
 #
 #TODO
-#TODO: Redo Reboots to use the Analysis Table
 #TODO: If all logs are in Epoch time
-#TODO: Remove Normal Logs (Flashsync)
+#TODO: Remove Unused Logs (Flashsync)
 #TODO: X logs before and after targetlog
 #TODO: Add LogMeaning
 #TODO: Integrate Tech Support downloader
@@ -136,6 +135,7 @@ SPBInitialized = False
 HealthInitialized = False
 ConnectivityInitialized = False
 CriticalInitialized = False
+UnusedInitialized = False
 AllLogsInitialized = False
 
 
@@ -1071,6 +1071,7 @@ def analysis_menu(conn,cursor):
 		print("[6] - Find most common logs")
 		print("[7] - Direct Query")
 		print("[8] - Change switch name for saved logfiles - Currently: "+PrefSwitchName)
+		print("[9] - Remove unneeded logs")
 		print("[AI] - Return the result for AI analysis")
 		print("[0] - Exit")
 		selection = input("What would you like to do with the logs? [0] ") or "0"
@@ -1094,12 +1095,148 @@ def analysis_menu(conn,cursor):
 				DirectQuery(conn,cursor)
 			case "8":
 				ChangeSwitchName()
+			case "9":
+				RemoveLogs(conn,cursor)
 			case "0":
 				validSelection = True
 				break
 			case _:
 				print("Invalid Selection")
 
+
+
+def RemoveLogs(conn,cursor):
+	ValidSelection = False
+	while ValidSelection == False:
+		cursor.execute("select count(*) from Logs")
+		count = CleanOutput(str(cursor.fetchall()))
+		cursor.execute("select Timestamp from Logs order by Timestamp desc limit 1")
+		NewestLog = CleanOutput(str(cursor.fetchall()))
+		cursor.execute("select Timestamp from Logs order by Timestamp limit 1")
+		OldestLog = CleanOutput(str(cursor.fetchall()))
+		print("There are "+count+" logs ranging from "+OldestLog+" to "+NewestLog)
+		print("[1] - Remove unused logs")
+		print("[2] - Remove logs based on a specific timeframe")
+		print("[0] - Return to Main Menu")
+		Selection = input("What logs would you like to remove? [0]  ") or "0"
+		match Selection:
+			case "1":
+				if UnusedInitialized == False:
+					AnalysisSelector(conn,cursor,"Unused")
+				cursor.execute("select count(*) from logs where category like '%Unused%'")
+				output = cursor.fetchall()
+				UnusedCount = CleanOutput(str(output))
+				if UnusedCount == "0":
+					print("There are no Unused logs in the log database. Returning to previous menu.")
+					continue
+				ValidSubselection = False
+				while ValidSubselection == False:
+					print("There are "+UnusedCount+" logs in the Unused category")
+					Subselection = input("Please confirm that you would like to remove them from the Log Database. [Yes]  ") or "Yes"
+					if "yes" in Subselection or "Yes" in Subselection or "y" in Subselection or "Y"in Subselection :
+						cursor.execute("delete from logs where category like '%Unused%'")
+						cursor.execute("select count(*) from Logs")
+						count = CleanOutput(str(cursor.fetchall()))
+						cursor.execute("select Timestamp from Logs order by Timestamp desc limit 1")
+						NewestLog = CleanOutput(str(cursor.fetchall()))
+						cursor.execute("select Timestamp from Logs order by Timestamp limit 1")
+						OldestLog = CleanOutput(str(cursor.fetchall()))
+						print(UnusedCount+" logs have been removed. There are now "+count+" logs ranging from "+OldestLog+" to "+NewestLog)
+						ValidSubselection = True
+						continue
+					if "no" in Subselection or "No" in Subselection or "n" in Subselection or "N"in Subselection :
+						print("Canceling delete request")
+						ValidSubselection = True
+						continue
+					else:
+						print("Invalid input, please answer 'Yes' or 'No'")
+			case "2":
+				print("")
+				print("The logs contain the time range of "+OldestLog+" to "+NewestLog)
+				ValidTimeSelection = False
+				while ValidTimeSelection == False:
+					timerequested1 = input("What is first time in your search range? Please use part of the format yyyy-mm-dd hh:mm:ss:  ")
+					if timerequested1 == "":
+						ValidTimeSelection == True
+						return
+					timerequested2 = input("What is second time in your search range? Please use part of the format yyyy-mm-dd hh:mm:ss:  ")
+					if timerequested1 == timerequested2:
+						print("Those are the same times, please insert two different times")
+						continue
+					PaddingTime = "2000-01-01 00:00:00"
+					Time1Len = len(timerequested1)
+					Time2Len = len(timerequested2)
+					#print(timerequested1)
+					#print(Time1Len)
+					Time1Full = timerequested1+PaddingTime[Time1Len:19]
+					#print(Time1Full)
+					Time2Full = timerequested2+PaddingTime[Time2Len:19]
+					format_string = "%Y-%m-%d %H:%M:%S"
+					try:
+						Time1 = datetime.datetime.strptime(Time1Full,format_string)
+						Time2 = datetime.datetime.strptime(Time2Full,format_string)
+					except:
+						print("Provided times do not match the format yyyy-mm-dd hh:mm:ss")
+						continue
+					#print(Time1)
+					#print(Time2)
+					try:
+						if Time1 > Time2:
+							cursor.execute("Select count(*) from Logs where TimeStamp >= '"+str(Time2)+"' and TimeStamp <= '"+str(Time1)+"'")
+							TimeSwap = Time1
+							Time1 = Time2
+							Time2 = TimeSwap
+							ValidTimeSelection = True
+						if Time2 > Time1:
+							cursor.execute("Select count(*) from Logs where TimeStamp >= '"+str(Time1)+"' and TimeStamp <= '"+str(Time2)+"'")
+							ValidTimeSelection = True
+					except:
+						print("Unable to run the command. Check your syntax and try again.")
+				TimeCount = CleanOutput(str(cursor.fetchall()))
+				ValidSubselection = False
+				while ValidSubselection == False:
+					print("")
+					print("There are "+str(TimeCount)+" logs between "+str(Time1)+" and "+str(Time2))
+					print("[1] - Remove all logs outside this timeframe")
+					print("[2] - Remove all logs within this timeframe")
+					print("[0] - Return to previous menu with no changes")
+					Subselection = input("What would you like to do with the logs? [0]  ") or "0"
+					match Subselection:
+						case "1":
+							cursor.execute("select count(*) from Logs where TimeStamp <= '"+str(Time1)+"'")
+							OutTime1Count = CleanOutput(str(cursor.fetchall()))
+							cursor.execute("select count(*) from Logs where TimeStamp >= '"+str(Time2)+"'")
+							OutTime2Count = CleanOutput(str(cursor.fetchall()))
+							OutTimeCount = int(OutTime1Count)+int(OutTime2Count)
+							cursor.execute("delete from Logs where TimeStamp >= '"+str(Time2)+"'")
+							cursor.execute("delete from Logs where TimeStamp <= '"+str(Time1)+"'")
+							cursor.execute("select count(*) from Logs")
+							count = CleanOutput(str(cursor.fetchall()))
+							cursor.execute("select Timestamp from Logs order by Timestamp desc limit 1")
+							NewestLog = CleanOutput(str(cursor.fetchall()))
+							cursor.execute("select Timestamp from Logs order by Timestamp limit 1")
+							OldestLog = CleanOutput(str(cursor.fetchall()))
+							print(str(OutTimeCount)+" logs have been removed. There are now "+count+" logs ranging from "+OldestLog+" to "+NewestLog)
+							ValidSubselection = True
+						case "2":
+							cursor.execute("delete from Logs where TimeStamp >= '"+str(Time1)+"' and TimeStamp <= '"+str(Time2)+"'")
+							cursor.execute("select count(*) from Logs")
+							count = CleanOutput(str(cursor.fetchall()))
+							cursor.execute("select Timestamp from Logs order by Timestamp desc limit 1")
+							NewestLog = CleanOutput(str(cursor.fetchall()))
+							cursor.execute("select Timestamp from Logs order by Timestamp limit 1")
+							OldestLog = CleanOutput(str(cursor.fetchall()))
+							print(TimeCount+" logs have been removed. There are now "+count+" logs ranging from "+OldestLog+" to "+NewestLog)
+							print("")
+							ValidSubselection = True
+						case "0":
+							ValidSubselection = True
+						case _:
+							print("Invalid selection, please enter '1', '2', or '0'")
+
+
+			case "0":
+				ValidSelection = True
 
 def CommonLog(conn,cursor):
 	ValidSelection = False
@@ -1394,6 +1531,7 @@ def LogAnalysis(conn,cursor):
 		print("[7] - Connectivity - Not Implemented")
 		print("[8] - Locate time desyncs - WIP")
 		print("[9] - Critical Logs")
+		print("[10] - Unused logs")
 		print("[All] - Analyze all known logs - Long Operation")
 		print("[0] - Return to Main Menu")
 		selection = input("What would you like to look for? [0]  ") or "0"
@@ -1416,6 +1554,8 @@ def LogAnalysis(conn,cursor):
 				TimeDesyncFinder(conn,cursor)
 			case "9":
 				AnalysisSelector(conn,cursor,"Critical")
+			case "10":
+				AnalysisSelector(conn,cursor,"Unused")
 			case "All":
 				AllKnownLogs(conn,cursor)
 			case "0":
@@ -1461,6 +1601,63 @@ def AnalysisSelector(conn,cursor,category):
 		case "Unknown":
 			UnknownAnalysis(conn,cursor)
 
+def UnusedAnalysis(conn,cursor):
+	print("Checking the logs for Unused logs")
+	global AnalysisInitialized
+	if AnalysisInitialized == False:
+		AnalysisInit(conn,cursor)
+		AnalysisInitialized = True
+	global UnusedInitialized
+	if UnusedInitialized == False:
+		UnusedInitialized = True
+		cursor.execute("select LogMessage,Category,LogMeaning from Analysis where category like '%Unused%'")
+		AnalysisOutput = cursor.fetchall()
+		LogDictionary = []
+		LogMeaning = []
+		for line in AnalysisOutput:
+			Message = line[0]
+			Meaning = line[2]
+			Message.strip()
+			Meaning.strip()
+			#print(Message)
+			#print(Meaning)
+			LogDictionary.append(Message)
+			LogMeaning.append(Meaning)
+		counter = 0
+		DictionaryLength = len(LogDictionary)
+		while counter < DictionaryLength:
+			query = "update Logs set LogMeaning = '"+LogMeaning[counter]+"', Category = 'Unused' where LogMessage like '%"+LogDictionary[counter]+"%'"
+			#print(query)
+			cursor.execute(query)
+			#cursor.execute("update Logs (LogMeaning, Category) values ("+LogMeaning[counter]+", "+Category[counter]+") where LogMessage like '%"+LogDictionary[counter]+"%'")
+			counter += 1
+	cursor.execute("select count(*) from logs where category like '%Unused%'")
+	output = cursor.fetchall()
+	UnusedCount = CleanOutput(str(output))
+	if UnusedCount == "0":
+		print("There are no Unused logs in the log database. Returning to previous menu.")
+		return
+	ValidSubselection = False
+	while ValidSubselection == False:
+		print("There are "+UnusedCount+" logs in the Unused category")
+		Subselection = input("Please confirm that you would like to remove them from the Log Database. [Yes]  ") or "Yes"
+		if "yes" in Subselection or "Yes" in Subselection or "y" in Subselection or "Y"in Subselection :
+			cursor.execute("delete from logs where category like '%Unused%'")
+			cursor.execute("select count(*) from Logs")
+			count = CleanOutput(str(cursor.fetchall()))
+			cursor.execute("select Timestamp from Logs order by Timestamp desc limit 1")
+			NewestLog = CleanOutput(str(cursor.fetchall()))
+			cursor.execute("select Timestamp from Logs order by Timestamp limit 1")
+			OldestLog = CleanOutput(str(cursor.fetchall()))
+			print(UnusedCount+" logs have been removed. There are now "+count+" logs ranging from "+OldestLog+" to "+NewestLog)
+			ValidSubselection = True
+			continue
+		if "no" in Subselection or "No" in Subselection or "n" in Subselection or "N"in Subselection :
+			print("Canceling delete request")
+			ValidSubselection = True
+			continue
+		else:
+			print("Invalid input, please answer 'Yes' or 'No'")
 
 def CriticalAnalysis(conn,cursor):
 	print("Checking the logs for Interface issues")
@@ -2237,6 +2434,15 @@ def AllKnownLogs(conn,cursor):
 ###This whole thing can be done better if we can compare all Logs.LogMessage against Analysis.LogMessage in SQL. This must support wildcards.
 	#Initialize all Categories
 	global AllLogsInitialized
+	global UnusedInitialized
+	global RebootsInitialized
+	global VCInitialized
+	global InterfaceInitialized
+	global OSPFInitialized
+	global SPBInitialized
+	global HealthInitialized
+	global ConnectivityInitialized
+	global CriticalInitialized
 	if AllLogsInitialized == False:
 		AllLogsInitialized = True
 		RebootsInitialized = True
@@ -2247,6 +2453,7 @@ def AllKnownLogs(conn,cursor):
 		HealthInitialized = True
 		ConnectivityInitialized = True
 		CriticalInitialized = True
+		UnusedInitialized = True
 		cursor.execute("select LogMessage,Category,LogMeaning from Analysis")
 		AnalysisOutput = cursor.fetchall()
 		Category = []
