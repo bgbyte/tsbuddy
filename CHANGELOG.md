@@ -1,5 +1,10 @@
 # Changelog
 
+### 2025-10-15 [0.0.37]
+- Added ability to download "latest" GA build, thank you @Medhi
+- Added more analysis features to LogAnalyzer, thank you @NathanielOrlina
+- Fixed bugs
+
 ### 2025-09-30 [0.0.34]
 - LogAnalyzer no longer depends on 7zip
 - LogAnalyzer supports adding multiple tech support files for analysis
