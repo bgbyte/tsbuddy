@@ -428,6 +428,9 @@ Please ensure your code adheres to any existing style guidelines and includes te
 
 ## Changelog
 
+### 2025-10-15
+- Added ability to download "latest" GA build, thank you @Medhi
+
 ### 2025-09-30
 - LogAnalyzer no longer depends on 7zip
 - LogAnalyzer supports adding multiple tech support files for analysis
