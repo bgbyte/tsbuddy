@@ -433,7 +433,7 @@ def get_family_from_ip(host: str) -> str | None:
         except:
             pass
 
-def main(folder_name=None, reload_when_finished=False, found_ga_build=None):
+def main(folder_name=None, reload_when_finished=False, found_ga_build=None, hosts=None):
     print("\nNote: you can lookup the GA build with aosdl-ga CLI command.\n")
     if not found_ga_build:
         aos_major, aos_build, aos_release = get_aos_version_simple()
@@ -444,7 +444,8 @@ def main(folder_name=None, reload_when_finished=False, found_ga_build=None):
     # Image mapping, moved to global scope for reusability
     base_ip = "http://10.46.4.37"
     base_dir = "/bop/images"
-    hosts = collect_hosts()
+    if not hosts:
+        hosts = collect_hosts()
     for host in hosts:
         download_images_for_host(host, aos_major, aos_build, aos_release, image_map, base_ip, base_dir, folder_name, reload_when_finished)
 

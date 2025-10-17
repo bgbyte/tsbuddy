@@ -13,6 +13,7 @@ old_clean_pycache.py
 ts-chat/
 *chat*
 uboot*json
+*aosdlv2*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
