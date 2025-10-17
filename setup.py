@@ -17,6 +17,7 @@ setup(
        'pandas>=2.3.1',
        #'prompt_toolkit>=3.0.0',
        #'openai>=0.27.0',
+       #'google-genai>=1.45.0',
    ],
    entry_points={
        'console_scripts': [
