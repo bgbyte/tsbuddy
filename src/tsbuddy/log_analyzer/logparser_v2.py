@@ -1074,7 +1074,7 @@ def analysis_menu(conn,cursor):
 		print("[9] - Remove unneeded logs")
 		print("[AI] - Return the result for AI analysis")
 		print("[0] - Exit")
-		selection = input("What would you like to do with the logs? [0] ") or "0"
+		selection = input("What would you like to do with the logs?  ")
 		match selection:
 			case "1":
 				context = "Full"
@@ -1522,6 +1522,7 @@ def LogAnalysis(conn,cursor):
 #		AnalysisInit(conn,cursor)
 	ValidSelection = False
 	while ValidSelection == False:
+		print("")
 		print("[1] - Reboots")
 		print("[2] - VC Issues - Not Implemented")
 		print("[3] - Interface Status")
@@ -1532,6 +1533,7 @@ def LogAnalysis(conn,cursor):
 		print("[8] - Locate time desyncs - WIP")
 		print("[9] - Critical Logs")
 		print("[10] - Unused logs")
+		print("[RCA] - Provide Root Cause Analysis - WIP")
 		print("[All] - Analyze all known logs - Long Operation")
 		print("[0] - Return to Main Menu")
 		selection = input("What would you like to look for? [0]  ") or "0"
@@ -1556,6 +1558,8 @@ def LogAnalysis(conn,cursor):
 				AnalysisSelector(conn,cursor,"Critical")
 			case "10":
 				AnalysisSelector(conn,cursor,"Unused")
+			case "RCA":
+				RootCauseAnalysis(conn,cursor)
 			case "All":
 				AllKnownLogs(conn,cursor)
 			case "0":
@@ -1699,6 +1703,7 @@ def CriticalAnalysis(conn,cursor):
 		print("")
 		print("[1] - Export to XLSX - Limit 1,000,000 Rows")
 		print("[2] - Display Critical logs in the console")
+		print("[3] - Provide Root Cause Analysis")
 		print("[0] - Return to Analysis Menu")
 		Selection = input("What would you like to do with the logs? [0]  ") or "0"
 		match Selection:
@@ -1756,11 +1761,28 @@ def CriticalAnalysis(conn,cursor):
 							line = line.replace(")","")
 							print(line)
 						ValidCountSelection = True
+			case "3":
+				RootCauseAnalysis(conn,cursor)
 			case "0":
 				ValidSelection = True
 			case _:
 				print("Invalid selection")
 
+def RootCauseAnalysis(conn,cursor):
+	MACFlaps = []
+	isMACFlapProblem = False
+	ArpInfoOverwrite = []
+	isArpInfoOverwriteProblem = False
+	Reboots = []
+	isRebootProblem = False
+	Health = []
+	isHealthProblem = False
+	PortFlaps = []
+	isPortFlapsProblem = False
+	Floods = []
+	isFloodProblem = []
+	VC = []
+	isVCProblem = False
 
 def InterfaceAnalysis(conn,cursor):
 	print("Checking the logs for Interface issues")
@@ -2414,7 +2436,7 @@ def AllKnownLogs(conn,cursor):
 		AnalysisInit(conn,cursor)
 		AnalysisInitialized = True
 	#Count of categories
-	CategoryList = ["Reboot","Critical","Hardware","Connectivity","Health","SPB","VC","Interface","Upgrades","General","MACLearning","Unused","STP","Security","Unclear","Unknown"]
+	CategoryList = ["Reboot","Critical","Hardware","Connectivity","Health","SPB","VC","Interface","Upgrades","General","MACLearning","Unused","STP","Security","Unclear","Unknown","OSPF"]
 	RebootCount = 0
 	CriticalCount = 0
 	HardwareCount = 0
@@ -2431,6 +2453,7 @@ def AllKnownLogs(conn,cursor):
 	SecurityCount = 0
 	UnclearCount = 0
 	UnknownCount = 0
+	OSPFCount = 0
 ###This whole thing can be done better if we can compare all Logs.LogMessage against Analysis.LogMessage in SQL. This must support wildcards.
 	#Initialize all Categories
 	global AllLogsInitialized
@@ -2443,6 +2466,7 @@ def AllKnownLogs(conn,cursor):
 	global HealthInitialized
 	global ConnectivityInitialized
 	global CriticalInitialized
+	global OSPFInitialized
 	if AllLogsInitialized == False:
 		AllLogsInitialized = True
 		RebootsInitialized = True
@@ -2454,6 +2478,7 @@ def AllKnownLogs(conn,cursor):
 		ConnectivityInitialized = True
 		CriticalInitialized = True
 		UnusedInitialized = True
+		OSPFInitialized = True
 		cursor.execute("select LogMessage,Category,LogMeaning from Analysis")
 		AnalysisOutput = cursor.fetchall()
 		Category = []
@@ -2515,7 +2540,9 @@ def AllKnownLogs(conn,cursor):
 				UnclearCount += int(CleanOutput(str(line[0])))
 			case "Unknown":
 				UnknownCount += int(CleanOutput(str(line[0])))
-	AllCategoryCounts = {UnclearCount: "Unclear", RebootCount: "Reboot", CriticalCount: "Critical", HardwareCount: "Hardware", ConnectivityCount: "Connectivity", HealthCount: "Health", SPBCount: "SPB", VCCount: "VC", InterfaceCount: "Interface", UpgradesCount: "Upgrades", GeneralCount: "General", MACLearningCount: "MAC Learning", UnusedCount: "Unused", STPCount: "STP", SecurityCount: "Security", UnknownCount: "Unknown"}
+			case "OSPF":
+				OSPFCount += int(CleanOutput(str(line[0])))
+	AllCategoryCounts = {OSPFCount: "OSPF", UnclearCount: "Unclear", RebootCount: "Reboot", CriticalCount: "Critical", HardwareCount: "Hardware", ConnectivityCount: "Connectivity", HealthCount: "Health", SPBCount: "SPB", VCCount: "VC", InterfaceCount: "Interface", UpgradesCount: "Upgrades", GeneralCount: "General", MACLearningCount: "MAC Learning", UnusedCount: "Unused", STPCount: "STP", SecurityCount: "Security", UnknownCount: "Unknown"}
 	AllCategoryCountsSorted = dict(sorted(AllCategoryCounts.items(),reverse=True))
 	KeysInterator = iter(AllCategoryCountsSorted.keys())
 	ValuesInterator = iter(AllCategoryCountsSorted.values())
@@ -2557,7 +2584,7 @@ def AllKnownLogs(conn,cursor):
 		print("")
 		print("There are "+KnownLogCount+" logs with a known explanation.")
 		print("[1] - Export to XLSX - Limit 1,000,000 Rows")
-		print("[2] - Display Critical logs in the console")
+		print("[2] - Review the Critical Logs")
 		print("[3] - Run an Analysis on "+Category1)
 		print("[4] - Run an Analysis on "+Category2)
 		print("[5] - Run an Analysis on "+Category3)
@@ -2595,6 +2622,39 @@ def AllKnownLogs(conn,cursor):
 			case "5":
 				ValidSubSelection = True
 				AnalysisSelector(conn,cursor,Category3)
+			case "Top":
+				if PrefSwitchName != "None":
+					OutputFileName = PrefSwitchName+"-SwlogsParsed-TopLogswithCategory-tsbuddy.xlsx"
+				else:
+					OutputFileName = "SwlogsParsed-TopLogswithCategory-tsbuddy.xlsx"
+				try:
+					with pd.ExcelWriter(OutputFileName,engine="xlsxwriter", engine_kwargs={'options': {'strings_to_formulas': False}}) as writer:
+						print("Exporting data to file. This may take a moment.")
+						FileOutput = pd.read_sql("select count(*),LogMessage,Category,Priority from Logs where Category not like '%Unused%' and Priority not like '%DBG%' group by LogMessage order by count(*) desc limit 200", conn)
+						FileOutput.to_excel(writer, sheet_name="ConsolidatedLogs")
+						workbook = writer.book
+						worksheet = writer.sheets["ConsolidatedLogs"]
+						text_format = workbook.add_format({'num_format': '@'})
+						worksheet.set_column("H:H", None, text_format)
+					print("Export complete. Your logs are in "+OutputFileName)
+					os.startfile(OutputFileName)
+				except:
+					print("Unable to write the file. Check if a file named "+OutputFileName+" is already open")
+			case "Pri":
+				OutputFileName = "SwlogsParsed-TopUnknownLogsAboveInfo-tsbuddy.xlsx"
+				try:
+					with pd.ExcelWriter(OutputFileName,engine="xlsxwriter", engine_kwargs={'options': {'strings_to_formulas': False}}) as writer:
+						print("Exporting data to file. This may take a moment.")
+						FileOutput = pd.read_sql("select count(*),Priority,LogMessage from logs where Priority not like '%INFO%' and Priority not like '%DBG%' and Category like '%Unknown%' group by LogMessage order by count(*) desc", conn)
+						FileOutput.to_excel(writer, sheet_name="ConsolidatedLogs")
+						workbook = writer.book
+						worksheet = writer.sheets["ConsolidatedLogs"]
+						text_format = workbook.add_format({'num_format': '@'})
+						worksheet.set_column("H:H", None, text_format)
+					print("Export complete. Your logs are in "+OutputFileName)
+					os.startfile(OutputFileName)
+				except:
+					print("Unable to write the file. Check if a file named "+OutputFileName+" is already open")
 			case "0":
 				ValidSubSelection = True
 				return
@@ -3943,7 +4003,7 @@ def ReadandParse(LogByLine,conn,cursor,Filename,ChassisID):
 			case "swlogd":
 				if partsSize > 6:
 					Appid = parts[6]
-					if Appid == "^^":
+					if Appid == "^^" or Appid == "Task":
 						LogMessage = ""
 						LogPartsCounter = 6
 						while LogPartsCounter < partsSize:
@@ -3959,6 +4019,32 @@ def ReadandParse(LogByLine,conn,cursor,Filename,ChassisID):
 						cursor.execute("insert into Logs (TSCount,Timestamp,SwitchName,Source,LogMessage,Filename,ChassisID) values ('"+str(TSCount)+"','"+Timestamp+"','"+SwitchName+"','"+Source+"','"+LogMessage+"','"+Filename+"','"+ChassisID+"')")
 						continue
 				if partsSize > 7:
+					#Several Subapps contain a space. This section fixes it.
+					if parts[7] == "Power":
+						parts[7] = "Power Mgr"
+						parts.pop(8)
+						partsSize -= 1
+					if parts[7] == "CS":
+						parts[7] = "CS Main"
+						parts.pop(8)
+						partsSize -= 1
+					if parts[7] == "fan":
+						print(line)
+						print(parts)
+						parts[7] = "fan & temp Mgr"
+						parts.pop(8)
+						parts.pop(8)
+						parts.pop(8)
+						partsSize -= 3
+						print(parts)
+					if parts[7] == "SharedMem":
+						parts[7] = "SharedMem Sync"
+						parts.pop(8)
+						partsSize -= 1
+					#svcCmm mGR has an additional space. This section removes it.
+					if parts[7] == "mGR" and parts[6] == "svcCmm":
+						parts.pop(8)
+						partsSize -= 1
 					Subapp = parts[7]
 				if partsSize > 8:
 					Priority = parts[8]
