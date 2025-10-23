@@ -43,19 +43,20 @@ import argparse
 
 
 """
-Implemented categories:
-Reboot
-Interface
-Unused
+Implemented categories for API:
+Reboot - Displays Reboots
+Interface - Displays interface flaps
+Critical - Displays critical logs
+Unused - Removes Unused logs and exports logs
+All Logs - Exports logs
+Empty request will export all logs
 
 WIP categories:
-All Logs 
 VC
 OSPF
 SPB
 Health
 Connectity
-Critical
 Hardware
 Upgrades
 General
@@ -1317,7 +1318,8 @@ def load_logs2(conn,cursor,chassis_selection):
 		OldestLog = CleanOutput(str(cursor.fetchall()))
 	print("There are "+count+" logs ranging from "+OldestLog+" to "+NewestLog)
 
-def analysis_menu(conn,cursor):
+def analysis_menu(conn,cursor,api=False):
+	AnalysisOutput = []
 	cursor.execute("select count(*) from Logs")
 	count = CleanOutput(str(cursor.fetchall()))
 	cursor.execute("select Timestamp from Logs order by Timestamp desc limit 1")
@@ -1325,10 +1327,15 @@ def analysis_menu(conn,cursor):
 	TimeDesync = False
 	cursor.execute("select Timestamp from Logs order by Timestamp limit 1")
 	OldestLog = CleanOutput(str(cursor.fetchall()))
-	if ("1970" or "1969") in OldestLog:
+	if "1969" in OldestLog or "1970" in OldestLog:
 		TimeDesync = True
 		cursor.execute("select Timestamp from Logs where Timestamp > '%2010%'  order by Timestamp limit 1")
 		OldestLog = CleanOutput(str(cursor.fetchall()))
+	if api == True:
+		AnalysisOutput.append("There are "+count+" logs ranging from "+OldestLog+" to "+NewestLog)
+		if TimeDesync == True:
+			AnalysisOutput.append("There is a time desync present in the logs where the timestamp is much older than expected. Use 'Look for problems' and 'Locate time desyncs' to determine where")
+		selection = "1"
 	validSelection = False
 	while validSelection == False:
 		print("")
@@ -1346,7 +1353,8 @@ def analysis_menu(conn,cursor):
 		print("[9] - Remove unneeded logs")
 		print("[AI] - Return the result for AI analysis")
 		print("[0] - Exit")
-		selection = input("What would you like to do with the logs?  ")
+		if api == False:
+			selection = input("What would you like to do with the logs?  ")
 		match selection:
 			case "1":
 				if PrefSwitchName != "None":
@@ -1358,6 +1366,9 @@ def analysis_menu(conn,cursor):
 				else:
 					query = "SELECT ChassisID, Filename, Timestamp, SwitchName, Source, AppID, SubApp, Priority, LogMessage from Logs order by Timestamp,Filename limit 1048576"
 				ExportXLSX(conn,cursor,query,OutputFileName)
+				AnalysisOutput.append("The logs have been exported to "+OutputFileName)
+				if api == True:
+					return AnalysisOutput
 			case "2":
 				SearchKeyword(conn,cursor)
 			case "3":
@@ -1964,6 +1975,8 @@ def AnalysisSelector(conn,cursor,request,api=False):
 			AnalysisOutput = UnclearAnalysis(conn,cursor,api)
 		case "Unknown":
 			AnalysisOutput = UnknownAnalysis(conn,cursor,api)
+		case "All Logs":
+			AnalysisOutput = analysis_menu(conn,cursor,api)
 	return AnalysisOutput
 
 def RebootAnalysis(conn,cursor,api=False):
@@ -2700,6 +2713,7 @@ def UnusedAnalysis(conn,cursor,api=False):
 
 def CriticalAnalysis(conn,cursor,api=False):
 	print("Checking the logs for Interface issues")
+	AnalysisOutput = []
 	global AnalysisInitialized
 	if AnalysisInitialized == False:
 		AnalysisInit(conn,cursor)
@@ -2708,10 +2722,10 @@ def CriticalAnalysis(conn,cursor,api=False):
 	if CriticalInitialized == False:
 		CriticalInitialized = True
 		cursor.execute("select LogMessage,Category,LogMeaning from Analysis where category like '%Critical%'")
-		AnalysisOutput = cursor.fetchall()
+		Analysis = cursor.fetchall()
 		LogDictionary = []
 		LogMeaning = []
-		for line in AnalysisOutput:
+		for line in Analysis:
 			Message = line[0]
 			Meaning = line[2]
 			Message.strip()
@@ -2731,6 +2745,10 @@ def CriticalAnalysis(conn,cursor,api=False):
 	cursor.execute("select count(*) from Logs where Category like '%Critical%'")
 	Output = cursor.fetchall()
 	count = CleanOutput(str(Output))
+	if api == True:
+		AnalysisOutput.append("There are "+count+" Critical logs")
+		Selection = "2"
+		countselection = "All"
 	ValidSelection = False
 	while ValidSelection == False:
 		print("")
@@ -2740,7 +2758,8 @@ def CriticalAnalysis(conn,cursor,api=False):
 		print("[2] - Display Critical logs in the console")
 		print("[3] - Provide Root Cause Analysis")
 		print("[0] - Return to Analysis Menu")
-		Selection = input("What would you like to do with the logs? [0]  ") or "0"
+		if api == False:
+			Selection = input("What would you like to do with the logs? [0]  ") or "0"
 		match Selection:
 			case "1":
 				if PrefSwitchName != "None":
@@ -2752,10 +2771,14 @@ def CriticalAnalysis(conn,cursor,api=False):
 				else:
 					query = "select ChassisID,Timestamp,LogMessage,LogMeaning from Logs where category like '%Critical%' order by timestamp"
 				ExportXLSX(conn,cursor,query,OutputFileName)
+				AnalysisOutput.append("The logs have been exported to "+OutputFileName)
+				if api == True:
+					return AnalysisOutput
 			case "2":
 				ValidCountSelection = False
 				while ValidCountSelection == False:
-					countselection = input("How many logs would you like to diplay in the console? There are "+count+" total Critical logs. [All]  ") or "All"
+					if api == False:
+						countselection = input("How many logs would you like to diplay in the console? There are "+count+" total Critical logs. [All]  ") or "All"
 					if countselection == "All":
 						countselection = int(count)
 					if not str(countselection).isnumeric():
@@ -2768,12 +2791,16 @@ def CriticalAnalysis(conn,cursor,api=False):
 						print("")
 						print("ChassisID, Timestamp, LogMessage, LogMeaning")
 						print("----------------------")
+						AnalysisOutput.append("ChassisID, Timestamp, LogMessage, LogMeaning")
+						AnalysisOutput.append("----------------------")
 						for line in CriticalLogs:
 							line = str(line)
 							line = line.replace("(","")
 							line = line.replace(")","")
 							print(line)
 						ValidCountSelection = True
+						if api == True:
+							return AnalysisOutput
 					else:
 						cursor.execute("select ChassisID,TimeStamp,LogMessage,LogMeaning from Logs where category like '%Critical%' order by Timestamp limit "+str(countselection))
 						CriticalLogs = cursor.fetchall()
@@ -2784,8 +2811,12 @@ def CriticalAnalysis(conn,cursor,api=False):
 							line = str(line)
 							line = line.replace("(","")
 							line = line.replace(")","")
-							print(line)
+							if api == False:
+								print(line)
+							AnalysisOutput.append(line)
 						ValidCountSelection = True
+						if api == True:
+							return AnalysisOutput
 			case "3":
 				RootCauseAnalysis(conn,cursor)
 			case "0":
@@ -3317,9 +3348,9 @@ def main(filename='',request="",chassis_selection='all',time='',api=True):
 		if request != "":
 			print("api is "+str(api))
 			AnalysisOutput = AnalysisSelector(conn,cursor,request,api)
-			print("AnalysisOutput = "+str(AnalysisOutput))
 		else:
-			analysis_menu(conn,cursor)
+			AnalysisOutput = analysis_menu(conn,cursor,api)
+		print("AnalysisOutput = "+str(AnalysisOutput))
 		return AnalysisOutput
 
 if __name__ == "__main__":
