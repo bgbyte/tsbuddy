@@ -7,21 +7,21 @@ from .utils.tsbuddy_version import main as check_version
 # Ensure the tsbuddy_version check runs first
 check_version()
 
-from .utils.tsbuddy_version import update_package_safe as update_package
-from .utils.tsbuddy_version import choice_form as upgrade_downgrade_choice
-from .tslog2csv.tslog2csv import main as tsbuddy_main
-#from .extract.extracttar import main as extracttar_main
-from .extracttar.extract_ts_tar import main as extract_all_main
-from .aos.aosdl import main as aosdl_main, lookup_ga_build, aosup
-from .log_analyzer.logparser_v2 import main as logparser_main
-from .log_analyzer.get_techsupport import main as get_techsupport_main
-from .hmon.graph_cpu import main as graph_hmon_main
-#from .clean_pycache import clean_pycache_and_pyc
+# from .utils.tsbuddy_version import update_package_safe as update_package
+# from .utils.tsbuddy_version import choice_form as upgrade_downgrade_choice
+# from .tslog2csv.tslog2csv import main as tsbuddy_main
+# #from .extract.extracttar import main as extracttar_main
+# from .extracttar.extract_ts_tar import main as extract_all_main
+# from .aos.aosdl import main as aosdl_main, lookup_ga_build, aosup
+# from .log_analyzer.logparser_v2 import main as logparser_main
+# from .log_analyzer.get_techsupport import main as get_techsupport_main
+# from .hmon.graph_cpu import main as graph_hmon_main
+# #from .clean_pycache import clean_pycache_and_pyc
 
 print("\n" * 15)  # Clear screen by printing new lines
 
-def update_tsbuddy():
-    update_package("tsbuddy")
+# def update_tsbuddy():
+#     update_package("tsbuddy")
 
 def print_help():
     help_text = """
@@ -71,6 +71,48 @@ def print_help():
 """
     print(help_text)
     time.sleep(1)  # Pause to allow user to read
+
+def update_package():
+    from .utils.tsbuddy_version import update_package_safe
+    update_package_safe("tsbuddy")
+
+def upgrade_downgrade_choice():
+    from .utils.tsbuddy_version import choice_form
+    choice_form()
+
+def tsbuddy_main():
+    from .tslog2csv.tslog2csv import main
+    main()
+
+def extract_all_main():
+    from .extracttar.extract_ts_tar import main
+    main()
+
+def aosdl_main():
+    from .aos.aosdl import main
+    main()
+
+def lookup_ga_build():
+    from .aos.aosdl import lookup_ga_build
+    lookup_ga_build()
+
+def aosup():
+    from .aos.aosdl import aosup
+    aosup()
+
+def logparser_main():
+    import importlib
+    from .log_analyzer import logparser_v2
+    importlib.reload(logparser_v2)
+    logparser_v2.main()
+
+def get_techsupport_main():
+    from .log_analyzer.get_techsupport import main
+    main()
+
+def graph_hmon_main():
+    from .hmon.graph_cpu import main
+    main()
 
 def list_directory_contents(path="."):
     """List directories and files in the given path. Returns (dirs, files)."""

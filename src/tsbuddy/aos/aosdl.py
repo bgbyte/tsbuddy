@@ -115,6 +115,9 @@ def safe_password_prompt(prompt="Password: ", fallback="switch"):
 ga_index_path = os.path.join(os.path.dirname(__file__), "ga_index.json")
 with open(ga_index_path) as f:
     ga_index = json.load(f)
+ga_latest_path = os.path.join(os.path.dirname(__file__), "ga_latest.json")
+with open(ga_latest_path) as f:
+    ga_latest = json.load(f)
 
 def wait_for_shell(shell, timeout=120):
     """Read output from shell until timeout or prompt returns."""
@@ -220,6 +223,15 @@ def get_aos_version_simple():
 
 def get_ga_build(version, family):
     try:
+        if version.lower() == "latest":
+            build = ga_latest.get(family, {}).get("latest_version")
+            if not version:
+                raise ValueError(f"No latest version found for family {family}")
+            print(f"Latest version for family {family} is {build}")
+            return build
+    except Exception as e:
+        raise ValueError(f"Error retrieving latest version for family {family}: {e}")
+    try:
         build = ga_index[version][family]
         if build in ('', 'N/S', 'N/A', 'UNK'):
             raise ValueError(f"No GA build available for version {version} and family {family}. Build returned: {build}")
@@ -265,20 +277,30 @@ def lookup_ga_build():
                 print(f"Unknown model: {model}. Please try again.")
                 continue
             print(f"Family for model {model}: {family}")
-        ga_prompt_ver = input("Provide the AOS version & Release for GA lookup (e.g., 8.10R02) [exit]: ").strip().upper() or None
+        ga_prompt_ver = input("Provide the AOS version & Release for GA lookup or 'latest' (e.g., 8.10R02, latest, etc.) [exit]: ").strip().upper() or None
         if not ga_prompt_ver or ga_prompt_ver.lower() == 'exit':
             print("Lookup canceled.")
             continue
         gadl = input(f"Would you like to download to OmniSwitch? [y]/n: ").strip().lower() or "y"
-        try:
-            ga_ver, ga_release = ga_prompt_ver.split('R') if ga_prompt_ver else (None, None)
-            ga_release = "R" + ga_release  # Add "R" to the beginning of the ga_release string
-            found_ga_build = f"{ga_ver}{get_ga_build(ga_prompt_ver, family)}.{ga_release}"
-            print("GA Build: ", found_ga_build)
-            if gadl == "y":
-                aosup(found_ga_build=found_ga_build)
-        except Exception as e:
-            print(f"Error looking up GA build: {e}")
+        if ga_prompt_ver.lower() == "latest":
+            try:
+                found_ga_build = f"{get_ga_build(ga_prompt_ver, family)}"
+                print("GA Build: ", found_ga_build)
+                if gadl == "y":
+                    aosup(found_ga_build=found_ga_build)
+            except Exception as e:
+                print(f"Error looking up GA build: {e}")
+                continue
+        else:
+            try:
+                ga_ver, ga_release = ga_prompt_ver.split('R') if ga_prompt_ver else (None, None)
+                ga_release = "R" + ga_release  # Add "R" to the beginning of the ga_release string
+                found_ga_build = f"{ga_ver}{get_ga_build(ga_prompt_ver, family)}.{ga_release}"
+                print("GA Build: ", found_ga_build)
+                if gadl == "y":
+                    aosup(found_ga_build=found_ga_build)
+            except Exception as e:
+                print(f"Error looking up GA build: {e}")
 
 def collect_hosts():
     """Collects device details from the user and returns a list of hosts."""
@@ -411,7 +433,7 @@ def get_family_from_ip(host: str) -> str | None:
         except:
             pass
 
-def main(folder_name=None, reload_when_finished=False, found_ga_build=None):
+def main(folder_name=None, reload_when_finished=False, found_ga_build=None, hosts=None):
     print("\nNote: you can lookup the GA build with aosdl-ga CLI command.\n")
     if not found_ga_build:
         aos_major, aos_build, aos_release = get_aos_version_simple()
@@ -422,7 +444,8 @@ def main(folder_name=None, reload_when_finished=False, found_ga_build=None):
     # Image mapping, moved to global scope for reusability
     base_ip = "http://10.46.4.37"
     base_dir = "/bop/images"
-    hosts = collect_hosts()
+    if not hosts:
+        hosts = collect_hosts()
     for host in hosts:
         download_images_for_host(host, aos_major, aos_build, aos_release, image_map, base_ip, base_dir, folder_name, reload_when_finished)
 

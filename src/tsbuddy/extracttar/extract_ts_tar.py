@@ -11,6 +11,12 @@ def extract_tar_archive(tar_path, output_dir):
     """
     output_dir.mkdir(exist_ok=True)
     is_hmon = re.match(r"hmondata_chassis\d+(\.\d+)?\.tar\.gz$", tar_path.name)
+    is_smemcap = re.match(r"smemcap.*\.gz$", tar_path.name)
+    # For smemcap, create a subfolder
+    if is_smemcap:
+        subfolder_name = sanitize_filename(tar_path.with_suffix('').name)
+        output_dir = output_dir / subfolder_name
+        output_dir.mkdir(exist_ok=True)
     with tarfile.open(tar_path, 'r:*') as tar:
         members = tar.getmembers()
         if is_hmon:
@@ -35,6 +41,11 @@ def extract_tar_archive(tar_path, output_dir):
                 if parts[0] in rename_map:
                     parts[0] = rename_map[parts[0]]
                     member.name = '/'.join(parts)
+        # Sanitize all member names
+        for member in members:
+            parts = member.name.split('/')
+            parts = [sanitize_filename(p) for p in parts]
+            member.name = '/'.join(parts)
         tar.extractall(path=output_dir, members=members)
     print(f"Extracted archive {tar_path} to {output_dir}")
 
@@ -43,7 +54,9 @@ def decompress_gz_file(gz_path, output_dir):
     Decompress a single gzip-compressed file.
     """
     output_dir.mkdir(exist_ok=True)
-    output_file = output_dir / gz_path.with_suffix('').name  # remove .gz extension
+    # output_file = output_dir / gz_path.with_suffix('').name  # remove .gz extension
+    sanitized_name = sanitize_filename(gz_path.with_suffix('').name)  # remove .gz extension and sanitize
+    output_file = output_dir / sanitized_name
     if output_file.exists():
         print(f"Skipping existing: {output_file}")
         return
@@ -101,6 +114,10 @@ def extract_archives(base_path):
                     decompress_gz_file(archive_path, archive_path.parent)
                     processed.add(archive_path)
                     archives_found = True
+
+def sanitize_filename(name):
+    # Replace colons and backslashes with underscores
+    return name.replace(':', '_') #.replace('\\', '_')
 
 def main():
     extract_archives('.')
