@@ -10,14 +10,14 @@ Console,Reboot,bootMgrRebootCMM:,This log is from the process responsible for re
 Swlog,Connectivity,logs since its last successful log,The switch was unable to send logs to its configured log server. This indicates a connectivity issue between the switch and the log server
 Swlog,Health,falling below,The switch has recovered from a high CPU status
 Swlog,SPB,Lost L1 adjacency ,An SPB Adjcency went down
-Swlog,Connectivity,Root port change detected,"The Spanning Tree root bridge for this VLAN has changed. If you see several of these logs, that could indicate a loop on the network"
+Swlog,Connectivity,Root port change detected,The Spanning Tree root bridge for this VLAN has changed. If you see several of these logs- that could indicate a loop on the network
 Swlog,Health,Kernel panic,The switch has an issue with the Kernel. Please gather Console Output logs by connecting a console cable to the switch
 Swlog,Reboot,Last reboot due to,This indicates why the switch last rebooted
 Console,VC,VC Takeover,A VC Topology change is taking place
 Console,Interface,operationally up,An interface has come up. The interface is clearly listed in the log
 Console,Interface,operationally down,An interface has gone down. The interface is clearly listed in the log
 swlog,Upgrades,Booting up with,Displays the directory and image to be used in the next boot
-swlog,"Health,Critical",Buffer list is empty,Out of Memory
+swlog,Health-Critical,Buffer list is empty,Out of Memory
 swlog,Health,rising above,The switch is entering a high CPU status
 Console,Reboot-Health,PowerSupply status changed,A power event has occurred on one of the power supplies
 swlog,Reboot-Health,ps % change,A power event has occurred on one of the power supplies
@@ -27,29 +27,69 @@ swlog,Unused,repeated % times,TrapAbsorptionTrap
 swlog,Interface-VC,"LINKSTS gport %, state 1",An interface on another switch in the VC has come up. gport is the hex for the interface
 swlog,Interface-VC,"LINKSTS gport %, state 0",An interface on another switch in the VC has gone down. gport is the hex for the interface
 swlog,Unused,flashMgrValidateImage_exec,All non-master switches in a VC run a flash validation every 20 minutes
-swlog,Interface,niEsmGetEvent:RX CMM_ESMDRV_CMD_CONFIG_MSGID,"A link has come up, link not provided in this log"
+swlog,Interface,niEsmGetEvent:RX CMM_ESMDRV_CMD_CONFIG_MSGID,A link has come up- link not provided in this log
 swlog,Unused,flashMgrThreadProcessMsg,All non-master switches in a VC run a flash validation every 20 minutes
-swlog,Interface,esmSendConfMsg: chassis % zslot % zport % Txed conf msgId:%,"A link has come up. Chassis is the chassis number, zslot is the slot-1, zport is the port-1."
-swlog,Interface,CMM_ESM_LINK_STATUS_CHG,"A link has changed status. This log provides the chassis and slot, but not the interface nor its status"
+swlog,Interface,esmSendConfMsg: chassis % zslot % zport % Txed conf msgId:%,A link has come up. Chassis is the chassis number- zslot is the slot-1- zport is the port-1.
+swlog,Interface,CMM_ESM_LINK_STATUS_CHG,A link has changed status. This log provides the chassis and slot- but not the interface nor its status
 swlog,Unused,--> [TRAP],The switch is sending a trap
 swlog,Interface-MACLearning,bcmDel,A MAC address is being flushed from the MAC table as the result of an interface change. Nathan does not know what gport means
-swlog,Interface-VC,niEsmSendLinkStatusChgMsg,"A link has come up and is being communicated to the rest of the VC, link not provided in this log"
+swlog,Interface-VC,niEsmSendLinkStatusChgMsg,A link has come up and is being communicated to the rest of the VC- link not provided in this log
 swlog,Interface,eniApplyConfig,Configuration is being applied to an interface. Typically part of an interface coming online. Zport is the port-1. Nathan does not know what cmd means
 swlog,Interface-STP,stpnimsg_processMsgFromPM: PM_LINK_STATUS_MSGID gPort=% linkStatus=1,An interface has come up in STP. gport is the hex for the port
 swlog,Interface-STP,stpnimsg_processMsgFromPM: PM_LINK_STATUS_MSGID gPort=% linkStatus=0,An interface has gone down in STP. gport is the hex for the port
-swlog,Interface,pmnHALLinkStatusCallback% LINKSTS % DOWN,"An interface has gone down, the interface is clearly listed"
-swlog,Interface,pmnHALLinkStatusCallback% LINKSTS % UP,"An interface has come up, the interface is clearly listed"
+swlog,Interface,pmnHALLinkStatusCallback% LINKSTS % DOWN,An interface has gone down- the interface is clearly listed
+swlog,Interface,pmnHALLinkStatusCallback% LINKSTS % UP,An interface has come up- the interface is clearly listed
 swlog,Interface,esmSetRateLimit,Configuration is being applied to an interface. Typically part of an interface coming online. The interface is not listed
 swlog,unknown,flow_index vrf % vlan % group % host 0.0.0.0 dest 0.0.0.0 orig 0.0.0.0 ipmc:% (failed),Unable to learn about this log. Cases imply it may be a sign of corruption
 swlog,VC-Critical,bootMgrVCMTopoDataEventHandler:slot split status event,A VC Split has occurred.
-swlog,VC,bootMgrVCMTopoDataEventHandler: neighbor % valid 1,"A switch has found its VC neighbor. Neighbor 0 is the 1st VFL, Neighbor 2 is the 2nd VFL. Chassis ID not present in this log"
+swlog,VC,bootMgrVCMTopoDataEventHandler: neighbor % valid 1,A switch has found its VC neighbor. Neighbor 0 is the 1st VFL- Neighbor 2 is the 2nd VFL. Chassis ID not present in this log
 swlog,VC-Interface-Unclear,lpRxProcessReport %: Report Command Successful Decode 0,This appears to be related to VFL interface changes. Nathan does not know
-swlog,VC,bootMgrVCMTopoDataEventHandler: neighbor % chassis_key id %,"A switch has found its VC neighbor. Neighbor 0 is the 1st VFL, Neighbor 2 is the 2nd VFL. Chassis ID is listed in this log"
+swlog,VC,bootMgrVCMTopoDataEventHandler: neighbor % chassis_key id %,A switch has found its VC neighbor. Neighbor 0 is the 1st VFL- Neighbor 2 is the 2nd VFL. Chassis ID is listed in this log
 swlog,VC-Unclear,Recieved STATEINFO CHG UPDATE from Port Manager,Appears to be associated with VC Takeovers
 swlog,Connectivity-Licensing,No response from server due to no internet connection.,The switch is unable to connect to the NaaS servers
 swlog,VC-Reboot,bootMgrRebootRecovery : recovering 0,The VC is reforming after one or more of its members have rebooted.
-swlog,General-Security,Login by ,"A user has logged in. The username, source IP and method of login are listed"
+swlog,General-Security,Login by ,A user has logged in. The username- source IP and method of login are listed
 swlog,Unused-Unclear,myChassisID,Appears to be associated with the VC bootup process
 swlog,Unused-Unclear,Access isValid,Appears to be associated with the VC bootup process
 swlog,Critical,TCAM_RET_NOT_FOUND,TCAM errors may be a sign of a hardware failure or a software bug. It is recommended to open a case with support
 swlog,Hardware-Interface,CSLIB_EVENT_SFP_INSERTED,An SFP has been connected to the switch. The interface is not listed
+swlog,Health-Security,CUSTLOG CMM SNMP message authentication failed,SNMP authentication failed. No credential or IP is provided in the log. This may be resolved by confirming the credentials and ciphers used to query the switch or by removing unused SNMP Stations
+swlog,Unused,----------------,Additional line for spacing
+swlog,Unused,"---- Logging MIP_SET type, command to be sent:",Part of a routine SNMP query
+swlog,Unused,set operation on table trapStationTable SUCCESS,Part of a routine SNMP query
+swlog,Unused,Table(73738/0): trapStationTable,Part of a routine SNMP query
+swlog,Unused,Object(6) Name: trapStationReplay,Part of a routine SNMP query
+swlog,Unused,Index: % % % %,Part of a routine SNMP query
+swlog,Unused,% traps (id = %) absorpted in % seconds,TrapAbsorptionTrap- several events occurred within a short window. Use `show snmp-config` to see the trap ID associated with the log
+swlog,Health-Security,error: kex_exchange_identification,An SSH session closed during the key exchange. This is typically caused by invalid credentials or a cipher mismatch
+swlog,Health-Connectivity-Unclear,ntp_writevar: No information returned,The switch was unable to update its time from an NTP request. This may be caused by a connection timeout to the NTP server or by the NTP server response being invalid such as for a high Root Dispersion
+swlog,Health-Security,CUSTLOG CMM Denial of Service attack detected: <port-scan>,The switch detected a port scan. This is not a denial of service attack- but means that something is scanning your network
+swlog,Health,fan_load,The speed of the fan is changing due to temperature
+swlog,Connectivity-Critical,arp info overwritten,The switch is seeing the same IP address from multiple MAC addresses. This may indicate an IP Conflict. If you see several of these logs in a short period of time- it may impact the switch. It is recommended to run Connectivity Analysis
+swlog,Unused,Object Value(%): %,Part of a routine SNMP query
+swlog,Connectivity,sending trap for swlog failure trap,The switch was unable to send syslogs to an external syslog server or the switch was unable to save logs to a file. This is normal just after a reboot or after a new swlog file is created
+swlog,Unused,NI: myslt[1] stg[CAP_MAN_HW_CHECK],A normal part of service bootup for the capManNi
+swlog,Connectivity-STP,Bridge has become new Root,This switch is the Root Bridge for the specified STP instance. This is normal as part of boot up or a new interface coming online. If you see a lot of these logs for the same instance- you may have a loop and it is recommended to run Connectivity Analysis
+swlog,Reboot,CUSTLOG CMM System Ready,This is part of the boot up process
+swlog,Reboot,The switch was restarted by the user,The previous reboot was cause by a user command
+swlog,VC-Critical,Virtual Chassis: Chassis % Status changed,The VC status has changed. This is normal as part of the boot up process.
+swlog,VC-Critical,Virtual Chassis: Chassis % Role changed,The VC status has changed. This is normal as part of the boot up process.
+swlog,Unused,CUSTLOG CMM Denial of Service attack detected: <arp-flood>,The switch detected an arp-flood. There is no information given
+swlog,Connectivity-Security-Critical,VRF %: DoS type arp-flood from,The switch detected an arp-flood. The source IP- source MAC and source port are given. The following log will contain the destination IP and MAC.
+swlog,Connectivity-Security-Critical,to %/%.,Gives the destination IP and MAC address for the previous log
+swlog,Security,CMM Authentication failure detected,The specified user has failed to login to the switch
+swlog,Health,CMM chassisTrapsAlert - CERTIFY w/FLASH SYNCHRO process started,write memory flash-synchro has been run
+swlog,Health,CMM chassisTrapsAlert - CERTIFY process completed successfully,write memory flash-synchro has completed
+swlog,Health,tech support file generated,A tech-support file has been created
+swlog,OSPF,CMM OSPF neighbor state change for %: INIT to 2WAY,OSPF neighborship process 2/6. This switch has received a HELLO packet containing its own Router ID from the neighbor referenced in the log. Both sides can talk to each other
+swlog,OSPF,CMM OSPF neighbor state change for %: LOADING to FULL,OSPF neighborship process 6/6. The adjacency with the neighbor has been fully completed.
+swlog,OSPF-Connectivity-Critical,CMM OSPF neighbor state change for %: FULL to DOWN,The OSPF neighborship has gone down. This can occur if this switch has not received a HELLO packet from the neighbor with in the Dead Interval time.
+swlog,OSPF-Connectivity-Critical-Unclear,No NetworkLSA for rtrLink,"Unclear. I believe it means that the interface that received the HELLO packet is not associated with any of the networks in the NetworkLSA. This would be caused by a misconfiguration, an IP interface being disconnected or an OSPF packet being sent to the wrong place"
+swlog,OSPF-Connectivity-Unclear,CMM OSPF neighbor state change for %: EXSTART to 2WAY,There was a problem during the DBD packet exchange. This may be caused by an MTU mismatch or a loss of communication during the exchange
+swlog,OSPF-Connectivity-Critical,CMM OSPF neighbor state change for %: FULL to INIT,The OSPF neighborship has gone down. This switch has received a HELLO packet that did not contain its own Router ID. This means that the neighbor is not receiving packets from this switch. The neighbor would list their state as DOWN
+swlog,Connectivity,pf_l2_add_routermac[%] Added router MAC,"A MAC Address and Port were associated with a VLAN. This is a normal part of a VLAN assignment or port coming up. If you see a lot of these messages, you may have a problem with Interface flapping or VLAN flapping"
+swlog,Connectivity-Unused,rtrmac seize % (% fwd %).,"A MAC Address and Port were associated with a VLAN. This is a normal part of a VLAN assignment or port coming up. If you see a lot of these messages, you may have a problem with Interface flapping or VLAN flapping"
+swlog,Connectivity-STP,itfv4 msg received % Del %,A MAC Address and IP address are no longer associated with a port. This is normal if an interface has been removed from a VLAN. It also means that all interfaces associated with a given VLAN have gone down. This may be caused by an STP dispute. The log only contains the IP address but not the MAC or VLAN. Look for an `rtrmac release` log that contains this info.
+swlog,Connectivity,itfv4 msg received % Add %,A MAC Address and IP address are associated with a port. This is normal if an interface has been add to a VLAN.
+swlog,Connectivity,rtrmac release %,A MAC Address and IP address are no longer associated with a port. This log will contain the MAC address and VLAN for a previous `itfv4 msg received 558 Del` log.
+swlog,OSPF-Connectivity,%EVENT KILLNBR; NEXT DOWN.,This switch says that communication with this neighbor is not possible. The neighborship is set to DOWN
