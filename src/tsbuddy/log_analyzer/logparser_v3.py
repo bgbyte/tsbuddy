@@ -43,7 +43,7 @@ import argparse
 
 
 """
-Implemented categories for API:
+Implemented requests for API:
 Reboot - Displays Reboots
 Interface - Displays interface flaps
 Critical - Displays critical logs
