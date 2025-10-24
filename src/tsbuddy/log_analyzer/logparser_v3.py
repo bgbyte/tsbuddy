@@ -48,7 +48,7 @@ Reboot - Displays Reboots
 Interface - Displays interface flaps
 Critical - Displays critical logs
 Unused - Removes Unused logs and exports logs
-All Logs - Exports logs
+All Logs - Exports logs with category and meaning
 Empty request will export all logs
 
 WIP categories:
@@ -1317,6 +1317,10 @@ def load_logs2(conn,cursor,chassis_selection):
 		cursor.execute("select Timestamp from Logs where Timestamp > '%2010%'  order by Timestamp limit 1")
 		OldestLog = CleanOutput(str(cursor.fetchall()))
 	print("There are "+count+" logs ranging from "+OldestLog+" to "+NewestLog)
+	cursor.execute("select Timestamp from Logs where Timestamp not like '%1969%' and Timestamp not like '%1970%' order by Timestamp limit 1")
+	RealOldestLog = CleanOutput(str(cursor.fetchall()))
+	#print(RealOldestLog)
+	return RealOldestLog,NewestLog
 
 def analysis_menu(conn,cursor,api=False):
 	AnalysisOutput = []
@@ -1338,6 +1342,15 @@ def analysis_menu(conn,cursor,api=False):
 		selection = "1"
 	validSelection = False
 	while validSelection == False:
+		cursor.execute("select count(*) from Logs")
+		count = CleanOutput(str(cursor.fetchall()))
+		cursor.execute("select Timestamp from Logs order by Timestamp desc limit 1")
+		NewestLog = CleanOutput(str(cursor.fetchall()))
+		TimeDesync = False
+		cursor.execute("select Timestamp from Logs order by Timestamp limit 1")
+		OldestLog = CleanOutput(str(cursor.fetchall()))
+		if "1969" in OldestLog or "1970" in OldestLog:
+			TimeDesync = True
 		print("")
 		print("There are "+count+" logs ranging from "+OldestLog+" to "+NewestLog)
 		if TimeDesync == True:
@@ -1460,35 +1473,7 @@ def RemoveLogs(conn,cursor):
 		Selection = input("What logs would you like to remove? [0]  ") or "0"
 		match Selection:
 			case "1":
-				if UnusedInitialized == False:
-					AnalysisSelector(conn,cursor,"Unused")
-				cursor.execute("select count(*) from logs where category like '%Unused%'")
-				output = cursor.fetchall()
-				UnusedCount = CleanOutput(str(output))
-				if UnusedCount == "0":
-					print("There are no Unused logs in the log database. Returning to previous menu.")
-					continue
-				ValidSubselection = False
-				while ValidSubselection == False:
-					print("There are "+UnusedCount+" logs in the Unused category")
-					Subselection = input("Please confirm that you would like to remove them from the Log Database. [Yes]  ") or "Yes"
-					if "yes" in Subselection or "Yes" in Subselection or "y" in Subselection or "Y"in Subselection :
-						cursor.execute("delete from logs where category like '%Unused%'")
-						cursor.execute("select count(*) from Logs")
-						count = CleanOutput(str(cursor.fetchall()))
-						cursor.execute("select Timestamp from Logs order by Timestamp desc limit 1")
-						NewestLog = CleanOutput(str(cursor.fetchall()))
-						cursor.execute("select Timestamp from Logs order by Timestamp limit 1")
-						OldestLog = CleanOutput(str(cursor.fetchall()))
-						print(UnusedCount+" logs have been removed. There are now "+count+" logs ranging from "+OldestLog+" to "+NewestLog)
-						ValidSubselection = True
-						continue
-					if "no" in Subselection or "No" in Subselection or "n" in Subselection or "N"in Subselection :
-						print("Canceling delete request")
-						ValidSubselection = True
-						continue
-					else:
-						print("Invalid input, please answer 'Yes' or 'No'")
+				AnalysisSelector(conn,cursor,"Unused")
 			case "2":
 				print("")
 				print("The logs contain the time range of "+OldestLog+" to "+NewestLog)
@@ -1502,23 +1487,10 @@ def RemoveLogs(conn,cursor):
 					if timerequested1 == timerequested2:
 						print("Those are the same times, please insert two different times")
 						continue
-					PaddingTime = "2000-01-01 00:00:00"
-					Time1Len = len(timerequested1)
-					Time2Len = len(timerequested2)
-					#print(timerequested1)
-					#print(Time1Len)
-					Time1Full = timerequested1+PaddingTime[Time1Len:19]
-					#print(Time1Full)
-					Time2Full = timerequested2+PaddingTime[Time2Len:19]
-					format_string = "%Y-%m-%d %H:%M:%S"
-					try:
-						Time1 = datetime.datetime.strptime(Time1Full,format_string)
-						Time2 = datetime.datetime.strptime(Time2Full,format_string)
-					except:
-						print("Provided times do not match the format yyyy-mm-dd hh:mm:ss")
-						continue
 					#print(Time1)
 					#print(Time2)
+					Time1 = TimestampFormatting(timerequested1)
+					Time2 = TimestampFormatting(timerequested2)
 					try:
 						if Time1 > Time2:
 							cursor.execute("Select count(*) from Logs where TimeStamp >= '"+str(Time2)+"' and TimeStamp <= '"+str(Time1)+"'")
@@ -1976,7 +1948,7 @@ def AnalysisSelector(conn,cursor,request,api=False):
 		case "Unknown":
 			AnalysisOutput = UnknownAnalysis(conn,cursor,api)
 		case "All Logs":
-			AnalysisOutput = analysis_menu(conn,cursor,api)
+			AnalysisOutput = AllKnownLogs(conn,cursor,api)
 	return AnalysisOutput
 
 def RebootAnalysis(conn,cursor,api=False):
@@ -2842,6 +2814,7 @@ def RootCauseAnalysis(conn,cursor,api=False):
 
 def AllKnownLogs(conn,cursor,api=False):
 	global AnalysisInitialized
+	AnalysisOutput = []
 	if AnalysisInitialized == False:
 		AnalysisInit(conn,cursor)
 		AnalysisInitialized = True
@@ -2890,11 +2863,11 @@ def AllKnownLogs(conn,cursor,api=False):
 		UnusedInitialized = True
 		OSPFInitialized = True
 		cursor.execute("select LogMessage,Category,LogMeaning from Analysis")
-		AnalysisOutput = cursor.fetchall()
+		Analysis = cursor.fetchall()
 		Category = []
 		LogDictionary = []
 		LogMeaning = []
-		for line in AnalysisOutput:
+		for line in Analysis:
 			Message = line[0]
 			Meaning = line[2]
 			Message.strip()
@@ -2983,8 +2956,17 @@ def AllKnownLogs(conn,cursor,api=False):
 	print("*Note that some logs will fall under several categories")
 	print("")
 	print("There are "+str(CriticalCount)+" Critical logs.")
+	AnalysisOutput.append("Out of all of the "+AllLogCount+" logs:")
+	AnalysisOutput.append("The category with the most logs is "+Category1+" with "+str(Count1)+" logs")
+	AnalysisOutput.append("The category with the next most logs is "+Category2+" with "+str(Count2)+" logs")
+	AnalysisOutput.append("The category with the third most logs is "+Category3+" with "+str(Count3)+" logs")
+	AnalysisOutput.append("It is recommended to run the Analysis tool for "+Category1)
+	AnalysisOutput.append("*Note that some logs will fall under several categories")
+	AnalysisOutput.append("")
+	AnalysisOutput.append("There are "+str(CriticalCount)+" Critical logs.")
 	if CriticalCount > 0:
 		print("It is recommended to view any Critical logs")
+		AnalysisOutput.append("It is recommended to view any Critical logs")
 	cursor.execute("select count(*) from Logs where LogMeaning is not null")
 	Output = cursor.fetchall()
 	#print(Output)
@@ -2999,18 +2981,24 @@ def AllKnownLogs(conn,cursor,api=False):
 		print("[4] - Run an Analysis on "+Category2)
 		print("[5] - Run an Analysis on "+Category3)
 		print("[0] - Return to Analysis Menu")
-		SubSelection = input("What would you like to do with the logs? [0]  ") or "0"
+		if api == False:
+			SubSelection = input("What would you like to do with the logs? [0]  ") or "0"
+		if api == True:
+			SubSelection = "1"
 		match SubSelection:
 			case "1":
 				if PrefSwitchName != "None":
-					OutputFileName = PrefSwitchName+"-SwlogsParsed-AllKnownLogs-tsbuddy.xlsx"
+					OutputFileName = PrefSwitchName+"-SwlogsParsed-AllLogswithCategory-tsbuddy.xlsx"
 				else:
-					OutputFileName = "SwlogsParsed-AllKnownLogs-tsbuddy.xlsx"
+					OutputFileName = "SwlogsParsed-AllLogswithCategory-tsbuddy.xlsx"
 				if TSImportedNumber > 1:
-					query = "select TSCount,ChassisID,Timestamp,Category,LogMessage,LogMeaning from Logs where LogMeaning is not Null order by Timestamp"
+					query = "select TSCount,ChassisID,Timestamp,Category,LogMessage,LogMeaning from Logs order by Timestamp"
 				else:
-					query = "select ChassisID,Timestamp,Category,LogMessage,LogMeaning from Logs where LogMeaning is not Null order by Timestamp"
+					query = "select ChassisID,Timestamp,Category,LogMessage,LogMeaning from Logs order by Timestamp"
 				ExportXLSX(conn,cursor,query,OutputFileName)
+				if api == True:
+					AnalysisOutput.append("All "+AllLogCount+" logs have been categorized and exported to "+OutputFileName)
+					return AnalysisOutput
 			case "2":
 				AnalysisSelector(conn,cursor,"Critical")
 			case "3":
@@ -3156,17 +3144,8 @@ def SearchTime(conn,cursor,NewestLog,OldestLog):
 					if timerequested1 == timerequested2:
 						print("Those are the same times, please insert two different times")
 						continue
-					PaddingTime = "2000-01-01 00:00:00"
-					Time1Len = len(timerequested1)
-					Time2Len = len(timerequested2)
-					#print(timerequested1)
-					#print(Time1Len)
-					Time1Full = timerequested1+PaddingTime[Time1Len:19]
-					#print(Time1Full)
-					Time2Full = timerequested2+PaddingTime[Time2Len:19]
-					format_string = "%Y-%m-%d %H:%M:%S"
-					Time1 = datetime.datetime.strptime(Time1Full,format_string)
-					Time2 = datetime.datetime.strptime(Time2Full,format_string)
+					Time1 = TimestampFormatting(timerequested1)
+					Time2 = TimestampFormatting(timerequested2)
 					#print(Time1)
 					#print(Time2)
 					command = ""
@@ -3275,6 +3254,29 @@ def ExportXLSX(conn,cursor,query,OutputFileName):
 	except:
 		print("Unable to write the file. Check if a file named "+OutputFileName+" is already open")
 
+def TimestampFormatting(time):
+	PaddingTime = "2000-01-01 00:00:00"
+	format_string = "%Y-%m-%d %H:%M:%S"
+	timePartsSpace = time.split(" ")
+	timePartsDash = timePartsSpace[0].split("-")
+	if len(timePartsDash) >= 2:
+		if len(timePartsDash[1]) != 2:
+			timePartsDash[1] = "0"+timePartsDash[1]
+	if len(timePartsDash) >= 3:
+		if len(timePartsDash[2]) != 2:
+			timePartsDash[2] = "0"+timePartsDash[2]
+	#
+	time = timePartsDash[0]
+	if len(timePartsDash) > 1:
+		time += "-"+timePartsDash[1]
+		if len(timePartsDash) > 2:
+			time += "-"+timePartsDash[2]
+			if len(timePartsSpace) > 1:
+				time += " "+timePartsSpace[1]
+	timeLen = len(time)
+	timeFull = time+PaddingTime[timeLen:19]
+	time = datetime.datetime.strptime(timeFull[:19],format_string)
+	return time
 
 def main(filename='',request="",chassis_selection='all',time='',api=True):
 	parser = argparse.ArgumentParser()
@@ -3317,34 +3319,30 @@ def main(filename='',request="",chassis_selection='all',time='',api=True):
 				tar.extractall('./'+TSDirName)
 		extract_tar_files(str("./"+TSDirName))
 		#dirpath = os.path.dirname(str(TSDirName))
-		print("Dirpath = "+str(TSDirName))
+		#print("Dirpath = "+str(TSDirName))
 		OldestLog,NewestLog = load_logs1(conn,cursor,TSDirName,chassis_selection)
 		load2 = False
 		if time == '':
 			load2 = True
 		if time != '':
-			PaddingTime = "2000-01-01 00:00:00"
-			format_string = "%Y-%m-%d %H:%M:%S"
-			timeLen = len(time)
-			OldestLogLen = len(OldestLog)
-			NewestLogLen = len(NewestLog)
-			timeFull = time+PaddingTime[timeLen:19]
-			OldestLogFull = OldestLog+PaddingTime[OldestLogLen:19]
-			NewestLogFull = NewestLog+PaddingTime[NewestLogLen:19]
-			time = datetime.datetime.strptime(timeFull[:19],format_string)
-			OldestLog = datetime.datetime.strptime(OldestLogFull[:19],format_string)
-			NewestLog = datetime.datetime.strptime(NewestLogFull[:19],format_string)
-			print(time)
-			print(OldestLog)
-			print(NewestLog)
+			time = TimestampFormatting(time)
+			OldestLog = TimestampFormatting(OldestLog)
+			NewestLog = TimestampFormatting(NewestLog)
 			if time < OldestLog:
 				load2 = True
 			if time > NewestLog:
-				AnalysisOutput = "The time you have requested is not present in the logs. These logs only go up to "+NewestLog
+				AnalysisOutput = "The time you have requested is not present in the logs. The newest log's timestamp is "+str(NewestLog)
+				print("AnalysisOutput = "+str(AnalysisOutput))
 				return AnalysisOutput
 		if load2 == True:
 			print("Loading archive swlogs")
-			load_logs2(conn,cursor,chassis_selection)
+			OldestLog,NewestLog = load_logs2(conn,cursor,chassis_selection)
+			OldestLog = TimestampFormatting(OldestLog)
+			if time != '':
+				if time < OldestLog:
+					AnalysisOutput = "The time you have requested is not present in the logs. The oldest timesynced log's timestamp is "+str(NewestLog)
+					print("AnalysisOutput = "+str(AnalysisOutput))
+					return AnalysisOutput
 		if request != "":
 			print("api is "+str(api))
 			AnalysisOutput = AnalysisSelector(conn,cursor,request,api)
