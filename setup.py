@@ -5,7 +5,7 @@ with open('README.md', 'r') as f:
 
 setup(
    name='tsbuddy',
-   version='0.0.34',
+   version='0.0.38',
    packages=find_packages(where='src'),
    package_dir={'': 'src'},
    install_requires=[
@@ -17,6 +17,7 @@ setup(
        'pandas>=2.3.1',
        #'prompt_toolkit>=3.0.0',
        #'openai>=0.27.0',
+       #'google-genai>=1.45.0',
    ],
    entry_points={
        'console_scripts': [

@@ -273,6 +273,7 @@ def main():
         show_changelog = True
     else:
         print(f"✅ '{package}' is up to date ({current_version})")
+        set_env_variable("TSBUDDY_IGNORE_VERSION", "")  # Clear ignore version if set
         return
 
     # Show changelog if available
