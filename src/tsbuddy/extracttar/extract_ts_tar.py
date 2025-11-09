@@ -47,7 +47,7 @@ def extract_tar_archive(tar_path, output_dir):
             parts = [sanitize_filename(p) for p in parts]
             member.name = '/'.join(parts)
         tar.extractall(path=output_dir, members=members)
-    print(f"Extracted archive {tar_path} to {output_dir}")
+    # print(f"Extracted archive {tar_path} to {output_dir}")
 
 def decompress_gz_file(gz_path, output_dir):
     """
@@ -58,11 +58,11 @@ def decompress_gz_file(gz_path, output_dir):
     sanitized_name = sanitize_filename(gz_path.with_suffix('').name)  # remove .gz extension and sanitize
     output_file = output_dir / sanitized_name
     if output_file.exists():
-        print(f"Skipping existing: {output_file}")
+        # print(f"Skipping existing: {output_file}")
         return
     with gzip.open(gz_path, 'rb') as f_in, open(output_file, 'wb') as f_out:
         shutil.copyfileobj(f_in, f_out)
-    print(f"Decompressed: {output_file}")
+    # print(f"Decompressed: {output_file}")
 
 def extract_archives(base_path):
     """
