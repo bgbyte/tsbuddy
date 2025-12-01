@@ -93,3 +93,6 @@ swlog,Connectivity-STP,itfv4 msg received % Del %,A MAC Address and IP address a
 swlog,Connectivity,itfv4 msg received % Add %,A MAC Address and IP address are associated with a port. This is normal if an interface has been add to a VLAN.
 swlog,Connectivity,rtrmac release %,A MAC Address and IP address are no longer associated with a port. This log will contain the MAC address and VLAN for a previous `itfv4 msg received 558 Del` log.
 swlog,OSPF-Connectivity,%EVENT KILLNBR; NEXT DOWN.,This switch says that communication with this neighbor is not possible. The neighborship is set to DOWN
+swlog,Reboot-Critical,%Cold reboot%,A Cold Reboot means that the switch lost power.
+swlog,Reboot-Critical-Unclear,Last reset reason: %,This is the reason that the switch rebooted
+swlog,Reboot-Critical-Unclear,Last reset reason: 0:Unknown,An Unknown reset reason could also mean a Cold Reboot. This means that the switch lost power.

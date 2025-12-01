@@ -3709,7 +3709,7 @@ def APReadandParse(LogByLine,conn,cursor,Filename):
 					LogMessage = LogMessage+PathLine+PasswordLine+UsernameLine+"}"
 					#single quotes break the function
 					LogMessage = LogMessage.replace("'","")
-					ogMessage = LogMessage.encode('utf-8')
+					LogMessage = LogMessage.encode('utf-8')
 					LogMessage = str(LogMessage)
 					LogMessage = LogMessage.replace("b'","")
 					LogMessage = LogMessage.replace("'","")

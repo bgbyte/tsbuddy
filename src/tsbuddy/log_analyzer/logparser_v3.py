@@ -872,11 +872,11 @@ def ReadandParse(LogByLine,conn,cursor,Filename,ChassisID):
 		#print(len(line))
 		#print(Filename)
 		#print(line)
+		#Remove null characters
+		line = line.replace('\0',"")
 		#skip empty lines
 		if len(line) < 2:
 			continue
-		#Remove null characters
-		line = line.replace('\0',"")
 		#8.10.R03 removed the year in console logs. This hardcodes 2025 if we do not have a year
 		if line[0].isdigit() == False:
 			line = "2025 "+line
@@ -1579,7 +1579,7 @@ def CommonLog(conn,cursor):
 						case "2":
 							ValidCountSelection = False
 							while ValidCountSelection == False:
-								countselection = input("How many logs would you like to diplay in the console? There are "+str(len(output))+" total unique logs. [All]  ") or "All"
+								countselection = input("How many logs would you like to display in the console? There are "+str(len(output))+" total unique logs. [All]  ") or "All"
 								if not int(countselection) and not "All":
 									print("Invalid number. Please insert a number")
 									continue
