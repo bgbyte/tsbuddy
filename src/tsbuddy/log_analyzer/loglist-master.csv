@@ -1,7 +1,7 @@
 ﻿Source,Category,LogMessage,LogMeaning
 Console,Reboot,Reboot,Keyword Check
 Console,Reboot,reboot,Keyword Check
-Swlog,Reboot-Critical,syslogd started: BusyBox,This is the first log that appears in the console during switch bootup
+Swlog,Reboot-Critical,syslogd started: BusyBox,This is the first log that appears in the console during switch bootup. This will also appear if changes to the logging service have occurred
 Console,Reboot-Critical,Chassis Supervision: CMM has reached the ready state,This log indicates that the switch has booted successfully and should begin passing traffic
 Console,Reboot-Hardware,Power Supply % Up,A Power Supply is online. It is common to see Power Supply events during a bootup
 Console,Reboot-Hardware,Power Supply % inserted,A Power Supply has been connected. It is common to see Power Supply events during a bootup
@@ -15,10 +15,10 @@ Swlog,Health,Kernel panic,The switch has an issue with the Kernel. Please gather
 Swlog,Reboot,Last reboot due to,This indicates why the switch last rebooted
 Console,VC,VC Takeover,A VC Topology change is taking place
 Console,Interface,operationally up,An interface has come up. The interface is clearly listed in the log
-Console,Interface,operationally down,An interface has gone down. The interface is clearly listed in the log
+Console,Interface-Critical,operationally down,An interface has gone down. The interface is clearly listed in the log
 swlog,Upgrades,Booting up with,Displays the directory and image to be used in the next boot
 swlog,Health-Critical,Buffer list is empty,Out of Memory
-swlog,Health,rising above,The switch is entering a high CPU status
+swlog,Health-Critical,rising above,The switch is entering a high CPU status
 Console,Reboot-Health,PowerSupply status changed,A power event has occurred on one of the power supplies
 swlog,Reboot-Health,ps % change,A power event has occurred on one of the power supplies
 swlog,General,CLI log,A command was inputted into the switch by a user
@@ -37,7 +37,7 @@ swlog,Interface-VC,niEsmSendLinkStatusChgMsg,A link has come up and is being com
 swlog,Interface,eniApplyConfig,Configuration is being applied to an interface. Typically part of an interface coming online. Zport is the port-1. Nathan does not know what cmd means
 swlog,Interface-STP,stpnimsg_processMsgFromPM: PM_LINK_STATUS_MSGID gPort=% linkStatus=1,An interface has come up in STP. gport is the hex for the port
 swlog,Interface-STP,stpnimsg_processMsgFromPM: PM_LINK_STATUS_MSGID gPort=% linkStatus=0,An interface has gone down in STP. gport is the hex for the port
-swlog,Interface,pmnHALLinkStatusCallback% LINKSTS % DOWN,An interface has gone down- the interface is clearly listed
+swlog,Interface-Critical,pmnHALLinkStatusCallback% LINKSTS % DOWN,An interface has gone down- the interface is clearly listed
 swlog,Interface,pmnHALLinkStatusCallback% LINKSTS % UP,An interface has come up- the interface is clearly listed
 swlog,Interface,esmSetRateLimit,Configuration is being applied to an interface. Typically part of an interface coming online. The interface is not listed
 swlog,unknown,flow_index vrf % vlan % group % host 0.0.0.0 dest 0.0.0.0 orig 0.0.0.0 ipmc:% (failed),Unable to learn about this log. Cases imply it may be a sign of corruption
@@ -76,8 +76,8 @@ swlog,VC-Critical,Virtual Chassis: Chassis % Status changed,The VC status has ch
 swlog,VC-Critical,Virtual Chassis: Chassis % Role changed,The VC status has changed. This is normal as part of the boot up process.
 swlog,Unused,CUSTLOG CMM Denial of Service attack detected: <arp-flood>,The switch detected an arp-flood. There is no information given
 swlog,Connectivity-Security-Critical,VRF %: DoS type arp-flood from,The switch detected an arp-flood. The source IP- source MAC and source port are given. The following log will contain the destination IP and MAC.
-swlog,Connectivity-Security-Critical,to %/%.,Gives the destination IP and MAC address for the previous log
-swlog,Security,CMM Authentication failure detected,The specified user has failed to login to the switch
+swlog,Connectivity-Security,to %/%.,Gives the destination IP and MAC address for the previous log
+swlog,Security-Critical,CMM Authentication failure detected,The specified user has failed to login to the switch. It is recommended to investigate failed logins if there are a large number of authentication attempts
 swlog,Health,CMM chassisTrapsAlert - CERTIFY w/FLASH SYNCHRO process started,write memory flash-synchro has been run
 swlog,Health,CMM chassisTrapsAlert - CERTIFY process completed successfully,write memory flash-synchro has completed
 swlog,Health,tech support file generated,A tech-support file has been created
@@ -93,6 +93,50 @@ swlog,Connectivity-STP,itfv4 msg received % Del %,A MAC Address and IP address a
 swlog,Connectivity,itfv4 msg received % Add %,A MAC Address and IP address are associated with a port. This is normal if an interface has been add to a VLAN.
 swlog,Connectivity,rtrmac release %,A MAC Address and IP address are no longer associated with a port. This log will contain the MAC address and VLAN for a previous `itfv4 msg received 558 Del` log.
 swlog,OSPF-Connectivity,%EVENT KILLNBR; NEXT DOWN.,This switch says that communication with this neighbor is not possible. The neighborship is set to DOWN
-swlog,Reboot-Critical,%Cold reboot%,A Cold Reboot means that the switch lost power.
-swlog,Reboot-Critical-Unclear,Last reset reason: %,This is the reason that the switch rebooted
-swlog,Reboot-Critical-Unclear,Last reset reason: 0:Unknown,An Unknown reset reason could also mean a Cold Reboot. This means that the switch lost power.
+swlog,Reboot-Critical-RebootReason,%Cold reboot%,Cold Reboot. This means that the switch lost power.
+swlog,Reboot-Critical-Unclear-RebootReason,Last reset reason: %,This is the reason that the switch rebooted. This means that the reset reason does not have an analysis entry yet. Please alert Nathan Orlina
+swlog,Reboot-Critical-RebootReason,Last reset reason: 0:Unknown,Cold Reboot. This means that the switch lost power.
+swlog,Reboot-Critical-RebootReason,Last reboot due to PowerFailure,Reboot due to PowerFailure
+swlog,Reboot-Critical-RebootReason,The switch was restarted by the user,The switch was restarted by the user
+swlog,Unclear,%have same filehandle%,Unclear. It appears to be benign
+swlog,VC-Interface,%VFL member port % DOWN%,A VFL link is down
+swlog,VC-Interface,%VFL Link % Status changed to Up%,A VFL link is up
+swlog,VC-Interface-Critical,%VFL Link % Status changed to Down%,A VFL link is down
+swlog,Connectivity,Network is unreachable,The switch is unable to send a packet for an internal function. Check the routing table and interfaces.
+swlog,Unused,sending sighup from snmp,This is an automatic log when an AAA server is checked. This log is no longer displayed in 8.9.R01
+swlog,Interface-STP,VM_ADD_VPA,"This Interface is associated with this vlan ID. This is generally normal, however, it you see a large number of these logs, this could indicate a flapping interface"
+swlog,Unused,is a Dedicated VFL port,Part of the VC Provisioning process
+swlog,Unused-VC,Setting Auto VFL pdu,Part of the VC Provisioning process
+swlog,Unused-VC,autoVflEnable2CMM,Part of the VC Provisioning process
+swlog,MACLearning-Unclear,hal_l2_addr_delete_by_port Failed,Meaning unclear. Need to update log analyzer code
+swlog,Unused,Table(8200/0): vpaTable,A regular part of VLAN Port Association
+swlog,Unused,Object(5) Name: vpaStatus,A regular part of VLAN Port Association
+swlog,Unused,Switch log file reached % Backup files before overwritten,A regular part of a log file being overwritten
+swlog,VC-Unused,distribChassisStatus2NI,A regular part of VC Discovery
+swlog,VC-Unused,esmSendConfMsg:IGNORE:NotPrimary:,A regular part of VC Discovery
+swlog,Unused,flashMgrThreadCompareFile,All non-master switches in a VC run a flash validation every 20 minutes
+swlog,Unused-VC,CMM:vcmCMM_is_vfl_capable_link,A regular part of VC Discovery
+swlog,Unused-VC,niLldpProcessLldpdu,A regular part of VC Discovery
+swlog,VC-Critical,chassis role has changed for chassis,"A chassis role has changed. This is normal on initial discovery, but it a concern if unexpected"
+swlog,VC-Critical,chassis role is now,"A chassis role has changed. This is normal on initial discovery, but it a concern if unexpected"
+swlog,VC,chassis % not present,"During VC initialization, the master chassis will check for other chassis. This is normal if the referenced chassis is not present"
+swlog,Hardware,lpNiPSInfoGetWatts,Informational - Shows when an interface pulls power
+swlog,Security,wrong credential,Either the credentials or the cipher suite for this authentication attempt is incorrect
+swlog,Connectivity,No response from server due to no internet connection,The switch is unable to communicate with cloud servers
+swlog,BGP-Connectivity,transitioned to ESTABLISHED state,This BGP peer is now in the ESTABLISHED state
+swlog,BGP-Connectivity,transitioned to IDLE state,This BGP peer is now in the IDLE state
+swlog,BGP-Connectivity-Critical,Peer down,This BGP peer is now down
+swlog,OSPF-Connectivity-Critical,Change! PREV FULL; EVENT 1WAYRX; NEXT INIT,This OSPF neighbor was online. The neighbor no longer sees this switch.
+swlog,OSPF-Connectivity-Critical,Change! PREV FULL; EVENT DEADTIMER; NEXT DOWN.,This OSPF neighbor was online. This switch has not received OSPF packets from the neighbor and the dead timer has expired
+swlog,Reboot-Critical-Configuration,starting reload sequence for image,A user has requested that this VC reload from the specified image
+swlog,Reboot-VC,new state is vcReloadMasterSync,The VC Master is syncing before a reload
+swlog,Unclear-Connectivity,smgrIsisTransitSvc,A normal part of service assignment for an interface. Unclear on the specifics. More research needed
+swlog,Unclear-Critical,ERROR response for MIP_GETNEXT(2),The SNMP service on the switch is not responding. Associated with an issue that is fixed in 8.10.R03.
+swlog,Unclear-Critical,ERROR code: 18/13(no answer received (timeout)),The SNMP service on the switch is not responding. Associated with an issue that is fixed in 8.10.R03.
+swlog,Unclear-Critical,snmpGetNextSorder[%] _snmpGetSorder[%]slGetContinuousSlotFromGport - %,The SNMP service on the switch is not responding. Associated with an issue that is fixed in 8.10.R03.
+swlog,Unused,Index: 0,Part of a routine SNMP query
+swlog,Unused,set operation on table systemFileSystem SUCCESS. snmp user = snmpadmin,A normal part of OV managing a Switch
+swlog,Unused,Table(76804/0): systemFileSystem,A normal part of OV managing a Switch
+swlog,Unused,Object(2) Name: systemFileSystemDirectoryName,A normal part of OV managing a Switch
+swlog,Connectivity-SPB,errorPrint[1607] Line:1607 Err:Mac % ALREADY exists on Vlan % for this port.,A normal part of rapid LSP converge for SPB. This means that a change happened in the SPB network and this switch received an advertisement for a network it already had. This is not a concern.
+swlog,Security-Critical,AAA failure%SSH%cause=%session=%,An authentication failure occurred for the listed user for the listed reason from the listed IP

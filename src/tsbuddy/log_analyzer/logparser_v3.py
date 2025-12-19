@@ -11,7 +11,8 @@ import subprocess
 from pathlib import Path
 import xlsxwriter
 import socket
-from tsbuddy import extracttar
+#from tsbuddy import extracttar
+import extract_ts_tar as extracttar
 import time
 import argparse
 
@@ -23,9 +24,10 @@ import argparse
 #
 #TODO
 #TODO: Redo ImportAnother
-#TODO: Add Reboot Reason
+#TODO: Time Desync fixer
+#TODO: Kernel logs are in UTC. Change to local time?
+#TODO: When did the issue start and end? Search for the first and last instance of a critical log
 #TODO: If all logs are in Epoch time
-#TODO: Remove Unused Logs
 #TODO: X logs before and after targetlog
 #TODO: Integrate Tech Support downloader
 #TODO: 9907s have per NI logs
@@ -95,6 +97,7 @@ Changes from LogParserv2:
 """
 
 
+SpecifiedTime = ""
 
 SwlogFiles1 = []
 SwlogFiles2 = []
@@ -721,8 +724,8 @@ def get_filepath():
 			files.append(item)
 			techSupports.append(item)
 			filetime = os.path.getmtime(item)
-			print(item)
-			print(filetime)
+			#print(item)
+			#print(filetime)
 			#Convert from epoch to datetime
 			techSupportTimes.append(datetime.datetime.fromtimestamp(filetime))
 	files.sort(key=os.path.getmtime,reverse=True)
@@ -768,7 +771,7 @@ def get_filepath():
 		with tarfile.open(selectedTS, "r") as tar:
 			for member in tar.getmembers():
 				if member.isdir():
-					os.mkdir(TSDirName+"/"+member.name)
+					os.makedirs(TSDirName+"/"+member.name, exist_ok=True)
 			tar.extractall('./'+TSDirName)
 	filepath = selectedTS
 	print(filepath)
@@ -956,14 +959,14 @@ def ReadandParse(LogByLine,conn,cursor,Filename,ChassisID):
 						parts.pop(8)
 						partsSize -= 1
 					if parts[7] == "fan":
-						print(line)
-						print(parts)
+						#print(line)
+						#print(parts)
 						parts[7] = "fan & temp Mgr"
 						parts.pop(8)
 						parts.pop(8)
 						parts.pop(8)
 						partsSize -= 3
-						print(parts)
+						#print(parts)
 					if parts[7] == "SharedMem":
 						parts[7] = "SharedMem Sync"
 						parts.pop(8)
@@ -1138,7 +1141,7 @@ def load_logs1(conn,cursor,dirpath,chassis_selection):
 				SwlogDir7 = logdir
 			case "8":
 				SwlogDir8 = logdir
-	else:
+	elif len(FolderChassis) == 1:
 		hasChassis.append(FolderChassis[0])
 		match FolderChassis[0]:
 			case "1":
@@ -1159,7 +1162,7 @@ def load_logs1(conn,cursor,dirpath,chassis_selection):
 			case "8":
 				SwlogDir8 = logdir
 	print("This switch has logs for chassis: "+str(sorted(hasChassis,key=str.lower)))
-	print(chassis_selection)
+	#print(chassis_selection)
 	if chassis_selection == "all":
 		print("Grabbing logs for all chassis")
 	if chassis_selection in hasChassis:
@@ -1339,6 +1342,7 @@ def analysis_menu(conn,cursor,api=False):
 		AnalysisOutput.append("There are "+count+" logs ranging from "+OldestLog+" to "+NewestLog)
 		if TimeDesync == True:
 			AnalysisOutput.append("There is a time desync present in the logs where the timestamp is much older than expected. Use 'Look for problems' and 'Locate time desyncs' to determine where")
+		print("API is enabled, outputting logs to file")
 		selection = "1"
 	validSelection = False
 	while validSelection == False:
@@ -1547,8 +1551,29 @@ def RemoveLogs(conn,cursor):
 			case "0":
 				ValidSelection = True
 
-def CommonLog(conn,cursor):
+def CommonLog(conn,cursor,api=False):
 	ValidSelection = False
+	if api == True:
+		ValidSelection = True
+		AnalysisOutput = []
+		cursor.execute("select count(*) from Logs group by logmessage order by count(*) desc")
+		output = cursor.fetchall()
+		cursor.execute("select count(*),logmessage from Logs group by logmessage order by count(*) desc limit 100")
+		UniqueLogs = cursor.fetchall()
+		print("")
+		print("Here are the top 100 logs:")
+		print("Log Count, Log Message")
+		print("----------------------")
+		AnalysisOutput.append("Here are the top 100 logs:")
+		AnalysisOutput.append("Log Count, Log Message")
+		AnalysisOutput.append("----------------------")
+		for line in UniqueLogs:
+			line = str(line)
+			line = line.replace("(","")
+			line = line.replace(")","")
+			print(line)
+			AnalysisOutput.append(line)
+		return AnalysisOutput
 	while ValidSelection == False:
 		print("")
 		print("[1] - All Logs")
@@ -1852,7 +1877,7 @@ def ChangeSwitchName():
 	print("Exported files will use the name: "+PrefSwitchName+". ie: "+PrefSwitchName+"SwlogsParsed-Unfiltered-tsbuddy.xlsx")
 
 def AnalysisInit(conn,cursor):
-	print("Initializing log analysis")
+	print("Initializing log analysis engine")
 	cursor.execute("alter table Logs add LogMeaning text")
 	cursor.execute("alter table Logs add Category text")
 	src_dir = os.path.dirname(os.path.abspath(__file__))
@@ -1875,6 +1900,7 @@ def LogAnalysis(conn,cursor,api=False):
 		print("[8] - Locate time desyncs - WIP")
 		print("[9] - Critical Logs")
 		print("[10] - Unused logs")
+		print("[11] - Configuration Changes")
 		print("[RCA] - Provide Root Cause Analysis - WIP")
 		print("[All] - Analyze all known logs - Long Operation")
 		print("[0] - Return to Main Menu")
@@ -1900,6 +1926,8 @@ def LogAnalysis(conn,cursor,api=False):
 				AnalysisSelector(conn,cursor,"Critical",api)
 			case "10":
 				AnalysisSelector(conn,cursor,"Unused",api)
+			case "11":
+				AnalysisSelector(conn,cursor,"Configuration",api)
 			case "RCA":
 				RootCauseAnalysis(conn,cursor,api)
 			case "All":
@@ -1910,49 +1938,338 @@ def LogAnalysis(conn,cursor,api=False):
 			case _:
 				print("Invalid Selection")
 
-def AnalysisSelector(conn,cursor,request,api=False):
+def AnalysisSelector(conn,cursor,request,api=False,RCA=False):
+	cursor.execute("create table if not exists RCA(id integer primary key autoincrement, ChassisID text, Timestamp text, Explanation text)")
+	# Initialize analysis engine (adds Category column, loads log patterns)
+	# Since we use :memory: database, this needs to be called each time
+	global AnalysisInitialized
+	if AnalysisInitialized == False:
+		AnalysisInit(conn,cursor)
+		AnalysisInitialized = True
+	if AllLogsRan == False:
+		if request == "Top":
+			AllKnownLogs(conn,cursor,api,True,True)
+			return
+		AllKnownLogs(conn,cursor,api,True)
 	print("Starting Analysis for "+request)
 	match request:
 		case "Reboot":
-			AnalysisOutput = RebootAnalysis(conn,cursor,api)
+			AnalysisOutput = RebootAnalysis(conn,cursor,api,RCA)
 		case "VC":
-			AnalysisOutput = VCAnalysis(conn,cursor,api)
+			AnalysisOutput = VCAnalysis(conn,cursor,api,RCA)
 		case "Interface":
-			AnalysisOutput = InterfaceAnalysis(conn,cursor,api)
+			AnalysisOutput = InterfaceAnalysis(conn,cursor,api,RCA)
 		case "OSPF":
-			AnalysisOutput = OSPFAnalysis(conn,cursor,api)
+			AnalysisOutput = OSPFAnalysis(conn,cursor,api,RCA)
 		case "SPB":
-			AnalysisOutput = SPBAnalysis(conn,cursor,api)
+			AnalysisOutput = SPBAnalysis(conn,cursor,api,RCA)
 		case "Health":
-			AnalysisOutput = HealthAnalysis(conn,cursor,api)
+			AnalysisOutput = HealthAnalysis(conn,cursor,api,RCA)
 		case "Connectivity":
-			AnalysisOutput = ConnectivityAnalysis(conn,cursor,api)
+			AnalysisOutput = ConnectivityAnalysis(conn,cursor,api,RCA)
 		case "Critical":
-			AnalysisOutput = CriticalAnalysis(conn,cursor,api)
+			AnalysisOutput = CriticalAnalysis(conn,cursor,api,RCA)
 		case "Hardware":
-			AnalysisOutput = HardwareAnalysis(conn,cursor,api)
+			AnalysisOutput = HardwareAnalysis(conn,cursor,api,RCA)
 		case "Upgrades":
-			AnalysisOutput = UpgradesAnalysis(conn,cursor,api)
+			AnalysisOutput = UpgradesAnalysis(conn,cursor,api,RCA)
 		case "General":
-			AnalysisOutput = GeneralAnalysis(conn,cursor,api)
+			AnalysisOutput = GeneralAnalysis(conn,cursor,api,RCA)
 		case "MACLearning":
-			AnalysisOutput = MACLearningAnalysis(conn,cursor,api)
+			AnalysisOutput = MACLearningAnalysis(conn,cursor,api,RCA)
 		case "Unused":
-			AnalysisOutput = UnusedAnalysis(conn,cursor,api)
+			AnalysisOutput = UnusedAnalysis(conn,cursor,api,RCA)
 		case "STP":
-			AnalysisOutput = STPAnalysis(conn,cursor,api)
+			AnalysisOutput = STPAnalysis(conn,cursor,api,RCA)
 		case "Security":
-			AnalysisOutput = SecurityAnalysis(conn,cursor,api)
+			AnalysisOutput = SecurityAnalysis(conn,cursor,api,RCA)
 		case "Unclear":
-			AnalysisOutput = UnclearAnalysis(conn,cursor,api)
+			AnalysisOutput = UnclearAnalysis(conn,cursor,api,RCA)
 		case "Unknown":
-			AnalysisOutput = UnknownAnalysis(conn,cursor,api)
+			AnalysisOutput = UnknownAnalysis(conn,cursor,api,RCA)
 		case "All Logs":
-			AnalysisOutput = AllKnownLogs(conn,cursor,api)
+			AnalysisOutput = AllKnownLogs(conn,cursor,api,RCA)
+		case "RCA":
+			AnalysisOutput = RootCauseAnalysis(conn,cursor,api)
+		case "Common":
+			AnalysisOutput = CommonLog(conn,cursor,api)
+		case "Configuration":
+			AnalysisOutput = ConfigurationAnalysis(conn,cursor,api,RCA)
 	return AnalysisOutput
 
-def RebootAnalysis(conn,cursor,api=False):
-	print("Checking the logs for reboots")
+def ConfigurationAnalysis(conn,cursor,api=False,RCA=False):
+	print("")
+	AnalysisOutput = []
+	cursor.execute("create table if not exists Configuration(id integer primary key autoincrement, TSCount Text, ChassisID Text, Filename Text, Timestamp Text, LogMessage text)")
+	cursor.execute("select TSCount,ChassisID,Filename,Timestamp,LogMessage from Logs where SubApp = 'CMD' and LogMessage like '%SUCCESS%'")
+	output = cursor.fetchall()
+	for line in output:
+		TSCount = line[0]
+		ChassisID = line[1]
+		Filename = line[2]
+		Timestamp = line[3]
+		LogMessage = line[4]
+		cursor.execute("insert into Configuration(TSCount,ChassisID,Filename,Timestamp,LogMessage) values ('"+str(TSCount)+"','"+ChassisID+"','"+Filename+"','"+Timestamp+"','"+LogMessage+"')")
+	cursor.execute("select ChassisID,Timestamp,LogMessage from Configuration order by Timestamp")
+	output = cursor.fetchall()
+	if len(output) != 0:
+		print("Here are the configuration changes in the logs:")
+		print("-------------------------------------")
+		print("Chassis ID - Time - LogMessage")
+		print("-------------------------------------")
+		for line in output:
+			print(line[0]+" - "+line[1]+" - "+line[2])
+		AnalysisOutput.append("Here are the configuration changes in the logs:")
+		AnalysisOutput.append("-------------------------------------")
+		AnalysisOutput.append("Chassis ID - Time - LogMessage")
+		AnalysisOutput.append("-------------------------------------")
+		for line in output:
+			AnalysisOutput.append(line[0]+" - "+line[1]+" - "+line[2])
+	return AnalysisOutput
+
+def SecurityAnalysis(conn,cursor,api=False,RCA=False):
+	#Written, but in a placeholder status
+	print("")
+	SecurityAnalysis = []
+	cursor.execute("create table if not exists Security(id integer primary key autoincrement, TSCount Text, ChassisID Text, Filename Text, Timestamp Text, LogMessage text)")
+	cursor.execute("select TSCount,ChassisID,Filename,Timestamp,LogMessage,Category from Logs where category like '%Critical%' and category like'%Security%' order by Timestamp")
+	SecurityOutput = cursor.fetchall()
+	if len(SecurityOutput) != 0:
+		if len(SecurityOutput) <= 50:
+			print("Here are the critical Security logs:")
+			print("-------------------------------------")
+			print("Chassis ID - Time - LogMessage")
+			print("-------------------------------------")
+			for line in SecurityOutput:
+				print(line[1]+" - "+line[3]+" - "+line[4])
+			SecurityAnalysis.append("Here are the critical Security logs:")
+			SecurityAnalysis.append("-------------------------------------")
+			SecurityAnalysis.append("Chassis ID - Time - LogMessage")
+			SecurityAnalysis.append("-------------------------------------")
+		if len(SecurityOutput) > 50:
+			cursor.execute("select count(*),ChassisID,Timestamp,LogMessage from Logs where Category like '%Critical%' and category like '%Security%' group by ChassisID,LogMessage order by count(*) desc")
+			GroupedOutput = cursor.fetchall()
+			print("Here are the critical Security logs:")
+			print("-----------------------------------------------------------------")
+			print("Occurance Count - Chassis ID - Time of 1st Occurance - LogMessage")
+			print("-----------------------------------------------------------------")
+			for line in GroupedOutput:
+				print(str(line[0])+" - "+line[1]+" - "+line[2]+" - "+line[3])
+			SecurityAnalysis.append("Here are the critical Security logs:")
+			SecurityAnalysis.append("-----------------------------------------------------------------")
+			SecurityAnalysis.append("Occurance Count - Chassis ID - Time of 1st Occurance - LogMessage")
+			SecurityAnalysis.append("-----------------------------------------------------------------")
+		for line in GroupedOutput:
+			SecurityAnalysis.append(str(line[0])+" - "+line[1]+" - "+line[2]+" - "+line[3])
+		for line in SecurityOutput:
+			Reason = line[4]
+			if "CMM Authentication failure detected: user" in Reason:
+				parts = Reason.split(" ")
+				User = parts[5]
+				Reason = "Failed login attempt for user `"+User+"`. It is recommended to investigate failed logins if there are a large number of authentication attempts"
+			cursor.execute("insert into RCA (ChassisID,Timestamp,Explanation) values ('"+line[1]+"','"+line[3]+"','"+Reason+"')")
+	return SecurityAnalysis
+
+def OSPFAnalysis(conn,cursor,api,RCA=False):
+	#Need to finish. This will be an undertaking
+	print("")
+	SecurityAnalysis = []
+	cursor.execute("create table if not exists OSPF(id integer primary key autoincrement, TSCount Text, ChassisID Text, Filename Text, Timestamp Text, LogMessage text)")
+	cursor.execute("select TSCount,ChassisID,Filename,Timestamp,LogMessage,Category from Logs where category like '%Critical%' and category like '%OSPF%' order by Timestamp")
+	OSPFOutput = cursor.fetchall()
+	for line in OSPFOutput:
+		#print(line)
+		cursor.execute("insert into RCA (ChassisID,Timestamp,Explanation) values ('"+line[1]+"','"+line[3]+"','"+line[4]+"')")
+		#OSPFAnalysis.append(line)
+	return OSPFAnalysis
+
+def SPBAnalysis(conn,cursor,api,RCA=False):
+	#Need to finish. This will be an undertaking
+	print("")
+	SPBAnalysis = []
+	cursor.execute("create table if not exists SPB(id integer primary key autoincrement, TSCount Text, ChassisID Text, Filename Text, Timestamp Text, LogMessage text)")
+	cursor.execute("select TSCount,ChassisID,Filename,Timestamp,LogMessage,Category from Logs where category like '%Critical%' and category like '%SPB%' order by Timestamp")
+	SPBOutput = cursor.fetchall()
+	for line in SPBOutput:
+		#print(line)
+		cursor.execute("insert into RCA (ChassisID,Timestamp,Explanation) values ('"+line[1]+"','"+line[3]+"','"+line[4]+"')")
+		#SPBAnalysis.append(line)
+	return SPBAnalysis
+
+def HealthAnalysis(conn,cursor,api,RCA=False):
+	#Written, but in a placeholder status
+	print("")
+	HealthAnalysis = []
+	cursor.execute("create table if not exists Health(id integer primary key autoincrement, TSCount Text, ChassisID Text, Filename Text, Timestamp Text, LogMessage text)")
+	cursor.execute("select TSCount,ChassisID,Filename,Timestamp,LogMessage,Category from Logs where category like '%Critical%' and category like '%Health%' order by Timestamp")
+	HealthOutput = cursor.fetchall()
+	if len(HealthOutput) != 0:
+		if len(HealthOutput) <= 50:
+			print("Here are the critical Health logs:")
+			print("-------------------------------------")
+			print("Chassis ID - Time - LogMessage")
+			print("-------------------------------------")
+			for line in HealthOutput:
+				print(line[1]+" - "+line[3]+" - "+line[4])
+			HealthAnalysis.append("Here are the critical Health logs:")
+			HealthAnalysis.append("-------------------------------------")
+			HealthAnalysis.append("Chassis ID - Time - LogMessage")
+			HealthAnalysis.append("-------------------------------------")
+		if len(HealthOutput) > 50:
+			cursor.execute("select count(*),ChassisID,Timestamp,LogMessage from Logs where Category like '%Critical%' and category like '%Health%' group by ChassisID,LogMessage order by count(*) desc")
+			GroupedOutput = cursor.fetchall()
+			print("Here are the critical Health logs:")
+			print("-----------------------------------------------------------------")
+			print("Occurance Count - Chassis ID - Time of 1st Occurance - LogMessage")
+			print("-----------------------------------------------------------------")
+			for line in GroupedOutput:
+				print(str(line[0])+" - "+line[1]+" - "+line[2]+" - "+line[3])
+			HealthAnalysis.append("Here are the critical Health logs:")
+			HealthAnalysis.append("-----------------------------------------------------------------")
+			HealthAnalysis.append("Occurance Count - Chassis ID - Time of 1st Occurance - LogMessage")
+			HealthAnalysis.append("-----------------------------------------------------------------")
+		for line in GroupedOutput:
+			HealthAnalysis.append(str(line[0])+" - "+line[1]+" - "+line[2]+" - "+line[3])
+		for line in HealthOutput:
+			Reason = line[4]
+			if "Buffer list is empty" in Reason:
+				Reason = "This switch is out of memory. This is commonly associated with a loop."
+			if "receive/transmit" in Reason:
+				continue
+			if "rising above receive threshold" in Reason:
+				parts = line[4].split(" ")
+				interface = parts[3]
+				Reason = "Port "+interface+" is above its receive threshold. This port is experiencing an inbound flood. This may be due to a loop or DOS."
+			if "rising above trasmit threshold" in Reason:
+				parts = line[4].split(" ")
+				interface = parts[3]
+				Reason = "Port "+interface+" is above its transmit threshold. This port is experiencing an outbound flood. This may be due to a loop or DOS."
+			cursor.execute("insert into RCA (ChassisID,Timestamp,Explanation) values ('"+line[1]+"','"+line[3]+"','"+Reason+"')")
+	return HealthAnalysis
+
+def ConnectivityAnalysis(conn,cursor,api,RCA=False):
+	#Written, but in a placeholder status
+	print("")
+	ConnectivityAnalysis = []
+	cursor.execute("create table if not exists Connectivity(id integer primary key autoincrement, TSCount Text, ChassisID Text, Filename Text, Timestamp Text, LogMessage text)")
+	cursor.execute("select TSCount,ChassisID,Filename,Timestamp,LogMessage,Category from Logs where category like '%Critical%' and category like '%Connectivity%' order by Timestamp")
+	ConnectivityOutput = cursor.fetchall()
+	for line in ConnectivityOutput:
+		#print(line)
+		cursor.execute("insert into RCA (ChassisID,Timestamp,Explanation) values ('"+line[1]+"','"+line[3]+"','"+line[4]+"')")
+		#ConnectivityAnalysis.append(line)
+	return ConnectivityAnalysis
+
+def HardwareAnalysis(conn,cursor,api,RCA=False):
+	#Written, but in a placeholder status
+	print("")
+	HardwareAnalysis = []
+	cursor.execute("create table if not exists Hardware(id integer primary key autoincrement, TSCount Text, ChassisID Text, Filename Text, Timestamp Text, LogMessage text)")
+	cursor.execute("select TSCount,ChassisID,Filename,Timestamp,LogMessage,Category from Logs where category like '%Critical%' and category like '%Hardware%' order by Timestamp")
+	HardwareOutput = cursor.fetchall()
+	for line in HardwareOutput:
+		#print(line)
+		cursor.execute("insert into RCA (ChassisID,Timestamp,Explanation) values ('"+line[1]+"','"+line[3]+"','"+line[4]+"')")
+		#HardwareAnalysis.append(line)
+	return HardwareAnalysis
+
+def UpgradesAnalysis(conn,cursor,api,RCA=False):
+	#Written, but in a placeholder status
+	print("")
+	UpgradesAnalysis = []
+	cursor.execute("create table if not exists Upgrades(id integer primary key autoincrement, TSCount Text, ChassisID Text, Filename Text, Timestamp Text, LogMessage text)")
+	cursor.execute("select TSCount,ChassisID,Filename,Timestamp,LogMessage,Category from Logs where category like '%Critical%' and category like '%Upgrades%' order by Timestamp")
+	UpgradesOutput = cursor.fetchall()
+	for line in UpgradesOutput:
+		#print(line)
+		cursor.execute("insert into RCA (ChassisID,Timestamp,Explanation) values ('"+line[1]+"','"+line[3]+"','"+line[4]+"')")
+		#UpgradesAnalysis.append(line)
+	return UpgradesAnalysis
+
+def GeneralAnalysis(conn,cursor,api,RCA=False):
+	#Written, but in a placeholder status
+	print("")
+	GeneralAnalysis = []
+	cursor.execute("create table if not exists General(id integer primary key autoincrement, TSCount Text, ChassisID Text, Filename Text, Timestamp Text, LogMessage text)")
+	#Any priorities higher than Info
+	cursor.execute("select TSCount,ChassisID,Filename,Timestamp,LogMessage,Category from Logs where priority not like '%Info%' and priority not like '%Debug%' order by Timestamp")
+	GeneralOutput = cursor.fetchall()
+	for line in GeneralOutput:
+		#print(line)
+		cursor.execute("insert into RCA (ChassisID,Timestamp,Explanation) values ('"+line[1]+"','"+line[3]+"','"+line[4]+"')")
+		#GeneralAnalysis.append(line)
+	return GeneralAnalysis
+
+def MACLearningAnalysis(conn,cursor,api,RCA=False):
+	#Written, but in a placeholder status
+	print("")
+	MACLearningAnalysis = []
+	cursor.execute("create table if not exists MACLearning(id integer primary key autoincrement, TSCount Text, ChassisID Text, Filename Text, Timestamp Text, LogMessage text)")
+	cursor.execute("select TSCount,ChassisID,Filename,Timestamp,LogMessage,Category from Logs where category like '%Critical%' and category like '%MACLearning%' order by Timestamp")
+	MACLearningOutput = cursor.fetchall()
+	for line in MACLearningOutput:
+		#print(line)
+		cursor.execute("insert into RCA (ChassisID,Timestamp,Explanation) values ('"+line[1]+"','"+line[3]+"','"+line[4]+"')")
+		#MACLearningAnalysis.append(line)
+	return MACLearningAnalysis
+
+def STPAnalysis(conn,cursor,api,RCA=False):
+	#Written, but in a placeholder status
+	print("")
+	STPAnalysis = []
+	cursor.execute("create table if not exists STP(id integer primary key autoincrement, TSCount Text, ChassisID Text, Filename Text, Timestamp Text, LogMessage text)")
+	cursor.execute("select TSCount,ChassisID,Filename,Timestamp,LogMessage,Category from Logs where category like '%Critical%' and category like '%STP%' order by Timestamp")
+	STPOutput = cursor.fetchall()
+	for line in STPOutput:
+		#print(line)
+		cursor.execute("insert into RCA (ChassisID,Timestamp,Explanation) values ('"+line[1]+"','"+line[3]+"','"+line[4]+"')")
+		#STPAnalysis.append(line)
+	return STPAnalysis
+
+def UnclearAnalysis(conn,cursor,api,RCA=False):
+	#How are you even seeing this?
+	print("How are you even seeing this? Nothing should link to Unclear")
+	cursor.execute("create table if not exists Unclear(id integer primary key autoincrement, TSCount Text, ChassisID Text, Filename Text, Timestamp Text, LogMessage text)")
+	print("This is where Unclear Analysis will go once it's written")
+	UnclearAnalysis = "This is where Unclear Analysis will go once it's written"
+	return UnclearAnalysis
+
+def UnknownAnalysis(conn,cursor,api,RCA=False):
+	#How are you even seeing this?
+	print("How are you even seeing this? Nothing should link to Unknown")
+	cursor.execute("create table if not exists Unknown(id integer primary key autoincrement, TSCount Text, ChassisID Text, Filename Text, Timestamp Text, LogMessage text)")
+	print("This is where Unknown Analysis will go once it's written")
+	UnknownAnalysis = "This is where Unknown Analysis will go once it's written"
+	return UnknownAnalysis
+
+def VCAnalysis(conn,cursor,api,RCA=False):
+	#Written, but in a placeholder status
+	print("")
+	VCAnalysis = []
+	cursor.execute("create table if not exists VC(id integer primary key autoincrement, TSCount Text, ChassisID Text, Filename Text, Timestamp Text, LogMessage text)")
+	cursor.execute("select TSCount,ChassisID,Filename,Timestamp,LogMessage,Category from Logs where category like '%Critical%' and category like '%VC%' order by Timestamp")
+	#cursor.execute("select count(*) from Logs where category like '%Critical%' and category like '%VC%'")
+	VCOutput = cursor.fetchall()
+	#print(len(VCOutput))
+	if len(VCOutput) != 0:
+		print("Here are the critical VC logs:")
+		print("-------------------------------------")
+		print("Chassis ID - Time - LogMessage")
+		print("-------------------------------------")
+		for line in VCOutput:
+			print(line[1]+" - "+line[3]+" - "+line[4])
+		VCAnalysis.append("Here are the critical VC logs:")
+		VCAnalysis.append("-------------------------------------")
+		VCAnalysis.append("Chassis ID - Time - LogMessage")
+		VCAnalysis.append("-------------------------------------")
+		for line in VCOutput:
+			VCAnalysis.append(line[1]+" - "+line[3]+" - "+line[4])
+			cursor.execute("insert into RCA (ChassisID,Timestamp,Explanation) values ('"+line[1]+"','"+line[3]+"','"+line[4]+"')")
+	return VCAnalysis
+
+def RebootAnalysis(conn,cursor,api=False,RCA=False):
+	print("")
+	print("Checking the logs for reboot events and correlating reboot reason")
 	global AnalysisInitialized
 	if AnalysisInitialized == False:
 		AnalysisInit(conn,cursor)
@@ -1963,459 +2280,696 @@ def RebootAnalysis(conn,cursor,api=False):
 		cursor.execute("select LogMessage,Category,LogMeaning from Analysis where category like '%Reboot%'")
 		Analysis = cursor.fetchall()
 		LogDictionary = []
+		LogCategory = []
 		LogMeaning = []
 		for line in Analysis:
 			Message = line[0]
+			Category = line[1]
 			Meaning = line[2]
 			Message.strip()
 			Meaning.strip()
 			#print(Message)
 			#print(Meaning)
 			LogDictionary.append(Message)
+			LogCategory.append(Category)
 			LogMeaning.append(Meaning)
 		counter = 0
 		DictionaryLength = len(LogDictionary)
 		while counter < DictionaryLength:
-			query = "update Logs set LogMeaning = '"+LogMeaning[counter]+"', Category = 'Reboot' where LogMessage like '%"+LogDictionary[counter]+"%'"
+			query = "update Logs set LogMeaning = '"+LogMeaning[counter]+"', Category = '"+LogCategory[counter]+"' where LogMessage like '%"+LogDictionary[counter]+"%'"
 			#print(query)
 			cursor.execute(query)
 			#cursor.execute("update Logs (LogMeaning, Category) values ("+LogMeaning[counter]+", "+Category[counter]+") where LogMessage like '%"+LogDictionary[counter]+"%'")
 			counter += 1
 	AnyReboots = False
-	"""
-	cursor.execute("select Logs.ID,Logs.ChassisID,Logs.Timestamp from Logs,Reboot where (((InStr([Logs].[LogMessage],[Reboot].[LogMessage]))>0)) order by Logs.ChassisID,Logs.Timestamp")
-	"""
-	cursor.execute("select ID,ChassisID,Timestamp from Logs where Category like '%Reboot%' order by ChassisID,Timestamp")
-	Output = cursor.fetchall()
-	#print(Output)
-	Chassis1ListTime = []
-	Chassis2ListTime = []
-	Chassis3ListTime = []
-	Chassis4ListTime = []
-	Chassis5ListTime = []
-	Chassis6ListTime = []
-	Chassis7ListTime = []
-	Chassis8ListTime = []
-	Chassis1ListID = []
-	Chassis2ListID = []
-	Chassis3ListID = []
-	Chassis4ListID = []
-	Chassis5ListID = []
-	Chassis6ListID = []
-	Chassis7ListID = []
-	Chassis8ListID = []
-	AnalysisOutput = []
-	for line in Output:
-		#print(line)
-		line = str(line)
-		line = line.replace("[", "")
-		line = line.replace("]", "")
-		line = line.replace("(", "")
-		line = line.replace(")", "")
-		line = line.replace("' ", "")
-		line = line.replace("'", "")
-		parts = line.split(",")
-		#print(parts)
-		ID = parts[0].strip()
-		ChassisID = parts[1].strip()
-		Timestamp = parts [2].strip()
-		#print("ID: "+ID)
-		#print("ChassisID: "+ChassisID)
-		#print("Timestamp: "+Timestamp)
-		match ChassisID:
-			case "Chassis 1":
-				Chassis1ListTime.append(Timestamp)
-				Chassis1ListID.append(ID)
-			case "Chassis 2":
-				Chassis2ListTime.append(Timestamp)
-				Chassis2ListID.append(ID)
-			case "Chassis 3":
-				Chassis3ListTime.append(Timestamp)
-				Chassis3ListID.append(ID)
-			case "Chassis 4":
-				Chassis4ListTime.append(Timestamp)
-				Chassis4ListID.append(ID)
-			case "Chassis 5":
-				Chassis5ListTime.append(Timestamp)
-				Chassis5ListID.append(ID)
-			case "Chassis 6":
-				Chassis6ListTime.append(Timestamp)
-				Chassis6ListID.append(ID)
-			case "Chassis 7":
-				Chassis7ListTime.append(Timestamp)
-				Chassis7ListID.append(ID)
-			case "Chassis 8":
-				Chassis8ListTime.append(Timestamp)
-				Chassis8ListID.append(ID)
-
-	#print(len(Chassis1ListTime))
-	#print(len(Chassis2ListTime))
-	#print(len(Chassis3ListTime))
-	#print(len(Chassis4ListTime))
-	#print(len(Chassis5ListTime))
-	#print(len(Chassis6ListTime))
-	#print(len(Chassis7ListTime))
-	#print(len(Chassis8ListTime))
-	Chassis1RebootEvent = []
-	Chassis2RebootEvent = []
-	Chassis3RebootEvent = []
-	Chassis4RebootEvent = []
-	Chassis5RebootEvent = []
-	Chassis6RebootEvent = []
-	Chassis7RebootEvent = []
-	Chassis8RebootEvent = []
-	format_string = "%Y-%m-%d %H:%M:%S"
-	if Chassis1ListTime != []:
-		AnyReboots = True
-		FirstReboot = Chassis1ListTime[0]
-		Chassis1RebootEvent.append(FirstReboot)
-		counter = 0
-		while counter+1 < len(Chassis1ListTime):
-			#print("counter = "+str(counter))
-			#print("Chassis1ListTime size: "+str(len(Chassis1ListTime)))
-			Time1 = Chassis1ListTime[counter]
-			Time2 = Chassis1ListTime[counter+1]
-			#print(Time1)
-			#print(Time2)
-			#remove subseconds
-			parts1 = Time1.split(".")
-			Time1 = parts1[0]
-			parts2 = Time2.split(".")
-			Time2 = parts2[0]
-			Time1 = datetime.datetime.strptime(Time1,format_string)
-			Time2 = datetime.datetime.strptime(Time2,format_string)
-			TimeDiff = Time2-Time1
-			#print(Time1)
-			#print(Time2)
-			#print(TimeDiff)
-			#If logs are more than 5 minutes apart
-			if TimeDiff >= datetime.timedelta(minutes=5):
-				#print("Reboot event!")
-				Chassis1RebootEvent.append(Time2)
-			counter += 1
-		if len(Chassis1RebootEvent) == 1:
-			print("Chassis 1 rebooted 1 time. Here is when the reboot happened:")
-			AnalysisOutput.append("Chassis 1 rebooted 1 time. Here is when the reboot happened:")
-		else:
-			print("Chassis 1 rebooted "+str(len(Chassis1RebootEvent))+" times. Here is when the reboots happened:")
-			AnalysisOutput.append("Chassis 1 rebooted "+str(len(Chassis1RebootEvent))+" times. Here is when the reboots happened:")
-		TimeDesync = False
-		for line in Chassis1RebootEvent:
-			print(line)
-			AnalysisOutput.append(str(line))
-			if ("1970" or "1969") in str(line):
-				TimeDesync = True
-		#print(AnalysisOutput)
-		if TimeDesync == True:
-			print("Warning: There is a time desync present in the logs where the timestamp reads 1970 or 1969. Use 'Look for problems' and 'Locate time desyncs' to determine where")
-	if Chassis2ListTime != []:
-		AnyReboots = True
-		FirstReboot = Chassis2ListTime[0]
-		Chassis2RebootEvent.append(FirstReboot)
-		counter = 0
-		while counter+1 < len(Chassis2ListTime):
-			#print("counter = "+str(counter))
-			#print("Chassis2ListTime size: "+str(len(Chassis2ListTime)))
-			Time1 = Chassis2ListTime[counter]
-			Time2 = Chassis2ListTime[counter+1]
-			#print(Time1)
-			#print(Time2)
-			#remove subseconds
-			parts1 = Time1.split(".")
-			Time1 = parts1[0]
-			parts2 = Time2.split(".")
-			Time2 = parts2[0]
-			Time1 = datetime.datetime.strptime(Time1,format_string)
-			Time2 = datetime.datetime.strptime(Time2,format_string)
-			TimeDiff = Time2-Time1
-			#print(Time1)
-			#print(Time2)
-			#print(TimeDiff)
-			#If logs are more than 5 minutes apart
-			if TimeDiff >= datetime.timedelta(minutes=5):
-				#print("Reboot event!")
-				Chassis2RebootEvent.append(Time2)
-			counter += 1
-		if len(Chassis2RebootEvent) == 1:
-			print("Chassis 2 rebooted 1 time. Here is when the reboot happened:")
-			AnalysisOutput.append("Chassis 2 rebooted 1 time. Here is when the reboot happened:")
-		else:
-			print("Chassis 2 rebooted "+str(len(Chassis2RebootEvent))+" times. Here is when the reboots happened:")
-			AnalysisOutput.append("Chassis 2 rebooted "+str(len(Chassis2RebootEvent))+" times. Here is when the reboots happened:")
-		TimeDesync = False
-		for line in Chassis2RebootEvent:
-			print(line)
-			AnalysisOutput.append(str(line))
-			if ("1970" or "1969") in str(line):
-				TimeDesync = True
-		if TimeDesync == True:
-			print("Warning: There is a time desync present in the logs where the timestamp reads 1970 or 1969. Use 'Look for problems' and 'Locate time desyncs' to determine where")
-	if Chassis3ListTime != []:
-		AnyReboots = True
-		FirstReboot = Chassis3ListTime[0]
-		Chassis3RebootEvent.append(FirstReboot)
-		counter = 0
-		while counter+1 < len(Chassis3ListTime):
-			#print("counter = "+str(counter))
-			#print("Chassis3ListTime size: "+str(len(Chassis3ListTime)))
-			Time1 = Chassis3ListTime[counter]
-			Time2 = Chassis3ListTime[counter+1]
-			#print(Time1)
-			#print(Time2)
-			#remove subseconds
-			parts1 = Time1.split(".")
-			Time1 = parts1[0]
-			parts2 = Time2.split(".")
-			Time2 = parts2[0]
-			Time1 = datetime.datetime.strptime(Time1,format_string)
-			Time2 = datetime.datetime.strptime(Time2,format_string)
-			TimeDiff = Time2-Time1
-			#print(Time1)
-			#print(Time2)
-			#print(TimeDiff)
-			#If logs are more than 5 minutes apart
-			if TimeDiff >= datetime.timedelta(minutes=5):
-				#print("Reboot event!")
-				Chassis3RebootEvent.append(Time2)
-			counter += 1
-		if len(Chassis3RebootEvent) == 1:
-			print("Chassis 3 rebooted 1 time. Here is when the reboot happened:")
-			AnalysisOutput.append("Chassis 3 rebooted 1 time. Here is when the reboot happened:")
-		else:
-			print("Chassis 3 rebooted "+str(len(Chassis3RebootEvent))+" times. Here is when the reboots happened:")
-			AnalysisOutput.append("Chassis 3 rebooted "+str(len(Chassis3RebootEvent))+" times. Here is when the reboots happened:")
-		TimeDesync = False
-		for line in Chassis3RebootEvent:
-			print(line)
-			AnalysisOutput.append(str(line))
-			if ("1970" or "1969") in str(line):
-				TimeDesync = True
-		if TimeDesync == True:
-			print("Warning: There is a time desync present in the logs where the timestamp reads 1970 or 1969. Use 'Look for problems' and 'Locate time desyncs' to determine where")
-	if Chassis4ListTime != []:
-		AnyReboots = True
-		FirstReboot = Chassis4ListTime[0]
-		Chassis4RebootEvent.append(FirstReboot)
-		counter = 0
-		while counter+1 < len(Chassis4ListTime):
-			#print("counter = "+str(counter))
-			#print("Chassis4ListTime size: "+str(len(Chassis4ListTime)))
-			Time1 = Chassis4ListTime[counter]
-			Time2 = Chassis4ListTime[counter+1]
-			#print(Time1)
-			#print(Time2)
-			#remove subseconds
-			parts1 = Time1.split(".")
-			Time1 = parts1[0]
-			parts2 = Time2.split(".")
-			Time2 = parts2[0]
-			Time1 = datetime.datetime.strptime(Time1,format_string)
-			Time2 = datetime.datetime.strptime(Time2,format_string)
-			TimeDiff = Time2-Time1
-			#print(Time1)
-			#print(Time2)
-			#print(TimeDiff)
-			#If logs are more than 5 minutes apart
-			if TimeDiff >= datetime.timedelta(minutes=5):
-				#print("Reboot event!")
-				Chassis4RebootEvent.append(Time2)
-			counter += 1
-		if len(Chassis4RebootEvent) == 1:
-			print("Chassis 4 rebooted 1 time. Here is when the reboot happened:")
-			AnalysisOutput.append("Chassis 4 rebooted 1 time. Here is when the reboot happened:")
-		else:
-			print("Chassis 4 rebooted "+str(len(Chassis4RebootEvent))+" times. Here is when the reboots happened:")
-			AnalysisOutput.append("Chassis 4 rebooted "+str(len(Chassis4RebootEvent))+" times. Here is when the reboots happened:")
-		TimeDesync = False
-		for line in Chassis4RebootEvent:
-			print(line)
-			AnalysisOutput.append(str(line))
-			if ("1970" or "1969") in str(line):
-				TimeDesync = True
-		if TimeDesync == True:
-			print("Warning: There is a time desync present in the logs where the timestamp reads 1970 or 1969. Use 'Look for problems' and 'Locate time desyncs' to determine where")
-	if Chassis5ListTime != []:
-		AnyReboots = True
-		FirstReboot = Chassis5ListTime[0]
-		Chassis5RebootEvent.append(FirstReboot)
-		counter = 0
-		while counter+1 < len(Chassis5ListTime):
-			#print("counter = "+str(counter))
-			#print("Chassis5ListTime size: "+str(len(Chassis5ListTime)))
-			Time1 = Chassis5ListTime[counter]
-			Time2 = Chassis5ListTime[counter+1]
-			#print(Time1)
-			#print(Time2)
-			#remove subseconds
-			parts1 = Time1.split(".")
-			Time1 = parts1[0]
-			parts2 = Time2.split(".")
-			Time2 = parts2[0]
-			Time1 = datetime.datetime.strptime(Time1,format_string)
-			Time2 = datetime.datetime.strptime(Time2,format_string)
-			TimeDiff = Time2-Time1
-			#print(Time1)
-			#print(Time2)
-			#print(TimeDiff)
-			#If logs are more than 5 minutes apart
-			if TimeDiff >= datetime.timedelta(minutes=5):
-				#print("Reboot event!")
-				Chassis5RebootEvent.append(Time2)
-			counter += 1
-		if len(Chassis5RebootEvent) == 1:
-			print("Chassis 5 rebooted 1 time. Here is when the reboot happened:")
-			AnalysisOutput.append("Chassis 5 rebooted 1 time. Here is when the reboot happened:")
-		else:
-			print("Chassis 5 rebooted "+str(len(Chassis5RebootEvent))+" times. Here is when the reboots happened:")
-			AnalysisOutput.append("Chassis 5 rebooted "+str(len(Chassis5RebootEvent))+" times. Here is when the reboots happened:")
-		TimeDesync = False
-		for line in Chassis5RebootEvent:
-			print(line)
-			AnalysisOutput.append(str(line))
-			if ("1970" or "1969") in str(line):
-				TimeDesync = True
-		if TimeDesync == True:
-			print("Warning: There is a time desync present in the logs where the timestamp reads 1970 or 1969. Use 'Look for problems' and 'Locate time desyncs' to determine where")
-	if Chassis6ListTime != []:
-		AnyReboots = True
-		FirstReboot = Chassis6ListTime[0]
-		Chassis6RebootEvent.append(FirstReboot)
-		counter = 0
-		while counter+1 < len(Chassis6ListTime):
-			#print("counter = "+str(counter))
-			#print("Chassis6ListTime size: "+str(len(Chassis6ListTime)))
-			Time1 = Chassis6ListTime[counter]
-			Time2 = Chassis6ListTime[counter+1]
-			#print(Time1)
-			#print(Time2)
-			#remove subseconds
-			parts1 = Time1.split(".")
-			Time1 = parts1[0]
-			parts2 = Time2.split(".")
-			Time2 = parts2[0]
-			Time1 = datetime.datetime.strptime(Time1,format_string)
-			Time2 = datetime.datetime.strptime(Time2,format_string)
-			TimeDiff = Time2-Time1
-			#print(Time1)
-			#print(Time2)
-			#print(TimeDiff)
-			#If logs are more than 5 minutes apart
-			if TimeDiff >= datetime.timedelta(minutes=5):
-				#print("Reboot event!")
-				Chassis6RebootEvent.append(Time2)
-			counter += 1
-		if len(Chassis6RebootEvent) == 1:
-			print("Chassis 6 rebooted 1 time. Here is when the reboot happened:")
-			AnalysisOutput.append("Chassis 6 rebooted 1 time. Here is when the reboot happened:")
-		else:
-			print("Chassis 6 rebooted "+str(len(Chassis6RebootEvent))+" times. Here is when the reboots happened:")
-			AnalysisOutput.append("Chassis 6 rebooted "+str(len(Chassis6RebootEvent))+" times. Here is when the reboots happened:")
-		TimeDesync = False
-		for line in Chassis6RebootEvent:
-			print(line)
-			AnalysisOutput.append(str(line))
-			if ("1970" or "1969") in str(line):
-				TimeDesync = True
-		if TimeDesync == True:
-			print("Warning: There is a time desync present in the logs where the timestamp reads 1970 or 1969. Use 'Look for problems' and 'Locate time desyncs' to determine where")
-	if Chassis7ListTime != []:
-		AnyReboots = True
-		FirstReboot = Chassis7ListTime[0]
-		Chassis7RebootEvent.append(FirstReboot)
-		counter = 0
-		while counter+1 < len(Chassis7ListTime):
-			#print("counter = "+str(counter))
-			#print("Chassis7ListTime size: "+str(len(Chassis7ListTime)))
-			Time1 = Chassis7ListTime[counter]
-			Time2 = Chassis7ListTime[counter+1]
-			#print(Time1)
-			#print(Time2)
-			#remove subseconds
-			parts1 = Time1.split(".")
-			Time1 = parts1[0]
-			parts2 = Time2.split(".")
-			Time2 = parts2[0]
-			Time1 = datetime.datetime.strptime(Time1,format_string)
-			Time2 = datetime.datetime.strptime(Time2,format_string)
-			TimeDiff = Time2-Time1
-			#print(Time1)
-			#print(Time2)
-			#print(TimeDiff)
-			#If logs are more than 5 minutes apart
-			if TimeDiff >= datetime.timedelta(minutes=5):
-				#print("Reboot event!")
-				Chassis7RebootEvent.append(Time2)
-			counter += 1
-		if len(Chassis7RebootEvent) == 1:
-			print("Chassis 7 rebooted 1 time. Here is when the reboot happened:")
-			AnalysisOutput.append("Chassis 7 rebooted 1 time. Here is when the reboot happened:")
-		else:
-			print("Chassis 7 rebooted "+str(len(Chassis7RebootEvent))+" times. Here is when the reboots happened:")
-			AnalysisOutput.append("Chassis 7 rebooted "+str(len(Chassis7RebootEvent))+" times. Here is when the reboots happened:")
-		TimeDesync = False
-		for line in Chassis7RebootEvent:
-			print(line)
-			AnalysisOutput.append(str(line))
-			if ("1970" or "1969") in str(line):
-				TimeDesync = True
-		if TimeDesync == True:
-			print("Warning: There is a time desync present in the logs where the timestamp reads 1970 or 1969. Use 'Look for problems' and 'Locate time desyncs' to determine where")
-	if Chassis8ListTime != []:
-		AnyReboots = True
-		FirstReboot = Chassis8ListTime[0]
-		Chassis8RebootEvent.append(FirstReboot)
-		counter = 0
-		while counter+1 < len(Chassis8ListTime):
-			#print("counter = "+str(counter))
-			#print("Chassis8ListTime size: "+str(len(Chassis8ListTime)))
-			Time1 = Chassis8ListTime[counter]
-			Time2 = Chassis8ListTime[counter+1]
-			#print(Time1)
-			#print(Time2)
-			#remove subseconds
-			parts1 = Time1.split(".")
-			Time1 = parts1[0]
-			parts2 = Time2.split(".")
-			Time2 = parts2[0]
-			Time1 = datetime.datetime.strptime(Time1,format_string)
-			Time2 = datetime.datetime.strptime(Time2,format_string)
-			TimeDiff = Time2-Time1
-			#print(Time1)
-			#print(Time2)
-			#print(TimeDiff)
-			#If logs are more than 5 minutes apart
-			if TimeDiff >= datetime.timedelta(minutes=5):
-				#print("Reboot event!")
-				Chassis8RebootEvent.append(Time2)
-			counter += 1
-		if len(Chassis8RebootEvent) == 1:
-			print("Chassis 8 rebooted 1 time. Here is when the reboot happened:")
-			AnalysisOutput.append("Chassis 8 rebooted 1 time. Here is when the reboot happened:")
-		else:
-			print("Chassis 8 rebooted "+str(len(Chassis8RebootEvent))+" times. Here is when the reboots happened:")
-			AnalysisOutput.append("Chassis 8 rebooted "+str(len(Chassis8RebootEvent))+" times. Here is when the reboots happened:")
-		TimeDesync = False
-		for line in Chassis8RebootEvent:
-			print(line)
-			AnalysisOutput.append(str(line))
-			if ("1970" or "1969") in str(line):
-				TimeDesync = True
-		if TimeDesync == True:
-			print("Warning: There is a time desync present in the logs where the timestamp reads 1970 or 1969. Use 'Look for problems' and 'Locate time desyncs' to determine where")
-	if AnyReboots == False:
-		AnalysisOutput = "There are no reboots in the logs."
-		return AnalysisOutput
+	# always create the Reboot table since we use :memory: database (fresh each call)
+	cursor.execute("create table if not exists Reboot(id integer primary key autoincrement, TSCount Text, ChassisID Text, Filename Text, Timestamp Text, LogMessage text, Instance text, Reason text)")
+	global RebootsRan
+	if RebootsRan == False:
+		RebootsRan = True
+		Chassis1ListTime = []
+		Chassis2ListTime = []
+		Chassis3ListTime = []
+		Chassis4ListTime = []
+		Chassis5ListTime = []
+		Chassis6ListTime = []
+		Chassis7ListTime = []
+		Chassis8ListTime = []
+		Chassis1ListID = []
+		Chassis2ListID = []
+		Chassis3ListID = []
+		Chassis4ListID = []
+		Chassis5ListID = []
+		Chassis6ListID = []
+		Chassis7ListID = []
+		Chassis8ListID = []
+		Chassis1TSCount = []
+		Chassis2TSCount = []
+		Chassis3TSCount = []
+		Chassis4TSCount = []
+		Chassis5TSCount = []
+		Chassis6TSCount = []
+		Chassis7TSCount = []
+		Chassis8TSCount = []
+		Chassis1Filename = []
+		Chassis2Filename = []
+		Chassis3Filename = []
+		Chassis4Filename = []
+		Chassis5Filename = []
+		Chassis6Filename = []
+		Chassis7Filename = []
+		Chassis8Filename = []
+		Instance = 2
+		cursor.execute("select ID,ChassisID,Timestamp,TSCount,Filename from Logs where LogMessage like '%syslogd started: BusyBox %' order by ChassisID,Timestamp")
+		Output = cursor.fetchall()
+		for line in Output:
+			ID = line[0]
+			#print(ID)
+			if int(ID) != 1:
+				cursor.execute("select logmessage from Logs where ID = '"+str(int(ID-1))+"'")
+				PreviousLogOutput = cursor.fetchall()
+				PreviousLog = PreviousLogOutput[0]
+				#print("Previous Log: "+str(PreviousLog))
+				if "syslogd exiting" in PreviousLog:
+					continue
+			ChassisID = line[1]
+			Timestamp = line[2]
+			TSCount = line[3]
+			Filename = line[4]
+			match ChassisID:
+				case "Chassis 1":
+					Chassis1ListTime.append(Timestamp)
+					Chassis1ListID.append(ID)
+					Chassis1TSCount.append(TSCount)
+					Chassis1Filename.append(Filename)
+				case "Chassis 2":
+					Chassis2ListTime.append(Timestamp)
+					Chassis2ListID.append(ID)
+					Chassis2TSCount.append(TSCount)
+					Chassis2Filename.append(Filename)
+				case "Chassis 3":
+					Chassis3ListTime.append(Timestamp)
+					Chassis3ListID.append(ID)
+					Chassis3TSCount.append(TSCount)
+					Chassis3Filename.append(Filename)
+				case "Chassis 4":
+					Chassis4ListTime.append(Timestamp)
+					Chassis4ListID.append(ID)
+					Chassis4TSCount.append(TSCount)
+					Chassis4Filename.append(Filename)
+				case "Chassis 5":
+					Chassis5ListTime.append(Timestamp)
+					Chassis5ListID.append(ID)
+					Chassis5TSCount.append(TSCount)
+					Chassis5Filename.append(Filename)
+				case "Chassis 6":
+					Chassis6ListTime.append(Timestamp)
+					Chassis6ListID.append(ID)
+					Chassis6TSCount.append(TSCount)
+					Chassis6Filename.append(Filename)
+				case "Chassis 7":
+					Chassis7ListTime.append(Timestamp)
+					Chassis7ListID.append(ID)
+					Chassis7TSCount.append(TSCount)
+					Chassis7Filename.append(Filename)
+				case "Chassis 8":
+					Chassis8ListTime.append(Timestamp)
+					Chassis8ListID.append(ID)
+					Chassis8TSCount.append(TSCount)
+					Chassis8Filename.append(Filename)
+		#print(Output)
+		AnalysisOutput = []
+		Chassis1RebootEvent = []
+		Chassis2RebootEvent = []
+		Chassis3RebootEvent = []
+		Chassis4RebootEvent = []
+		Chassis5RebootEvent = []
+		Chassis6RebootEvent = []
+		Chassis7RebootEvent = []
+		Chassis8RebootEvent = []
+		Chassis1RebootEventID = []
+		Chassis2RebootEventID = []
+		Chassis3RebootEventID = []
+		Chassis4RebootEventID = []
+		Chassis5RebootEventID = []
+		Chassis6RebootEventID = []
+		Chassis7RebootEventID = []
+		Chassis8RebootEventID = []
+		format_string = "%Y-%m-%d %H:%M:%S"
+		if Chassis1ListTime != []:
+			AnyReboots = True
+			FirstReboot = Chassis1ListTime[0]
+			FirstRebootID = Chassis1ListID[0]
+			Chassis1RebootEvent.append(FirstReboot)
+			Chassis1RebootEventID.append(FirstRebootID)
+			counter = 0
+			while counter+1 < len(Chassis1ListTime):
+				#print("counter = "+str(counter))
+				#print("Chassis1ListTime size: "+str(len(Chassis1ListTime)))
+				Time1 = Chassis1ListTime[counter]
+				Time2 = Chassis1ListTime[counter+1]
+				#print(Time1)
+				#print(Time2)
+				#remove subseconds
+				parts1 = Time1.split(".")
+				Time1 = parts1[0]
+				parts2 = Time2.split(".")
+				Time2 = parts2[0]
+				Time1 = datetime.datetime.strptime(Time1,format_string)
+				Time2 = datetime.datetime.strptime(Time2,format_string)
+				TimeDiff = Time2-Time1
+				#print(Time1)
+				#print(Time2)
+				#print(TimeDiff)
+				#If logs are more than 5 minutes apart
+				if TimeDiff >= datetime.timedelta(minutes=5):
+					#print("Reboot event!")
+					#Look for previous Reason
+					#print("select LogMeaning from Logs where Category like '%RebootReason%' and Timestamp > '"+str(Chassis1ListTime[counter])+"' and Timestamp < '"+str(Chassis1ListTime[counter+1])+"' and ChassisID = 'Chassis 1' limit 1")
+					cursor.execute("select LogMeaning from Logs where Category like '%RebootReason%' and Timestamp > '"+str(Chassis1ListTime[counter])+"' and Timestamp < '"+str(Chassis1ListTime[counter+1])+"' and ChassisID = 'Chassis 1' limit 1")
+					ReasonOutput = cursor.fetchall()
+					#print(ReasonOutput)
+					if len(ReasonOutput) == 0:
+						ReasonOutput = "No reason specified"
+					Reason = ReasonOutput
+					Reason = CleanOutput(str(Reason))
+					#print("Reason is:")
+					#print(Reason)
+					Chassis1RebootEvent.append(Time2)
+					Chassis1RebootEventID.append(Chassis1ListID[counter+1])
+					cursor.execute("insert into Reboot (ChassisID,id,Timestamp,Instance,Reason) values ('Chassis 1','"+str(Chassis1ListID[counter])+"','"+str(Chassis1ListTime[counter])+"','"+str(Instance-1)+"','"+Reason+"')")
+					if RCA == True:
+						cursor.execute("insert into RCA (ChassisID,Timestamp,Explanation) values ('Chassis 1','"+str(Chassis1ListTime[counter])+"','"+Reason+"')")
+					Instance += 1
+				counter += 1
+			#cursor.execute("insert into Reboot (id,Timestamp,Instance) values ()")
+			#Find Reason for last instance
+			#print("select LogMessage,LogMeaning from Logs where Category like '%RebootReason%' and id > '"+str(Chassis1RebootEventID[-1])+"' and ChassisID = 'Chassis 1' limit 1")
+			cursor.execute("select LogMeaning from Logs where Category like '%RebootReason%' and Timestamp > '"+str(Chassis1RebootEvent[-1])+"' and ChassisID = 'Chassis 1' limit 1")
+			ReasonOutput = cursor.fetchall()
+			#print(ReasonOutput)
+			#print(Reason)
+			if len(ReasonOutput) == 0:
+				ReasonOutput = "No reason specified"
+			Reason = ReasonOutput
+			Reason = CleanOutput(str(Reason))
+			#print("Reason is:")
+			#print(Reason)
+			cursor.execute("insert into Reboot (ChassisID,id,Timestamp,Instance,Reason) values ('Chassis 1','"+str(Chassis1ListID[counter])+"','"+str(Chassis1ListTime[counter])+"','"+str(Instance-1)+"','"+Reason+"')")
+			if RCA == True:
+				cursor.execute("insert into RCA (ChassisID,Timestamp,Explanation) values ('Chassis 1','"+str(Chassis1ListTime[counter])+"','"+Reason+"')")
+			if Instance != 1:
+				Instance -= 1
+			"""
+			if len(Chassis1RebootEvent) == 1:
+				print("Chassis 1 rebooted 1 time. Here is when the reboot happened:")
+				AnalysisOutput.append("Chassis 1 rebooted 1 time. Here is when the reboot happened:")
+			else:
+				print("Chassis 1 rebooted "+str(len(Chassis1RebootEvent))+" times. Here is when the reboots happened:")
+				AnalysisOutput.append("Chassis 1 rebooted "+str(len(Chassis1RebootEvent))+" times. Here is when the reboots happened:")
+			TimeDesync = False
+			for line in Chassis1RebootEvent:
+				print(line)
+				AnalysisOutput.append(str(line))
+				if ("1970" or "1969") in str(line):
+					TimeDesync = True
+			#print(AnalysisOutput)
+			if TimeDesync == True:
+				print("Warning: There is a time desync present in the logs where the timestamp reads 1970 or 1969. Use 'Look for problems' and 'Locate time desyncs' to determine where")
+			"""
+		if Chassis2ListTime != []:
+			AnyReboots = True
+			FirstReboot = Chassis2ListTime[0]
+			FirstRebootID = Chassis2ListID[0]
+			Chassis2RebootEvent.append(FirstReboot)
+			Chassis2RebootEventID.append(FirstRebootID)
+			counter = 0
+			while counter+1 < len(Chassis2ListTime):
+				#print("counter = "+str(counter))
+				#print("Chassis2ListTime size: "+str(len(Chassis2ListTime)))
+				Time1 = Chassis2ListTime[counter]
+				Time2 = Chassis2ListTime[counter+1]
+				#print(Time1)
+				#print(Time2)
+				#remove subseconds
+				parts1 = Time1.split(".")
+				Time1 = parts1[0]
+				parts2 = Time2.split(".")
+				Time2 = parts2[0]
+				Time1 = datetime.datetime.strptime(Time1,format_string)
+				Time2 = datetime.datetime.strptime(Time2,format_string)
+				TimeDiff = Time2-Time1
+				#print(Time1)
+				#print(Time2)
+				#print(TimeDiff)
+				#If logs are more than 5 minutes apart
+				if TimeDiff >= datetime.timedelta(minutes=5):
+					#print("Reboot event!")
+					#Look for previous Reason
+					#print("select LogMeaning from Logs where Category like '%RebootReason%' and Timestamp > '"+str(Chassis2ListTime[counter])+"' and Timestamp < '"+str(Chassis2ListTime[counter+1])+"' and ChassisID = 'Chassis 2' limit 1")
+					cursor.execute("select LogMeaning from Logs where Category like '%RebootReason%' and Timestamp > '"+str(Chassis2ListTime[counter])+"' and Timestamp < '"+str(Chassis2ListTime[counter+1])+"' and ChassisID = 'Chassis 2' limit 1")
+					ReasonOutput = cursor.fetchall()
+					#print(ReasonOutput)
+					if len(ReasonOutput) == 0:
+						ReasonOutput = "No reason specified"
+					Reason = ReasonOutput
+					Reason = CleanOutput(str(Reason))
+					#print("Reason is:")
+					#print(Reason)
+					Chassis2RebootEvent.append(Time2)
+					Chassis2RebootEventID.append(Chassis2ListID[counter+1])
+					cursor.execute("insert into Reboot (ChassisID,id,Timestamp,Instance,Reason) values ('Chassis 2','"+str(Chassis2ListID[counter])+"','"+str(Chassis2ListTime[counter])+"','"+str(Instance-1)+"','"+Reason+"')")
+					if RCA == True:
+						cursor.execute("insert into RCA (ChassisID,Timestamp,Explanation) values ('Chassis 2','"+str(Chassis2ListTime[counter])+"','"+Reason+"')")
+					Instance += 1
+				counter += 1
+			#cursor.execute("insert into reboot (id,Timestamp,Instance) values ()")
+			#Find Reason for last instance
+			#print("select LogMessage,LogMeaning from Logs where Category like '%RebootReason%' and id > '"+str(Chassis2RebootEventID[-1])+"' and ChassisID = 'Chassis 2' limit 1")
+			cursor.execute("select LogMeaning from Logs where Category like '%RebootReason%' and Timestamp > '"+str(Chassis2RebootEvent[-1])+"' and ChassisID = 'Chassis 2' limit 1")
+			ReasonOutput = cursor.fetchall()
+			#print(ReasonOutput)
+			#print(Reason)
+			if len(ReasonOutput) == 0:
+				ReasonOutput = "No reason specified"
+			Reason = ReasonOutput
+			Reason = CleanOutput(str(Reason))
+			#print("Reason is:")
+			#print(Reason)
+			cursor.execute("insert into Reboot (ChassisID,id,Timestamp,Instance,Reason) values ('Chassis 2','"+str(Chassis2ListID[counter])+"','"+str(Chassis2ListTime[counter])+"','"+str(Instance-1)+"','"+Reason+"')")
+			if RCA == True:
+				cursor.execute("insert into RCA (ChassisID,Timestamp,Explanation) values ('Chassis 2','"+str(Chassis2ListTime[counter])+"','"+Reason+"')")
+			if Instance != 1:
+				Instance -= 1
+		if Chassis3ListTime != []:
+			AnyReboots = True
+			FirstReboot = Chassis3ListTime[0]
+			FirstRebootID = Chassis3ListID[0]
+			Chassis3RebootEvent.append(FirstReboot)
+			Chassis3RebootEventID.append(FirstRebootID)
+			counter = 0
+			while counter+1 < len(Chassis3ListTime):
+				#print("counter = "+str(counter))
+				#print("Chassis3ListTime size: "+str(len(Chassis3ListTime)))
+				Time1 = Chassis3ListTime[counter]
+				Time2 = Chassis3ListTime[counter+1]
+				#print(Time1)
+				#print(Time2)
+				#remove subseconds
+				parts1 = Time1.split(".")
+				Time1 = parts1[0]
+				parts2 = Time2.split(".")
+				Time2 = parts2[0]
+				Time1 = datetime.datetime.strptime(Time1,format_string)
+				Time2 = datetime.datetime.strptime(Time2,format_string)
+				TimeDiff = Time2-Time1
+				#print(Time1)
+				#print(Time2)
+				#print(TimeDiff)
+				#If logs are more than 5 minutes apart
+				if TimeDiff >= datetime.timedelta(minutes=5):
+					#print("Reboot event!")
+					#Look for previous Reason
+					#print("select LogMeaning from Logs where Category like '%RebootReason%' and Timestamp > '"+str(Chassis3ListTime[counter])+"' and Timestamp < '"+str(Chassis3ListTime[counter+1])+"' and ChassisID = 'Chassis 3' limit 1")
+					cursor.execute("select LogMeaning from Logs where Category like '%RebootReason%' and Timestamp > '"+str(Chassis3ListTime[counter])+"' and Timestamp < '"+str(Chassis3ListTime[counter+1])+"' and ChassisID = 'Chassis 3' limit 1")
+					ReasonOutput = cursor.fetchall()
+					#print(ReasonOutput)
+					if len(ReasonOutput) == 0:
+						ReasonOutput = "No reason specified"
+					Reason = ReasonOutput
+					Reason = CleanOutput(str(Reason))
+					#print("Reason is:")
+					#print(Reason)
+					Chassis3RebootEvent.append(Time2)
+					Chassis3RebootEventID.append(Chassis3ListID[counter+1])
+					cursor.execute("insert into Reboot (ChassisID,id,Timestamp,Instance,Reason) values ('Chassis 3','"+str(Chassis3ListID[counter])+"','"+str(Chassis3ListTime[counter])+"','"+str(Instance-1)+"','"+Reason+"')")
+					if RCA == True:
+						cursor.execute("insert into RCA (ChassisID,Timestamp,Explanation) values ('Chassis 3','"+str(Chassis3ListTime[counter])+"','"+Reason+"')")
+					Instance += 1
+				counter += 1
+			#cursor.execute("insert into reboot (id,Timestamp,Instance) values ()")
+			#Find Reason for last instance
+			#print("select LogMessage,LogMeaning from Logs where Category like '%RebootReason%' and id > '"+str(Chassis3RebootEventID[-1])+"' and ChassisID = 'Chassis 3' limit 1")
+			cursor.execute("select LogMeaning from Logs where Category like '%RebootReason%' and Timestamp > '"+str(Chassis3RebootEvent[-1])+"' and ChassisID = 'Chassis 3' limit 1")
+			ReasonOutput = cursor.fetchall()
+			#print(ReasonOutput)
+			#print(Reason)
+			if len(ReasonOutput) == 0:
+				ReasonOutput = "No reason specified"
+			Reason = ReasonOutput
+			Reason = CleanOutput(str(Reason))
+			#print("Reason is:")
+			#print(Reason)
+			cursor.execute("insert into Reboot (ChassisID,id,Timestamp,Instance,Reason) values ('Chassis 3','"+str(Chassis3ListID[counter])+"','"+str(Chassis3ListTime[counter])+"','"+str(Instance-1)+"','"+Reason+"')")
+			if RCA == True:
+				cursor.execute("insert into RCA (ChassisID,Timestamp,Explanation) values ('Chassis 3','"+str(Chassis3ListTime[counter])+"','"+Reason+"')")
+			if Instance != 1:
+				Instance -= 1
+		if Chassis4ListTime != []:
+			AnyReboots = True
+			FirstReboot = Chassis4ListTime[0]
+			FirstRebootID = Chassis4ListID[0]
+			Chassis4RebootEvent.append(FirstReboot)
+			Chassis4RebootEventID.append(FirstRebootID)
+			counter = 0
+			while counter+1 < len(Chassis4ListTime):
+				#print("counter = "+str(counter))
+				#print("Chassis4ListTime size: "+str(len(Chassis4ListTime)))
+				Time1 = Chassis4ListTime[counter]
+				Time2 = Chassis4ListTime[counter+1]
+				#print(Time1)
+				#print(Time2)
+				#remove subseconds
+				parts1 = Time1.split(".")
+				Time1 = parts1[0]
+				parts2 = Time2.split(".")
+				Time2 = parts2[0]
+				Time1 = datetime.datetime.strptime(Time1,format_string)
+				Time2 = datetime.datetime.strptime(Time2,format_string)
+				TimeDiff = Time2-Time1
+				#print(Time1)
+				#print(Time2)
+				#print(TimeDiff)
+				#If logs are more than 5 minutes apart
+				if TimeDiff >= datetime.timedelta(minutes=5):
+					#print("Reboot event!")
+					#Look for previous Reason
+					#print("select LogMeaning from Logs where Category like '%RebootReason%' and Timestamp > '"+str(Chassis4ListTime[counter])+"' and Timestamp < '"+str(Chassis4ListTime[counter+1])+"' and ChassisID = 'Chassis 4' limit 1")
+					cursor.execute("select LogMeaning from Logs where Category like '%RebootReason%' and Timestamp > '"+str(Chassis4ListTime[counter])+"' and Timestamp < '"+str(Chassis4ListTime[counter+1])+"' and ChassisID = 'Chassis 4' limit 1")
+					ReasonOutput = cursor.fetchall()
+					#print(ReasonOutput)
+					if len(ReasonOutput) == 0:
+						ReasonOutput = "No reason specified"
+					Reason = ReasonOutput
+					Reason = CleanOutput(str(Reason))
+					#print("Reason is:")
+					#print(Reason)
+					Chassis4RebootEvent.append(Time2)
+					Chassis4RebootEventID.append(Chassis4ListID[counter+1])
+					cursor.execute("insert into Reboot (ChassisID,id,Timestamp,Instance,Reason) values ('Chassis 4','"+str(Chassis4ListID[counter])+"','"+str(Chassis4ListTime[counter])+"','"+str(Instance-1)+"','"+Reason+"')")
+					if RCA == True:
+						cursor.execute("insert into RCA (ChassisID,Timestamp,Explanation) values ('Chassis 4','"+str(Chassis4ListTime[counter])+"','"+Reason+"')")
+					Instance += 1
+				counter += 1
+			#cursor.execute("insert into reboot (id,Timestamp,Instance) values ()")
+			#Find Reason for last instance
+			#print("select LogMessage,LogMeaning from Logs where Category like '%RebootReason%' and id > '"+str(Chassis4RebootEventID[-1])+"' and ChassisID = 'Chassis 4' limit 1")
+			cursor.execute("select LogMeaning from Logs where Category like '%RebootReason%' and Timestamp > '"+str(Chassis4RebootEvent[-1])+"' and ChassisID = 'Chassis 4' limit 1")
+			ReasonOutput = cursor.fetchall()
+			#print(ReasonOutput)
+			#print(Reason)
+			if len(ReasonOutput) == 0:
+				ReasonOutput = "No reason specified"
+			Reason = ReasonOutput
+			Reason = CleanOutput(str(Reason))
+			#print("Reason is:")
+			#print(Reason)
+			cursor.execute("insert into Reboot (ChassisID,id,Timestamp,Instance,Reason) values ('Chassis 4','"+str(Chassis4ListID[counter])+"','"+str(Chassis4ListTime[counter])+"','"+str(Instance-1)+"','"+Reason+"')")
+			if RCA == True:
+				cursor.execute("insert into RCA (ChassisID,Timestamp,Explanation) values ('Chassis 4','"+str(Chassis4ListTime[counter])+"','"+Reason+"')")
+			if Instance != 1:
+				Instance -= 1
+		if Chassis5ListTime != []:
+			AnyReboots = True
+			FirstReboot = Chassis5ListTime[0]
+			FirstRebootID = Chassis5ListID[0]
+			Chassis5RebootEvent.append(FirstReboot)
+			Chassis5RebootEventID.append(FirstRebootID)
+			counter = 0
+			while counter+1 < len(Chassis5ListTime):
+				#print("counter = "+str(counter))
+				#print("Chassis5ListTime size: "+str(len(Chassis5ListTime)))
+				Time1 = Chassis5ListTime[counter]
+				Time2 = Chassis5ListTime[counter+1]
+				#print(Time1)
+				#print(Time2)
+				#remove subseconds
+				parts1 = Time1.split(".")
+				Time1 = parts1[0]
+				parts2 = Time2.split(".")
+				Time2 = parts2[0]
+				Time1 = datetime.datetime.strptime(Time1,format_string)
+				Time2 = datetime.datetime.strptime(Time2,format_string)
+				TimeDiff = Time2-Time1
+				#print(Time1)
+				#print(Time2)
+				#print(TimeDiff)
+				#If logs are more than 5 minutes apart
+				if TimeDiff >= datetime.timedelta(minutes=5):
+					#print("Reboot event!")
+					#Look for previous Reason
+					#print("select LogMeaning from Logs where Category like '%RebootReason%' and Timestamp > '"+str(Chassis5ListTime[counter])+"' and Timestamp < '"+str(Chassis5ListTime[counter+1])+"' and ChassisID = 'Chassis 5' limit 1")
+					cursor.execute("select LogMeaning from Logs where Category like '%RebootReason%' and Timestamp > '"+str(Chassis5ListTime[counter])+"' and Timestamp < '"+str(Chassis5ListTime[counter+1])+"' and ChassisID = 'Chassis 5' limit 1")
+					ReasonOutput = cursor.fetchall()
+					#print(ReasonOutput)
+					if len(ReasonOutput) == 0:
+						ReasonOutput = "No reason specified"
+					Reason = ReasonOutput
+					Reason = CleanOutput(str(Reason))
+					#print("Reason is:")
+					#print(Reason)
+					Chassis5RebootEvent.append(Time2)
+					Chassis5RebootEventID.append(Chassis5ListID[counter+1])
+					cursor.execute("insert into Reboot (ChassisID,id,Timestamp,Instance,Reason) values ('Chassis 5','"+str(Chassis5ListID[counter])+"','"+str(Chassis5ListTime[counter])+"','"+str(Instance-1)+"','"+Reason+"')")
+					if RCA == True:
+						cursor.execute("insert into RCA (ChassisID,Timestamp,Explanation) values ('Chassis 5','"+str(Chassis5ListTime[counter])+"','"+Reason+"')")
+					Instance += 1
+				counter += 1
+			#cursor.execute("insert into reboot (id,Timestamp,Instance) values ()")
+			#Find Reason for last instance
+			#print("select LogMessage,LogMeaning from Logs where Category like '%RebootReason%' and id > '"+str(Chassis5RebootEventID[-1])+"' and ChassisID = 'Chassis 5' limit 1")
+			cursor.execute("select LogMeaning from Logs where Category like '%RebootReason%' and Timestamp > '"+str(Chassis5RebootEvent[-1])+"' and ChassisID = 'Chassis 5' limit 1")
+			ReasonOutput = cursor.fetchall()
+			#print(ReasonOutput)
+			#print(Reason)
+			if len(ReasonOutput) == 0:
+				ReasonOutput = "No reason specified"
+			Reason = ReasonOutput
+			Reason = CleanOutput(str(Reason))
+			#print("Reason is:")
+			#print(Reason)
+			cursor.execute("insert into Reboot (ChassisID,id,Timestamp,Instance,Reason) values ('Chassis 5','"+str(Chassis5ListID[counter])+"','"+str(Chassis5ListTime[counter])+"','"+str(Instance-1)+"','"+Reason+"')")
+			if RCA == True:
+				cursor.execute("insert into RCA (ChassisID,Timestamp,Explanation) values ('Chassis 5','"+str(Chassis5ListTime[counter])+"','"+Reason+"')")
+			if Instance != 1:
+				Instance -= 1
+		if Chassis6ListTime != []:
+			AnyReboots = True
+			FirstReboot = Chassis6ListTime[0]
+			FirstRebootID = Chassis6ListID[0]
+			Chassis6RebootEvent.append(FirstReboot)
+			Chassis6RebootEventID.append(FirstRebootID)
+			counter = 0
+			while counter+1 < len(Chassis6ListTime):
+				#print("counter = "+str(counter))
+				#print("Chassis6ListTime size: "+str(len(Chassis6ListTime)))
+				Time1 = Chassis6ListTime[counter]
+				Time2 = Chassis6ListTime[counter+1]
+				#print(Time1)
+				#print(Time2)
+				#remove subseconds
+				parts1 = Time1.split(".")
+				Time1 = parts1[0]
+				parts2 = Time2.split(".")
+				Time2 = parts2[0]
+				Time1 = datetime.datetime.strptime(Time1,format_string)
+				Time2 = datetime.datetime.strptime(Time2,format_string)
+				TimeDiff = Time2-Time1
+				#print(Time1)
+				#print(Time2)
+				#print(TimeDiff)
+				#If logs are more than 5 minutes apart
+				if TimeDiff >= datetime.timedelta(minutes=5):
+					#print("Reboot event!")
+					#Look for previous Reason
+					#print("select LogMeaning from Logs where Category like '%RebootReason%' and Timestamp > '"+str(Chassis6ListTime[counter])+"' and Timestamp < '"+str(Chassis6ListTime[counter+1])+"' and ChassisID = 'Chassis 6' limit 1")
+					cursor.execute("select LogMeaning from Logs where Category like '%RebootReason%' and Timestamp > '"+str(Chassis6ListTime[counter])+"' and Timestamp < '"+str(Chassis6ListTime[counter+1])+"' and ChassisID = 'Chassis 6' limit 1")
+					ReasonOutput = cursor.fetchall()
+					#print(ReasonOutput)
+					if len(ReasonOutput) == 0:
+						ReasonOutput = "No reason specified"
+					Reason = ReasonOutput
+					Reason = CleanOutput(str(Reason))
+					#print("Reason is:")
+					#print(Reason)
+					Chassis6RebootEvent.append(Time2)
+					Chassis6RebootEventID.append(Chassis6ListID[counter+1])
+					cursor.execute("insert into Reboot (ChassisID,id,Timestamp,Instance,Reason) values ('Chassis 6','"+str(Chassis6ListID[counter])+"','"+str(Chassis6ListTime[counter])+"','"+str(Instance-1)+"','"+Reason+"')")
+					if RCA == True:
+						cursor.execute("insert into RCA (ChassisID,Timestamp,Explanation) values ('Chassis 6','"+str(Chassis6ListTime[counter])+"','"+Reason+"')")
+					Instance += 1
+				counter += 1
+			#cursor.execute("insert into reboot (id,Timestamp,Instance) values ()")
+			#Find Reason for last instance
+			#print("select LogMessage,LogMeaning from Logs where Category like '%RebootReason%' and id > '"+str(Chassis6RebootEventID[-1])+"' and ChassisID = 'Chassis 6' limit 1")
+			cursor.execute("select LogMeaning from Logs where Category like '%RebootReason%' and Timestamp > '"+str(Chassis6RebootEvent[-1])+"' and ChassisID = 'Chassis 6' limit 1")
+			ReasonOutput = cursor.fetchall()
+			#print(ReasonOutput)
+			#print(Reason)
+			if len(ReasonOutput) == 0:
+				ReasonOutput = "No reason specified"
+			Reason = ReasonOutput
+			Reason = CleanOutput(str(Reason))
+			#print("Reason is:")
+			#print(Reason)
+			cursor.execute("insert into Reboot (ChassisID,id,Timestamp,Instance,Reason) values ('Chassis 6','"+str(Chassis6ListID[counter])+"','"+str(Chassis6ListTime[counter])+"','"+str(Instance-1)+"','"+Reason+"')")
+			if RCA == True:
+				cursor.execute("insert into RCA (ChassisID,Timestamp,Explanation) values ('Chassis 6','"+str(Chassis6ListTime[counter])+"','"+Reason+"')")
+			if Instance != 1:
+				Instance -= 1
+		if Chassis7ListTime != []:
+			AnyReboots = True
+			FirstReboot = Chassis7ListTime[0]
+			FirstRebootID = Chassis7ListID[0]
+			Chassis7RebootEvent.append(FirstReboot)
+			Chassis7RebootEventID.append(FirstRebootID)
+			counter = 0
+			while counter+1 < len(Chassis7ListTime):
+				#print("counter = "+str(counter))
+				#print("Chassis7ListTime size: "+str(len(Chassis7ListTime)))
+				Time1 = Chassis7ListTime[counter]
+				Time2 = Chassis7ListTime[counter+1]
+				#print(Time1)
+				#print(Time2)
+				#remove subseconds
+				parts1 = Time1.split(".")
+				Time1 = parts1[0]
+				parts2 = Time2.split(".")
+				Time2 = parts2[0]
+				Time1 = datetime.datetime.strptime(Time1,format_string)
+				Time2 = datetime.datetime.strptime(Time2,format_string)
+				TimeDiff = Time2-Time1
+				#print(Time1)
+				#print(Time2)
+				#print(TimeDiff)
+				#If logs are more than 5 minutes apart
+				if TimeDiff >= datetime.timedelta(minutes=5):
+					#print("Reboot event!")
+					#Look for previous Reason
+					#print("select LogMeaning from Logs where Category like '%RebootReason%' and Timestamp > '"+str(Chassis7ListTime[counter])+"' and Timestamp < '"+str(Chassis7ListTime[counter+1])+"' and ChassisID = 'Chassis 7' limit 1")
+					cursor.execute("select LogMeaning from Logs where Category like '%RebootReason%' and Timestamp > '"+str(Chassis7ListTime[counter])+"' and Timestamp < '"+str(Chassis7ListTime[counter+1])+"' and ChassisID = 'Chassis 7' limit 1")
+					ReasonOutput = cursor.fetchall()
+					#print(ReasonOutput)
+					if len(ReasonOutput) == 0:
+						ReasonOutput = "No reason specified"
+					Reason = ReasonOutput
+					Reason = CleanOutput(str(Reason))
+					#print("Reason is:")
+					#print(Reason)
+					Chassis7RebootEvent.append(Time2)
+					Chassis7RebootEventID.append(Chassis7ListID[counter+1])
+					cursor.execute("insert into Reboot (ChassisID,id,Timestamp,Instance,Reason) values ('Chassis 7','"+str(Chassis7ListID[counter])+"','"+str(Chassis7ListTime[counter])+"','"+str(Instance-1)+"','"+Reason+"')")
+					if RCA == True:
+						cursor.execute("insert into RCA (ChassisID,Timestamp,Explanation) values ('Chassis 7','"+str(Chassis7ListTime[counter])+"','"+Reason+"')")
+					Instance += 1
+				counter += 1
+			#cursor.execute("insert into reboot (id,Timestamp,Instance) values ()")
+			#Find Reason for last instance
+			#print("select LogMessage,LogMeaning from Logs where Category like '%RebootReason%' and id > '"+str(Chassis7RebootEventID[-1])+"' and ChassisID = 'Chassis 7' limit 1")
+			cursor.execute("select LogMeaning from Logs where Category like '%RebootReason%' and Timestamp > '"+str(Chassis7RebootEvent[-1])+"' and ChassisID = 'Chassis 7' limit 1")
+			ReasonOutput = cursor.fetchall()
+			#print(ReasonOutput)
+			#print(Reason)
+			if len(ReasonOutput) == 0:
+				ReasonOutput = "No reason specified"
+			Reason = ReasonOutput
+			Reason = CleanOutput(str(Reason))
+			#print("Reason is:")
+			#print(Reason)
+			cursor.execute("insert into Reboot (ChassisID,id,Timestamp,Instance,Reason) values ('Chassis 7','"+str(Chassis7ListID[counter])+"','"+str(Chassis7ListTime[counter])+"','"+str(Instance-1)+"','"+Reason+"')")
+			if RCA == True:
+				cursor.execute("insert into RCA (ChassisID,Timestamp,Explanation) values ('Chassis 7','"+str(Chassis7ListTime[counter])+"','"+Reason+"')")
+			if Instance != 1:
+				Instance -= 1
+		if Chassis8ListTime != []:
+			AnyReboots = True
+			FirstReboot = Chassis8ListTime[0]
+			FirstRebootID = Chassis8ListID[0]
+			Chassis8RebootEvent.append(FirstReboot)
+			Chassis8RebootEventID.append(FirstRebootID)
+			counter = 0
+			while counter+1 < len(Chassis8ListTime):
+				#print("counter = "+str(counter))
+				#print("Chassis8ListTime size: "+str(len(Chassis8ListTime)))
+				Time1 = Chassis8ListTime[counter]
+				Time2 = Chassis8ListTime[counter+1]
+				#print(Time1)
+				#print(Time2)
+				#remove subseconds
+				parts1 = Time1.split(".")
+				Time1 = parts1[0]
+				parts2 = Time2.split(".")
+				Time2 = parts2[0]
+				Time1 = datetime.datetime.strptime(Time1,format_string)
+				Time2 = datetime.datetime.strptime(Time2,format_string)
+				TimeDiff = Time2-Time1
+				#print(Time1)
+				#print(Time2)
+				#print(TimeDiff)
+				#If logs are more than 5 minutes apart
+				if TimeDiff >= datetime.timedelta(minutes=5):
+					#print("Reboot event!")
+					#Look for previous Reason
+					#print("select LogMeaning from Logs where Category like '%RebootReason%' and Timestamp > '"+str(Chassis8ListTime[counter])+"' and Timestamp < '"+str(Chassis8ListTime[counter+1])+"' and ChassisID = 'Chassis 8' limit 1")
+					cursor.execute("select LogMeaning from Logs where Category like '%RebootReason%' and Timestamp > '"+str(Chassis8ListTime[counter])+"' and Timestamp < '"+str(Chassis8ListTime[counter+1])+"' and ChassisID = 'Chassis 8' limit 1")
+					ReasonOutput = cursor.fetchall()
+					#print(ReasonOutput)
+					if len(ReasonOutput) == 0:
+						ReasonOutput = "No reason specified"
+					Reason = ReasonOutput
+					Reason = CleanOutput(str(Reason))
+					#print("Reason is:")
+					#print(Reason)
+					Chassis8RebootEvent.append(Time2)
+					Chassis8RebootEventID.append(Chassis8ListID[counter+1])
+					cursor.execute("insert into Reboot (ChassisID,id,Timestamp,Instance,Reason) values ('Chassis 8','"+str(Chassis8ListID[counter])+"','"+str(Chassis8ListTime[counter])+"','"+str(Instance-1)+"','"+Reason+"')")
+					if RCA == True:
+						cursor.execute("insert into RCA (ChassisID,Timestamp,Explanation) values ('Chassis 8','"+str(Chassis8ListTime[counter])+"','"+Reason+"')")
+					Instance += 1
+				counter += 1
+			#cursor.execute("insert into reboot (id,Timestamp,Instance) values ()")
+			#Find Reason for last instance
+			#print("select LogMessage,LogMeaning from Logs where Category like '%RebootReason%' and id > '"+str(Chassis8RebootEventID[-1])+"' and ChassisID = 'Chassis 8' limit 1")
+			cursor.execute("select LogMeaning from Logs where Category like '%RebootReason%' and Timestamp > '"+str(Chassis8RebootEvent[-1])+"' and ChassisID = 'Chassis 8' limit 1")
+			ReasonOutput = cursor.fetchall()
+			#print(ReasonOutput)
+			#print(Reason)
+			if len(ReasonOutput) == 0:
+				ReasonOutput = "No reason specified"
+			Reason = ReasonOutput
+			Reason = CleanOutput(str(Reason))
+			#print("Reason is:")
+			#print(Reason)
+			cursor.execute("insert into Reboot (ChassisID,id,Timestamp,Instance,Reason) values ('Chassis 8','"+str(Chassis8ListID[counter])+"','"+str(Chassis8ListTime[counter])+"','"+str(Instance-1)+"','"+Reason+"')")
+			if RCA == True:
+				cursor.execute("insert into RCA (ChassisID,Timestamp,Explanation) values ('Chassis 8','"+str(Chassis8ListTime[counter])+"','"+Reason+"')")
+			if Instance != 1:
+				Instance -= 1
+		if AnyReboots == False:
+			AnalysisOutput = "There are no reboots in the logs."
+			return AnalysisOutput
+		if AnyReboots == False:
+			print("There are no reboots in the logs. Returning to Analysis menu.")
+			ValidSubSelection = True
+			return
+	print("Here are the times that the switches rebooted and their causes")
+	print("---------------------------------------------------------------------")
+	cursor.execute("select ChassisID,Timestamp,Reason from Reboot order by Timestamp")
+	AnalysisOutput = cursor.fetchall()
+	#print(AnalysisOutput)
+	for line in AnalysisOutput:
+		ChassisID = str(line[0])
+		Timestamp = str(line[1])
+		Reason = str(line[2])
+		print(ChassisID+" - "+Timestamp+" - "+Reason)
 	if api == True:
 		return AnalysisOutput
 	ValidSubSelection = False
-	if AnyReboots == False:
-		print("There are no reboots in the logs. Returning to Analysis menu.")
-		ValidSubSelection = True
+	
 	while ValidSubSelection == False:
 		print("[1] - Export reboot logs to xlsx - Limit 1,000,000 rows")
 		print("[2] - Display reboot logs")
 		print("[3] - Show logs around each reboot - Not Implemented")
-		print("[4] - Look for reboot reason - Not Implemented")
 		print("[0] - Go back")
 		selection = input("What would you like to do? [0] ") or "0"
 		match selection:
@@ -2437,12 +2991,11 @@ def RebootAnalysis(conn,cursor,api=False):
 					print(line)
 			case "3":
 				pass
-			case "4":
-				pass
 			case "0":
 				ValidSubSelection = True
 
-def InterfaceAnalysis(conn,cursor,api=False):
+def InterfaceAnalysis(conn,cursor,api=False,RCA=False):
+	print("")
 	print("Checking the logs for Interface issues")
 	global AnalysisInitialized
 	if AnalysisInitialized == False:
@@ -2475,7 +3028,7 @@ def InterfaceAnalysis(conn,cursor,api=False):
 	global InterfaceRan
 	if InterfaceRan == False:
 		InterfaceRan = True
-		cursor.execute("create table Interface(id integer primary key autoincrement, TSCount Text, ChassisID Text, Filename Text, Timestamp Text, LogMessage text, Interface text, Status text)")
+		cursor.execute("create table if not exists Interface(id integer primary key autoincrement, TSCount Text, ChassisID Text, Filename Text, Timestamp Text, LogMessage text, Interface text, Status text)")
 		#For log "pmnHALLinkStatusCallback:208 LINKSTS 1/1/13 DOWN gport 0xc Speed 0 Duplex HALF"
 		cursor.execute("select TScount,TimeStamp,ChassisID,Filename,LogMessage from Logs where category like '%Interface%' and LogMessage like '%LINKSTS %/%/%' order by ChassisID,TimeStamp")
 		Output = cursor.fetchall()
@@ -2491,6 +3044,9 @@ def InterfaceAnalysis(conn,cursor,api=False):
 			Interface = Parts[3]
 			Status = Parts[4]
 			cursor.execute("insert into Interface (TSCount, TimeStamp, ChassisID, Filename, LogMessage, Interface, Status) values ('"+str(TSCount)+"','"+TimeStamp+"','"+ChassisID+"','"+Filename+"','"+LogMessage+"','"+Interface+"','"+Status+"')")
+			if RCA == True and Status == "DOWN":
+				#print(line)
+				cursor.execute("insert into RCA (ChassisID,TimeStamp,Explanation) values ('"+ChassisID+"','"+TimeStamp+"','"+Interface +" "+Status+"')")
 		#For log "CUSTLOG CMM Link 1/1/13 Alias r.202D_j.104A.2.1-062A operationally up""
 		cursor.execute("select TScount,TimeStamp,ChassisID,Filename,LogMessage from Logs where category like '%Interface%' and LogMessage like '%LINK %/%/%' order by ChassisID,TimeStamp")
 		Output = cursor.fetchall()
@@ -2517,6 +3073,9 @@ def InterfaceAnalysis(conn,cursor,api=False):
 			if Status == "down":
 				Status = "DOWN"
 			cursor.execute("insert into Interface (TSCount, TimeStamp, ChassisID, Filename, LogMessage, Interface, Status) values ('"+str(TSCount)+"','"+TimeStamp+"','"+ChassisID+"','"+Filename+"','"+LogMessage+"','"+Interface+"','"+Status+"')")
+			if RCA == True and Status == "DOWN":
+				#print(line)
+				cursor.execute("insert into RCA (ChassisID,TimeStamp,Explanation) values ('"+ChassisID+"','"+TimeStamp+"','"+Interface +" "+Status+"')")
 	#Most Flapped interfaces
 	AnalysisOutput = []
 	cursor.execute("select count(*),ChassisID as ReportingChassis, Interface from Interface where Status = 'DOWN' group by Interface order by count(*) desc limit 10")
@@ -2615,7 +3174,8 @@ def InterfaceAnalysis(conn,cursor,api=False):
 				ValidSelection = True
 				return
 
-def UnusedAnalysis(conn,cursor,api=False):
+def UnusedAnalysis(conn,cursor,api=False,RCA=False):
+	print("")
 	print("Checking the logs for Unused logs")
 	AnalysisOutput = ""
 	global AnalysisInitialized
@@ -2684,7 +3244,8 @@ def UnusedAnalysis(conn,cursor,api=False):
 			print("Invalid input, please answer 'Yes' or 'No'")
 
 def CriticalAnalysis(conn,cursor,api=False):
-	print("Checking the logs for Interface issues")
+	print("")
+	print("Checking the logs for Critical issues")
 	AnalysisOutput = []
 	global AnalysisInitialized
 	if AnalysisInitialized == False:
@@ -2797,6 +3358,12 @@ def CriticalAnalysis(conn,cursor,api=False):
 				print("Invalid selection")
 
 def RootCauseAnalysis(conn,cursor,api=False):
+	print("")
+	#Create RCA table for categorization
+	cursor.execute("create table if not exists RCA(id integer primary key autoincrement, ChassisID text, Timestamp text, Explanation text)")
+	#Run AllLogsInitialized from AllKnownLogs()
+	AllKnownLogs(conn,cursor,True,True)
+	AnalysisOutput = []
 	MACFlaps = []
 	isMACFlapProblem = False
 	ArpInfoOverwrite = []
@@ -2811,8 +3378,365 @@ def RootCauseAnalysis(conn,cursor,api=False):
 	isFloodProblem = []
 	VC = []
 	isVCProblem = False
+	#Run categorization within Critical Logs:
+	CategoryList = ["Reboot","Hardware","Connectivity","Health","SPB","VC","Interface","Upgrades","General","MACLearning","Unused","STP","Security","Unclear","Unknown","OSPF"]
+	RebootCount = 0
+	HardwareCount = 0
+	ConnectivityCount = 0
+	HealthCount = 0
+	SPBCount = 0
+	VCCount = 0
+	InterfaceCount = 0
+	UpgradesCount = 0
+	GeneralCount = 0
+	MACLearningCount = 0
+	UnusedCount = 0
+	STPCount = 0
+	SecurityCount = 0
+	UnclearCount = 0
+	UnknownCount = 0
+	OSPFCount = 0
+	for category in CategoryList:
+		cursor.execute("select count(*) from Logs where category like '%"+category+"%' and category like '%Critical%'")
+		line = cursor.fetchall()
+		match category:
+			case "Reboot":
+				RebootCount += int(CleanOutput(str(line[0])))
+			case "Hardware":
+				HardwareCount += int(CleanOutput(str(line[0])))
+			case "Connectivity":
+				ConnectivityCount += int(CleanOutput(str(line[0])))
+			case "Health":
+				HealthCount += int(CleanOutput(str(line[0])))
+			case "SPB":
+				SPBCount += int(CleanOutput(str(line[0])))
+			case "VC":
+				VCCount += int(CleanOutput(str(line[0])))
+			case "Interface":
+				InterfaceCount += int(CleanOutput(str(line[0])))
+			case "Upgrades":
+				UpgradesCount += int(CleanOutput(str(line[0])))
+			case "General":
+				GeneralCount += int(CleanOutput(str(line[0])))
+			case "MACLearning":
+				MACLearningCount += int(CleanOutput(str(line[0])))
+			case "Unused":
+				UnusedCount += int(CleanOutput(str(line[0])))
+			case "STP":
+				STPCount += int(CleanOutput(str(line[0])))
+			case "Security":
+				SecurityCount += int(CleanOutput(str(line[0])))
+			case "Unclear":
+				UnclearCount += int(CleanOutput(str(line[0])))
+			case "Unknown":
+				UnknownCount += int(CleanOutput(str(line[0])))
+			case "OSPF":
+				OSPFCount += int(CleanOutput(str(line[0])))
+	AllCategoryCounts = {OSPFCount: "OSPF", UnclearCount: "Unclear", RebootCount: "Reboot", HardwareCount: "Hardware", ConnectivityCount: "Connectivity", HealthCount: "Health", SPBCount: "SPB", VCCount: "VC", InterfaceCount: "Interface", UpgradesCount: "Upgrades", GeneralCount: "General", MACLearningCount: "MAC Learning", UnusedCount: "Unused", STPCount: "STP", SecurityCount: "Security", UnknownCount: "Unknown"}
+	AllCategoryCountsSorted = dict(sorted(AllCategoryCounts.items(),reverse=True))
+	KeysInterator = iter(AllCategoryCountsSorted.keys())
+	ValuesInterator = iter(AllCategoryCountsSorted.values())
+	CategoryCount = len(AllCategoryCountsSorted)
+	if CategoryCount == 0:
+		print("How are you seeing this? You would have to have no logs?")
+	if CategoryCount >= 1:
+		Category1 = next(ValuesInterator)
+		Count1 = next(KeysInterator)
+		while Category1 == "Unknown" or Category1 == "Unused":
+			Category1 = next(ValuesInterator)
+			Count1 = next(KeysInterator)
+	if CategoryCount >= 2:
+		Category2 = next(ValuesInterator)
+		Count2 = next(KeysInterator)
+		while Category2 == "Unknown" or Category2 == "Unused":
+			try:
+				Category2 = next(ValuesInterator)
+			except:
+				CategoryCount -= 1
+				Category2 = None
+				Category3 = None
+				continue
+			try:
+				Count2 = next(KeysInterator)
+			except:
+				CategoryCount -= 1
+				Category2 = None
+				Category3 = None
+				continue
+	if CategoryCount >= 3:
+		Category3 = next(ValuesInterator)
+		Count3 = next(KeysInterator)
+		while Category3 == "Unknown" or Category3 == "Unused":
+			try:
+				Category3 = next(ValuesInterator)
+			except:
+				CategoryCount -= 1
+				Category3 = None
+				continue
+			try:
+				Count3 = next(KeysInterator)
+			except:
+				CategoryCount -= 1
+				Category3 = None
+				continue
+	#print(AllCategoryCountsSorted)
+	cursor.execute("select count(*) from Logs where category like '%Critical%'")
+	CriticalCount = CleanOutput(str(cursor.fetchall()))
+	print("")
+	print("Out of all of the "+CriticalCount+" critical logs:")
+	print("The category with the most logs is "+Category1+" with "+str(Count1)+" logs")
+	if Category2:
+		print("The category with the next most logs is "+Category2+" with "+str(Count2)+" logs")
+	if Category3:
+		print("The category with the third most logs is "+Category3+" with "+str(Count3)+" logs")
+	print("*Note that some logs will fall under several categories")
+	print("")
+	AnalysisOutput.append("Out of all of the "+CriticalCount+" critical logs:")
+	AnalysisOutput.append("The category with the most logs is "+Category1+" with "+str(Count1)+" logs")
+	if Category2:
+		AnalysisOutput.append("The category with the next most logs is "+Category2+" with "+str(Count2)+" logs")
+	if Category3:
+		AnalysisOutput.append("The category with the third most logs is "+Category3+" with "+str(Count3)+" logs")
+	AnalysisOutput.append("*Note that some logs will fall under several categories")
+	AnalysisOutput.append("")
+	#print("Starting analysis for "+Category1)
+	Category1Analysis = AnalysisSelector(conn,cursor,Category1,True,True)
+	#print(Category1Analysis)
+	#AnalysisOutput.append(Category1Analysis)
+	#print("Starting analysis for "+Category2)
+	if Category2:
+		Category2Analysis = AnalysisSelector(conn,cursor,Category2,True,True)
+	#print(Category2Analysis)
+	#AnalysisOutput.append(Category2Analysis)
+	#print("Starting analysis for "+Category3)
+	if Category3:
+		Category3Analysis = AnalysisSelector(conn,cursor,Category3,True,True)
+	#print(Category3Analysis)
+	#AnalysisOutput.append(Category3Analysis)
+	#print(AnalysisOutput)
+	#Compare results the top3 category tables against specified time
+	#cursor.execute("select * from RCA")
+	#RCA = cursor.fetchall()
+	#print("Here is the output of the RCA table:")
+	#print(RCA)
+	if SpecifiedTime:
+		#There would be too many logs to include configuration changes, so config check is only run if a time is specified
+		print("Checking to see if critical events are the result of configuration changes")
+		ConfigAnalysis = AnalysisSelector(conn,cursor,"Configuration",True,True)
+		print("")
+		print("")
+		#Check for within 5 minutes
+		FivePrior = SpecifiedTime-datetime.timedelta(minutes = 5)
+		FiveAfter = SpecifiedTime+datetime.timedelta(minutes = 5)
+		#print(SpecifiedTime)
+		#print(FivePrior)
+		#print(FiveAfter)
+		cursor.execute("select ChassisID,TimeStamp,Explanation from RCA where TimeStamp > '"+str(FivePrior)+"' and TimeStamp < '"+str(FiveAfter)+"' group by Explanation order by TimeStamp")
+		TimeMatch = cursor.fetchall()
+		if len(TimeMatch) != 0:
+			EventsAndConfig = []
+			for line in TimeMatch:
+				EventTime = line[1]
+				EventTime = TimestampFormatting(EventTime)
+				#print(EventTime)
+				SecondsBefore = EventTime-datetime.timedelta(seconds = 10)
+				SecondsAfter = EventTime+datetime.timedelta(seconds = 10)
+				cursor.execute("select ChassisID,TimeStamp,LogMessage from Configuration where TimeStamp > '"+str(SecondsBefore)+"' and TimeStamp < '"+str(SecondsAfter)+"'")
+				ConfigOutput = cursor.fetchall()
+				#print(ConfigOutput)
+				if len(ConfigOutput) != 0:
+					for ConfLine in ConfigOutput:
+						ConfTime = TimestampFormatting(ConfLine[1])
+						#print(ConfTime)
+						if ConfTime > EventTime:
+							EventsAndConfig.append(line)
+							EventsAndConfig.append(ConfLine)
+						if ConfTime <= EventTime:
+							EventsAndConfig.append(ConfLine)
+							EventsAndConfig.append(line)
+				else:
+					EventsAndConfig.append(line)
+				#print(EventsAndConfig)
+			if len(TimeMatch) == 1:
+				print("There is 1 critical event within 5 minutes of the Specified Time:")
+				print("-------------------------------------------------------------------")
+				print("Chassis ID - Timestamp - Event")
+				print("-------------------------------------------------------------------")
+				for line in EventsAndConfig:
+					print(line[0]+" - "+line[1]+" - "+line[2])
+				AnalysisOutput.append("There is 1 critical event within 5 minutes of the Specified Time:")
+				AnalysisOutput.append("-------------------------------------------------------------------")
+				AnalysisOutput.append("Chassis ID - Timestamp - Event")
+				AnalysisOutput.append("-------------------------------------------------------------------")
+				for line in EventsAndConfig:
+					AnalysisOutput.append(line[0]+" - "+line[1]+" - "+line[2])
+			else:
+				print("There are "+str(len(TimeMatch))+" critical events within 5 minutes of the Specified Time:")
+				print("-------------------------------------------------------------------")
+				print("Chassis ID - Timestamp - Event")
+				print("-------------------------------------------------------------------")
+				for line in EventsAndConfig:
+					print(line[0]+" - "+line[1]+" - "+line[2])
+				AnalysisOutput.append("There are "+str(len(TimeMatch))+" critical events within 5 minutes of the Specified Time:")
+				AnalysisOutput.append("-------------------------------------------------------------------")
+				AnalysisOutput.append("Chassis ID - Timestamp - Event")
+				AnalysisOutput.append("-------------------------------------------------------------------")
+				for line in EventsAndConfig:
+					AnalysisOutput.append(line[0]+" - "+line[1]+" - "+line[2])
+		if len(TimeMatch) == 0:
+			print("There are no critical events within 5 minutes of the specified time")
+			AnalysisOutput.append("There are no critical events within 5 minutes of the specified time")
+			#Check for within 1 hour
+			HourPrior = SpecifiedTime-datetime.timedelta(hours = 1)
+			HourAfter = SpecifiedTime+datetime.timedelta(hours = 1)
+			#print(SpecifiedTime)
+			#print(FivePrior)
+			#print(FiveAfter)
+			cursor.execute("select ChassisID,TimeStamp,Explanation from RCA where TimeStamp > '"+str(HourPrior)+"' and TimeStamp < '"+str(HourAfter)+"' group by Explanation order by TimeStamp")
+			TimeMatch = cursor.fetchall()
+			EventsAndConfig = []
+			for line in TimeMatch:
+				EventTime = line[1]
+				EventTime = TimestampFormatting(EventTime)
+				SecondsBefore = EventTime-datetime.timedelta(seconds = 10)
+				SecondsAfter = EventTime+datetime.timedelta(seconds = 10)
+				cursor.execute("select ChassisID,TimeStamp,LogMessage from Configuration where TimeStamp > '"+str(SecondsBefore)+"' and TimeStamp < '"+str(SecondsAfter)+"'")
+				ConfigOutput = cursor.fetchall()
+				if len(ConfigOutput) != 0:
+					for ConfLine in ConfigOutput:
+						ConfTime = TimestampFormatting(ConfLine[1])
+						print(ConfTime)
+						if ConfTime > EventTime:
+							EventsAndConfig.append(line)
+							EventsAndConfig.append(ConfLine)
+						if ConfTime <= EventTime:
+							EventsAndConfig.append(ConfLine)
+							EventsAndConfig.append(line)
+				else:
+					EventsAndConfig.append(line)
+			#print(Category1TimeMatch)
+			if len(TimeMatch) != 0:
+				if len(TimeMatch) == 1:
+					print("There is 1 critical event within 1 hour of the Specified Time:")
+					print("-------------------------------------------------------------------")
+					print("Chassis ID - Timestamp - Event")
+					print("-------------------------------------------------------------------")
+					for line in EventsAndConfig:
+						print(line[0]+" - "+line[1]+" - "+line[2])
+					AnalysisOutput.append("There is 1 critical event within 1 hour of the Specified Time:")
+					AnalysisOutput.append("-------------------------------------------------------------------")
+					AnalysisOutput.append("Chassis ID - Timestamp - Event")	
+					AnalysisOutput.append("-------------------------------------------------------------------")	
+					for line in EventsAndConfig:
+						AnalysisOutput.append(line[0]+" - "+line[1]+" - "+line[2])
+				else:
+					print("There are "+str(len(TimeMatch))+" critical events within 1 hour of the Specified Time:")
+					print("-------------------------------------------------------------------")
+					print("Chassis ID - Timestamp - Event")
+					print("-------------------------------------------------------------------")
+					for line in EventsAndConfig:
+						print(line[0]+" - "+line[1]+" - "+line[2])
+					AnalysisOutput.append("There are "+str(len(TimeMatch))+" critical events within 1 hour of the Specified Time:")
+					AnalysisOutput.append("-------------------------------------------------------------------")
+					print("Chassis ID - Timestamp - Event")
+					AnalysisOutput.append("-------------------------------------------------------------------")
+					for line in EventsAndConfig:
+						AnalysisOutput.append(line[0]+" - "+line[1]+" - "+line[2])
+			if len(TimeMatch) == 0:
+				print("There are no critical events within 1 hour of the specified time")
+				AnalysisOutput.append("There are no critical events within 1 hour of the specified time")
+				#Check for within 1 day
+				DayPrior = SpecifiedTime-datetime.timedelta(days = 1)
+				DayAfter = SpecifiedTime+datetime.timedelta(days = 1)
+				#print(SpecifiedTime)
+				#print(FivePrior)
+				#print(FiveAfter)
+				cursor.execute("select ChassisID,TimeStamp,Explanation from RCA where TimeStamp > '"+str(DayPrior)+"' and TimeStamp < '"+str(DayAfter)+"' group by Explanation order by TimeStamp")
+				TimeMatch = cursor.fetchall()
+				EventsAndConfig = []
+				for line in TimeMatch:
+					EventTime = line[1]
+					EventTime = TimestampFormatting(EventTime)
+					SecondsBefore = EventTime-datetime.timedelta(seconds = 10)
+					SecondsAfter = EventTime+datetime.timedelta(seconds = 10)
+					cursor.execute("select ChassisID,TimeStamp,LogMessage from Configuration where TimeStamp > '"+str(SecondsBefore)+"' and TimeStamp < '"+str(SecondsAfter)+"'")
+					ConfigOutput = cursor.fetchall()
+					if len(ConfigOutput) != 0:
+						for ConfLine in ConfigOutput:
+							ConfTime = TimestampFormatting(ConfLine[1])
+							print(ConfTime)
+							if ConfTime > EventTime:
+								EventsAndConfig.append(line)
+								EventsAndConfig.append(ConfLine)
+							if ConfTime <= EventTime:
+								EventsAndConfig.append(ConfLine)
+								EventsAndConfig.append(line)
+					else:
+						EventsAndConfig.append(line)
+				if len(TimeMatch) != 0:
+					if len(TimeMatch) == 1:
+						print("There is 1 critical event within 1 day of the Specified Time:")
+						print("-------------------------------------------------------------------")
+						print("Chassis ID - Timestamp - Event")
+						print("-------------------------------------------------------------------")
+						for line in EventsAndConfig:
+							print(line[0]+" - "+line[1]+" - "+line[2])
+						AnalysisOutput.append("There is 1 critical event within 1 day of the Specified Time:")
+						AnalysisOutput.append("-------------------------------------------------------------------")
+						AnalysisOutput.append("Chassis ID - Timestamp - Event")	
+						AnalysisOutput.append("-------------------------------------------------------------------")	
+						for line in EventsAndConfig:
+							AnalysisOutput.append(line[0]+" - "+line[1]+" - "+line[2])
+					else:
+						print("There are "+str(len(TimeMatch))+" critical events within 1 day of the Specified Time:")
+						print("-------------------------------------------------------------------")
+						print("Chassis ID - Timestamp - Event")
+						print("-------------------------------------------------------------------")
+						for line in EventsAndConfig:
+							print(line[0]+" - "+line[1]+" - "+line[2])
+						AnalysisOutput.append("There are "+str(len(TimeMatch))+" critical events within 1 day of the Specified Time:")
+						AnalysisOutput.append("-------------------------------------------------------------------")
+						print("Chassis ID - Timestamp - Event")
+						AnalysisOutput.append("-------------------------------------------------------------------")
+						for line in EventsAndConfig:
+							AnalysisOutput.append(line[0]+" - "+line[1]+" - "+line[2])
+				if len(TimeMatch) == 0:
+					print("There are no critical events within 1 day of the specified time")
+					AnalysisOutput.append("There are no critical events within 1 day of the specified time")
+	else:
+		cursor.execute("select count(*),ChassisID,TimeStamp,Explanation from RCA group by Explanation order by TimeStamp")
+		output = cursor.fetchall()
+		if len(output) != 0:
+				if len(output) == 1:
+					print("There is 1 critical event in the logs:")
+					print("-------------------------------------------------------------------")
+					print("Chassis ID - Timestamp - Event")
+					print("-------------------------------------------------------------------")
+					AnalysisOutput.append("There is 1 critical event in the logs:")
+					AnalysisOutput.append("-------------------------------------------------------------------")
+					AnalysisOutput.append("Chassis ID - Timestamp - Event")	
+					AnalysisOutput.append("-------------------------------------------------------------------")	
+					for line in output:
+						AnalysisOutput.append(line[1]+" - "+line[2]+" - "+line[3])
+				else:
+					print("There are "+str(len(output))+" critical events in the logs:")
+					print("-------------------------------------------------------------------")
+					print("Occurance Count - Chassis ID - Timestamp of 1st Occurance - Event")
+					print("-------------------------------------------------------------------")
+					for line in output:
+						print(str(line[0])+" - "+line[1]+" - "+line[2]+" - "+line[3])
+					AnalysisOutput.append("There are "+str(len(output))+" critical events in the logs:")
+					AnalysisOutput.append("-------------------------------------------------------------------")
+					AnalysisOutput.append("Occurance Count - Chassis ID - Timestamp of 1st Occurance - Event")
+					AnalysisOutput.append("-------------------------------------------------------------------")
+					for line in output:
+						AnalysisOutput.append(str(line[0])+" - "+line[1]+" - "+line[2]+" - "+line[3])
+	print("")
+	print("")
+	return AnalysisOutput
 
-def AllKnownLogs(conn,cursor,api=False):
+def AllKnownLogs(conn,cursor,api=False,RCA=False,Top=False):
+	print("Beginning log categorization of all logs, this may take a moment")
 	global AnalysisInitialized
 	AnalysisOutput = []
 	if AnalysisInitialized == False:
@@ -2886,6 +3810,19 @@ def AllKnownLogs(conn,cursor,api=False):
 			#cursor.execute("update Logs (LogMeaning, Category) values ("+LogMeaning[counter]+", "+Category[counter]+") where LogMessage like '%"+LogDictionary[counter]+"%'")
 			counter += 1
 		cursor.execute("update Logs set Category = 'Unknown' where Category is NULL")
+	if Top == True:
+		OutputFileName = "TopLogswithCategory.xlsx"
+		query = "select count(*),LogMessage,AppID,SubApp,Category,Priority from Logs where Category like '%Unknown%' and Priority not like '%DBG%' group by LogMessage order by count(*) desc limit 200"
+		ExportXLSX(conn,cursor,query,OutputFileName)
+		os.startfile(OutputFileName)
+		#
+		OutputFileName = "AllLogs.xlsx"
+		query = "select id,filename,chassisid,timestamp,LogMessage,AppID,SubApp,Category,Priority from Logs where Priority not like '%DBG%' order by id limit 1000000"
+		ExportXLSX(conn,cursor,query,OutputFileName)
+		os.startfile(OutputFileName)
+		return
+	if RCA == True:
+		return
 	#Group by category
 	for category in CategoryList:
 		cursor.execute("select count(*) from Logs where category like '%"+category+"%'")
@@ -3015,7 +3952,7 @@ def AllKnownLogs(conn,cursor,api=False):
 					OutputFileName = PrefSwitchName+"-SwlogsParsed-TopLogswithCategory-tsbuddy.xlsx"
 				else:
 					OutputFileName = "SwlogsParsed-TopLogswithCategory-tsbuddy.xlsx"
-				query = "select count(*),LogMessage,Category,Priority from Logs where Category not like '%Unused%' and Priority not like '%DBG%' group by LogMessage order by count(*) desc limit 200"
+				query = "select count(*),LogMessage,AppID,SubApp,Category,Priority from Logs where Category like '%Unknown%' and Priority not like '%DBG%' group by LogMessage order by count(*) desc limit 200"
 				ExportXLSX(conn,cursor,query,OutputFileName)
 				os.startfile(OutputFileName)
 			case "Pri":
@@ -3278,10 +4215,10 @@ def TimestampFormatting(time):
 	time = datetime.datetime.strptime(timeFull[:19],format_string)
 	return time
 
-def main(filename='',request="",chassis_selection='all',time='',api=True):
+def main(filename='',request="",chassis_selection='all',time='',api=False):
 	parser = argparse.ArgumentParser()
 	parser.add_argument('--filename', required=False)
-	parser.add_argument('--request', required=False, choices=['All Logs','Reboot','VC','Interface','OSPF','SPB','Health','Connectity','Critical','Hardware','Upgrades','General','MACLearning','Unused','STP','Security','Unclear','Unknown'])
+	parser.add_argument('--request', required=False, choices=['All Logs','Reboot','VC','Interface','OSPF','SPB','Health','Connectity','Critical','Hardware','Upgrades','General','MACLearning','Unused','STP','Security','Unclear','Unknown','RCA','Common','Configuration','Top'])
 	parser.add_argument('--chassis_selection', required=False)
 	parser.add_argument('--time', required=False)
 	parser.add_argument('--api',required=False, action="store_true")
@@ -3295,10 +4232,27 @@ def main(filename='',request="",chassis_selection='all',time='',api=True):
 		chassis_selection = args.chassis_selection
 	if args.time is not None:
 		time = args.time
-	api = args.api
+	global SpecifiedTime
+	# set SpecifiedTime if time is provided (either from args or parameter)
+	if time != '':
+		SpecifiedTime = time
+		#if args.time is not None:
+			#print("The Specified time is:")
+			#print(SpecifiedTime)
+	else:
+		# reset SpecifiedTime if no time provided
+		SpecifiedTime = ""
+	# Use api from function parameter, not args.api (args.api is False when called programmatically)
+	# Only override with args.api if it was explicitly set via command line (--api flag)
+	if hasattr(args, 'api') and args.api:
+		api = True  # Command line --api flag was set
+
 	AnalysisOutput = ""
 	global TSImportedNumber
 	TSImportedNumber += 1
+	# Reset AnalysisInitialized since we use :memory: database (fresh each call)
+	global AnalysisInitialized
+	AnalysisInitialized = False
 	with sqlite3.connect(':memory:') as conn:
 		cursor = conn.cursor()
 		if filename == '':
@@ -3310,12 +4264,13 @@ def main(filename='',request="",chassis_selection='all',time='',api=True):
 				os.mkdir('./'+TSDirName)
 				print("Made directory at "+str('./'+TSDirName))
 			except FileExistsError:
-				print("Dir already exists at "+str('./'+TSDirName))
+				#print("Dir already exists at "+str('./'+TSDirName))
+				pass
 			#extract first TS
 			with tarfile.open(filename, "r") as tar:
 				for member in tar.getmembers():
 					if member.isdir():
-						os.mkdir(TSDirName+"/"+member.name)
+						os.makedirs(TSDirName+"/"+member.name, exist_ok=True)
 				tar.extractall('./'+TSDirName)
 		extract_tar_files(str("./"+TSDirName))
 		#dirpath = os.path.dirname(str(TSDirName))
@@ -3323,13 +4278,17 @@ def main(filename='',request="",chassis_selection='all',time='',api=True):
 		OldestLog,NewestLog = load_logs1(conn,cursor,TSDirName,chassis_selection)
 		load2 = False
 		if time == '':
+			print("No time specified, loading all logs")
 			load2 = True
 		if time != '':
 			time = TimestampFormatting(time)
+			SpecifiedTime = TimestampFormatting(SpecifiedTime)
 			OldestLog = TimestampFormatting(OldestLog)
 			NewestLog = TimestampFormatting(NewestLog)
 			if time < OldestLog:
 				load2 = True
+			else:
+				print("The requested time is present in the first set of logs. Skipping loading the archive logs.")
 			if time > NewestLog:
 				AnalysisOutput = "The time you have requested is not present in the logs. The newest log's timestamp is "+str(NewestLog)
 				print("AnalysisOutput = "+str(AnalysisOutput))
@@ -3344,7 +4303,7 @@ def main(filename='',request="",chassis_selection='all',time='',api=True):
 					print("AnalysisOutput = "+str(AnalysisOutput))
 					return AnalysisOutput
 		if request != "":
-			print("api is "+str(api))
+			#print("api is "+str(api))
 			AnalysisOutput = AnalysisSelector(conn,cursor,request,api)
 		else:
 			AnalysisOutput = analysis_menu(conn,cursor,api)
