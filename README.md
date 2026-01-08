@@ -428,6 +428,11 @@ Please ensure your code adheres to any existing style guidelines and includes te
 
 ## Changelog
 
+### 2026-01-08
+- Added AOS 8.10R04 compatibility to AOS Upgrade Tool (default image only, no choice between Secure Boot or Non Secure Boot) 
+- Added compatibility for OS6920 to AOS Upgrade Tool
+- Removed some verbose output from extracttar
+
 ### 2025-10-15
 - Added ability to download "latest" GA build, thank you @Medhi
 - Added more analysis features to LogAnalyzer, thank you @NathanielOrlina

@@ -1,5 +1,10 @@
 # Changelog
 
+### 2026-01-08 [0.0.39]
+- Added AOS 8.10R04 compatibility (default image only, no choice between Secure Boot or Non Secure Boot) to AOS Upgrade Tool
+- Added compatibility for OS6920 to AOS Upgrade Tool
+- Removed some verbose output from extracttar
+
 ### 2025-10-15 [0.0.37]
 - Added ability to download "latest" GA build, thank you @Medhi
 - Added more analysis features to LogAnalyzer, thank you @NathanielOrlina

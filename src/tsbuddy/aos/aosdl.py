@@ -15,6 +15,7 @@ image_map = {
     "vindhya": ["Nos.img"],
     "medora": ["Mos.img", "Meni.img", "Mhost.img"],
     "yukon": ["Yos.img"],
+    "yukon_plus": ["Ypos.img"],
     "shasta": ["Uos.img"],
     "aravalli": ["Nosa.img"],
     "shasta_n": ["Uosn.img"],
@@ -35,12 +36,14 @@ model_family_map = {
  '6870': 'kailash',
  '6900 Tor': 'tor',
  '6900 Yukon': 'yukon',
+ '6920': 'yukon_plus',
  '9900': 'medora'
  }
 
 model_6900_variants = {
     "6900 Yukon":"T48C6/V72/V48C8/X48C6", 
-    "6900 Tor":"X20/X40/X72/T20/T40/Q32"
+    "6900 Tor":"X20/X40/X72/T20/T40/Q32",
+    "6920":"OS6920..."
     }
 
 family_model_image_map = {
@@ -63,6 +66,10 @@ family_model_image_map = {
   "yukon": {
     "models": ["6900 Yukon", "T48C6/V72/V48C8"],
     "Img": "Yos.img"
+  },
+  "yukon_plus": {
+    "models": ["6920", "OS6920..."],
+    "Img": "Ypos.img"
   },
   "shasta": {
     "models": ["6860", "6860"],
