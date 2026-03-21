@@ -252,10 +252,18 @@ def main():
 
     current_version = get_installed_version(package)
     latest_version = get_latest_version(package)
+    # print(f"\n📦 Current version: {current_version} Latest: {latest_version}")
 
     if latest_version is None:
         print(f"⚠ Could not determine the latest version of '{package}'.")
         return
+    
+    def is_outdated(current, latest):
+        # Convert "1.2.10" -> (1, 2, 10)
+        curr_tuple = tuple(map(int, current.split('.')))
+        late_tuple = tuple(map(int, latest.split('.')))
+        # Returns bool if current is strictly less than latest
+        return curr_tuple < late_tuple
 
     # Check if user wants to ignore this version
     ignore_version = os.environ.get("TSBUDDY_IGNORE_VERSION")
@@ -269,7 +277,7 @@ def main():
     if current_version is None:
         print(f"📦 '{package}' is not installed. Latest available: {latest_version}")
         show_changelog = True
-    elif current_version != latest_version:
+    elif is_outdated(current_version, latest_version):
         show_changelog = True
     else:
         print(f"✅ '{package}' is up to date ({current_version})")
