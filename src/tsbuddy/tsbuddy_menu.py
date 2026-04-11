@@ -3,6 +3,17 @@ import os
 import sys
 import time
 
+from tsbuddy import IS_PRIVATE
+
+# Checks if we're in the private repo environment and sets a flag accordingly
+def check_private():
+    if IS_PRIVATE:
+        print("🤫 Running ALE Employee only version, do not share.\n")
+    else:
+        print("Running Public TSBuddy version.\n")
+
+check_private()
+
 from .utils.tsbuddy_version import main as check_version
 # Ensure the tsbuddy_version check runs first
 check_version()
@@ -79,6 +90,10 @@ def update_package():
 def upgrade_downgrade_choice():
     from .utils.tsbuddy_version import choice_form
     choice_form()
+
+def ale_auth_and_upgrade():
+    from .utils.ale_auth import main
+    main()
 
 def tsbuddy_main():
     from .tslog2csv.tslog2csv import main
@@ -158,13 +173,18 @@ def menu():
         {" Run CPU Graph (ts-graph-cpu)": graph_hmon_main},
         {" Change current directory or list contents (cd)": change_directory},
         # {"Clear pycache and .pyc files (ts-clean)": clean_pycache_and_pyc},
+        {("✅ Employees Only - Replace Token" if IS_PRIVATE else "🚪 Employees Only"): ale_auth_and_upgrade},
         {"Upgrade or downgrade tsbuddy": upgrade_downgrade_choice},
         {"Show help info": print_help},
     ]
     #print("\n       (•‿•)  Hey there, buddy!")
     #print(ale_ascii)
     try:
-        print("\n   ( ^_^)ノ  Hey there, tsbuddy is at your service!")
+        if IS_PRIVATE:
+            print("\n   ( ^_^)ノ  Hey there, tsbuddy is at your service!\n" \
+            "\n 🤫 Running ALE Employee only version, do not share.")
+        else:
+            print("\n   ( ^_^)ノ  Hey there, tsbuddy is at your service!")
     except:
         print("\n   ( ^_^)/  Hey there, tsbuddy is at your service!")
     print("\n Skip this menu by running the CLI commands directly (provided in parentheses below), e.g. `ts-get`.\n")

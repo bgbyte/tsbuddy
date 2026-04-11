@@ -14,6 +14,9 @@ ts-chat/
 *chat*
 uboot*json
 *aosdlv2*
+*Parsed.csv
+*Parsed.json
+swlog*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

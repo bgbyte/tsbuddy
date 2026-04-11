@@ -1,3 +1,5 @@
+# this script is for developers
+
 import os
 import shutil
 

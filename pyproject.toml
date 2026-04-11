@@ -1,0 +1,64 @@
+[build-system]
+requires = ["setuptools>=61", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "tsbuddy"
+version = "0.0.40"
+description = "Tech Support Buddy is a versatile Python module built to empower developers and IT professionals in resolving technical issues. It provides a suite of Python modules designed to efficiently diagnose and resolve technical issues while enabling automation and data-driven decision-making."
+readme = "README.md"
+requires-python = ">=3.7"
+authors = [
+    {name = "tsbuddy"},
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    # "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+]
+dependencies = [
+    "paramiko>=2.7.0",
+    "xlsxwriter>=3.2.5",
+    "scapy>=2.6.1",
+    "pandas>=2.3.1",
+]
+
+[project.scripts]
+tslog2csv = "tsbuddy.tslog2csv.tslog2csv:main"
+ts-extract = "tsbuddy.extracttar.extract_ts_tar:main"
+ts-extract-legacy = "tsbuddy.extracttar.legacy.extracttar_7zip:main"
+aosdl = "tsbuddy.aos.aosdl:main"
+aosga = "tsbuddy.aos.aosdl:lookup_ga_build"
+aosup = "tsbuddy.aos.aosdl:aosup"
+tsbuddy = "tsbuddy.tsbuddy_menu:menu"
+logbuddy = "tsbuddy.log_analyzer.logparser_v2:main"
+ts-get = "tsbuddy.log_analyzer.get_techsupport:main"
+# ts-clean = "tsbuddy.utils.clean_pycache:clean_pycache_and_pyc"
+ts-graph-cpu = "tsbuddy.hmon.graph_cpu:main"
+# ts-chat = "ts_chat.main_api_caller:main"
+pathfinder = "tsbuddy.pathfinder.pathfindingLogic:main"
+pathfinder-init = "tsbuddy.pathfinder.dbsetup:main"
+pathfinder-refresh = "tsbuddy.pathfinder.pathfinder2:main"
+
+[project.urls]
+Employee_Only_Repo = "https://github.com/tsbuddy/tsbuddy"
+Public_Repo = "https://github.com/bgbyte/tsbuddy"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+packages = [
+    "tsbuddy",
+    "tsbuddy.utils",
+    "tsbuddy.log_analyzer",
+    "tsbuddy.aos",
+    "tsbuddy.hmon",
+    # "tsbuddy.pathfinder",
+    "tsbuddy.tslog2csv",
+    "tsbuddy.extracttar"
+]
+py-modules = []
+include-package-data = true
+exclude-package-data = {"*" = [".env", ".tsbuddy_secrets", ".tsbuddy_settings"]}
+
+#[tool.setuptools.packages.find]
+#where = ["src"]
