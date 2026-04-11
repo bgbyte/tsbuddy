@@ -95,11 +95,12 @@ def update_package():
 
 def upgrade_downgrade_choice():
     from .utils.tsbuddy_version import choice_form
+    print("\n########\nThis feature is unreliable.\nTo properly upgrade use `pip install tsbuddy --upgrade`\nIf you want to revert to a previous public version, you can run `pip install tsbuddy==<version>` with the desired version number.\n ########\n")
     choice_form()
 
 def ale_auth_and_upgrade():
     from .utils.ale_auth import main
-    print("\n###########\n\nThis option is for ALE employees only. It will prompt you to enter your ALE token provided by Brian, which will then be used to check for private tsbuddy updates and perform upgrades if available.\n\n###########\n")
+    print("\n###########\n\nThis option is for ALE employees only. It will prompt you to enter your ALE token provided by Brian, which will then be used to check for private tsbuddy updates and perform upgrades if available.\n\nIMPORTANT:\nIf the upgrade doesn't work, you can try running `pip uninstall tsbuddy -y`,\n then `pip cache purge`,\n then `pip install tsbuddy`,\n then try this menu option again.\n\n###########\n")
     main()
 
 def tsbuddy_main():
@@ -182,7 +183,7 @@ def menu():
         {" Change current directory or list contents (cd)": change_directory},
         # {"Clear pycache and .pyc files (ts-clean)": clean_pycache_and_pyc},
         {("✅ Employees Only - Upgrade or Replace Token" if IS_PRIVATE else "🚪 Employees Only - Upgrade to private tsbuddy version"): ale_auth_and_upgrade},
-        {"⬆️  Upgrade or downgrade public tsbuddy version": upgrade_downgrade_choice},
+        {"Upgrade or downgrade public tsbuddy version": upgrade_downgrade_choice},
         {"Show help info": print_help},
     ]
     #print("\n       (•‿•)  Hey there, buddy!")
