@@ -70,15 +70,22 @@ import sys
 print("Waiting for current process to exit...")
 time.sleep(2)
 
-subprocess.check_call([r"{sys.executable}", "-m", "pip", "install", "tsbuddy @ git+https://github.com/tsbuddy/tsbuddy", "--trusted-host", "github.com"])
+print("\\n","Purging pip cache to ensure clean install...")
+subprocess.check_call([r"{sys.executable}", "-m", "pip", "cache", "purge"])
+time.sleep(2)
+subprocess.check_call([r"{sys.executable}", "-m", "pip", "uninstall", "tsbuddy", "-y"])
+time.sleep(2)
+
+print("\\n","Upgrading {package_name} from private GitHub repository...")
+subprocess.check_call([r"{sys.executable}", "-m", "pip", "install", "tsbuddy @ git+https://github.com/tsbuddy/tsbuddy", "--upgrade", "--trusted-host", "github.com"])
 print("\\n"+("#"*15))
 print("Please report any bugs to Brian.")
 if "{current_version or ''}":
     print("If there is an issue, you can revert to your previous version using: ")
     print("pip install tsbuddy=={current_version}")
-print("#"*15,"\\n")
+print("#"*15,"\\n","\\nPlease wait...")
 time.sleep(5)
-print("\\n* Upgrade complete. You can now rerun tsbuddy.")
+print("\\n* Upgrade complete. You can now rerun tsbuddy...")
 """
 
     with open(updater_path, "w") as f:
