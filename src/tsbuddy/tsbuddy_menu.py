@@ -3,9 +3,9 @@ import os
 import sys
 import time
 
+# Checks if we're in the private repo environment and sets a global variable accordingly
 from tsbuddy import IS_PRIVATE
-
-# Checks if we're in the private repo environment and sets a flag accordingly
+                                                                
 def check_private():
     if IS_PRIVATE:
         print("🤫 Running ALE Employee only version, do not share.\n")
@@ -54,7 +54,7 @@ def print_help():
 4. Run tech_support.log to CSV Converter (ts-csv):
    - Converts tech_support.log files into a CSV file for easier viewing and analysis.
 
-5. Run Log Analyzer (ts-log):
+5. Run Log Analyzer (logbuddy):
    - Creates DB of switch log & console log files
    - Interactive menu for filtering 
    - Option to output the results to Excel (.xlsx)
@@ -71,7 +71,13 @@ def print_help():
 9. Change current directory:
    - Allows you to view and change the current working directory. Lists available directories and files, and lets you navigate to a new directory for file operations.
 
-10. Print Help (help):
+10. Employees Only - Upgrade to private version or Replace Token:
+   - Prompts ALE employees to enter their auth token provided by Brian. This token is used to check for private tsbuddy updates and perform upgrades if available.
+
+11. Upgrade or Downgrade public tsbuddy Version:
+   - Allows you to upgrade to the latest public version of tsbuddy or downgrade to a previous version if you encounter issues. This will remove the private version if you have it, so only use this if you want to switch back to the public version.
+
+12. Print Help (help):
    - Shows this help text describing each menu option in detail.
 
 🤫 Secrets and ⚙️ Settings:
@@ -93,6 +99,7 @@ def upgrade_downgrade_choice():
 
 def ale_auth_and_upgrade():
     from .utils.ale_auth import main
+    print("\n###########\n\nThis option is for ALE employees only. It will prompt you to enter your ALE token provided by Brian, which will then be used to check for private tsbuddy updates and perform upgrades if available.\n\n###########\n")
     main()
 
 def tsbuddy_main():
@@ -109,6 +116,7 @@ def aosdl_main():
 
 def lookup_ga_build():
     from .aos.aosdl import lookup_ga_build
+    print("\n###########\n\nWithout your own repo, this script is just a memory aid for: Model/AOS image name, latest AOS/latest GA #, old AOS/prev GA build #, Model/Family, Model Variants.\n\nThis option will look up the latest GA build for your switch and provide options for upgrading (requires your own AOS image repo). If you want a custom build, choose the AOS Upgrader (aosup) option to upgrade to a specific build. If you only want to download an AOS image to /flash for later processing, use the AOS Downloader (aosdl) option.\n\n###########\n")
     lookup_ga_build()
 
 def aosup():
@@ -117,9 +125,9 @@ def aosup():
 
 def logparser_main():
     import importlib
-    from .log_analyzer import logparser_v2
-    importlib.reload(logparser_v2)
-    logparser_v2.main()
+    from .log_analyzer import logparser_v2 as logbuddy
+    importlib.reload(logbuddy)
+    logbuddy.main()
 
 def get_techsupport_main():
     from .log_analyzer.get_techsupport import main
@@ -167,14 +175,14 @@ def menu():
         {" Run tech support gatherer (ts-get)": get_techsupport_main},
         {" Run tech_support_complete.tar Extractor (ts-extract) (ts-extract-legacy)": extract_all_main},
         {" Run tech_support.log to CSV Converter (ts-csv)": tsbuddy_main},
-        {" Run Log Analyzer (ts-log)": logparser_main},
+        {" Run Log Analyzer (logbuddy)": logparser_main},
         {" Run AOS Upgrader (aosup)": aosup},
         {" Run AOS Downloader (aosdl)": aosdl_main},
         {" Run CPU Graph (ts-graph-cpu)": graph_hmon_main},
         {" Change current directory or list contents (cd)": change_directory},
         # {"Clear pycache and .pyc files (ts-clean)": clean_pycache_and_pyc},
-        {("✅ Employees Only - Replace Token" if IS_PRIVATE else "🚪 Employees Only"): ale_auth_and_upgrade},
-        {"Upgrade or downgrade tsbuddy": upgrade_downgrade_choice},
+        {("✅ Employees Only - Upgrade or Replace Token" if IS_PRIVATE else "🚪 Employees Only - Upgrade to private tsbuddy version"): ale_auth_and_upgrade},
+        {"⬆️  Upgrade or downgrade public tsbuddy version": upgrade_downgrade_choice},
         {"Show help info": print_help},
     ]
     #print("\n       (•‿•)  Hey there, buddy!")
@@ -182,7 +190,8 @@ def menu():
     try:
         if IS_PRIVATE:
             print("\n   ( ^_^)ノ  Hey there, tsbuddy is at your service!\n" \
-            "\n 🤫 Running ALE Employee only version, do not share.")
+            # "\n 🤫 Running ALE Employee only version, do not share."
+            )
         else:
             print("\n   ( ^_^)ノ  Hey there, tsbuddy is at your service!")
     except:
