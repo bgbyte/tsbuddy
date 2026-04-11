@@ -428,6 +428,10 @@ Please ensure your code adheres to any existing style guidelines and includes te
 
 ## Changelog
 
+### 2026-04-17
+- Added private version for ALE Employees (ask Brian for a token)
+- Improved UX menu of AOS utilities (aosga, aosup)
+
 ### 2026-01-08
 - Added AOS 8.10R04 compatibility to AOS Upgrade Tool (default image only, no choice between Secure Boot or Non Secure Boot) 
 - Added compatibility for OS6920 to AOS Upgrade Tool

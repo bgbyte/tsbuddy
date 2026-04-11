@@ -120,10 +120,10 @@ def safe_password_prompt(prompt="Password: ", fallback="switch"):
 
 # Load GA index once at the module level
 ga_index_path = os.path.join(os.path.dirname(__file__), "ga_index.json")
-with open(ga_index_path) as f:
+with open(ga_index_path, encoding='utf-8') as f:
     ga_index = json.load(f)
 ga_latest_path = os.path.join(os.path.dirname(__file__), "ga_latest.json")
-with open(ga_latest_path) as f:
+with open(ga_latest_path, encoding='utf-8') as f:
     ga_latest = json.load(f)
 
 def wait_for_shell(shell, timeout=120):
@@ -260,6 +260,7 @@ def lookup_ga_build():
         print(f"{model:<{max_key_length}} : {variants}")
     print("\nLookup the GA build by providing a model or device IP...")
     while True:
+        print("\n\n############   AOS Lookup Mode   ############\n\n")
         user_input = input("Enter a model name (e.g., 6900 Yukon) or device IP (e.g., 192.168.1.1) [exit]: ").strip()
         if not user_input or user_input.lower() == 'exit':
             print("Canceling GA build lookup...")
@@ -314,6 +315,7 @@ def collect_hosts():
     hosts = []
     print("\nEnter device details. Press Enter without an IP to finish.")
     while True:
+        print("Press Enter without an IP to finish.")
         ip = input("Enter device IP: ").strip()
         if not ip:
             break
@@ -340,6 +342,8 @@ def aosup(found_ga_build=None):
     folder_name = input("Which folder name would you like to download to? [working]: ").strip() or "working"
     reload_choice = input("Would you like to reload when finished? [y]/n: ").strip().lower() or "y"
     reload_when_finished = reload_choice == "y"
+    print("\n\n############   AOS Download Mode   ############")
+    print("\nYou will need to provide the IP again to upgrade, and the script will attempt to download the GA image and then reload from the chosen folder. Make sure to have enough space and that the device is ready for an upgrade before confirming.")
     main(folder_name=folder_name, reload_when_finished=reload_when_finished, found_ga_build=found_ga_build)
     #if reload_when_finished:
     #    print(f"Reloading from folder '/flash/{folder_name}'...")
