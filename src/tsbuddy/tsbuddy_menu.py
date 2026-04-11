@@ -38,7 +38,7 @@ def print_help():
     help_text = """
 \nHelp: Menu Option Details
 
-1. Get GA Build & Upgrade (aosga):
+1. Lookup GA Build & Upgrade (aosga):
    - Looks up the latest GA build for your switch and provides options for upgrading.
    - If you want a custom build, choose the AOS Upgrader (aosup) option to upgrade to a specific build.
    - If you only want to download an AOS image to /flash for later processing, use the AOS Downloader (aosdl) option.
@@ -175,7 +175,7 @@ def menu():
         {" Run tech support gatherer (ts-get)": get_techsupport_main},
         {" Run tech_support_complete.tar Extractor (ts-extract) (ts-extract-legacy)": extract_all_main},
         {" Run tech_support.log to CSV Converter (ts-csv)": tsbuddy_main},
-        {" Run Log Analyzer (logbuddy)": logparser_main},
+        {" Run Log Analyzer -DEPRECATED- (logbuddy)": logparser_main},
         {" Run AOS Upgrader (aosup)": aosup},
         {" Run AOS Downloader (aosdl)": aosdl_main},
         {" Run CPU Graph (ts-graph-cpu)": graph_hmon_main},
