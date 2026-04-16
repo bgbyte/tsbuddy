@@ -17,6 +17,7 @@ uboot*json
 *Parsed.csv
 *Parsed.json
 swlog*
+*_old*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
