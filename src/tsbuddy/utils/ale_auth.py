@@ -105,7 +105,7 @@ print("\\n* Upgrade complete. You can now rerun tsbuddy...")
     sys.exit(0)
 
 
-def ale_auth_and_upgrade():
+def ale_auth_and_upgrade(replace=True, confirm=True):
     """Main entry point: load secrets, check/prompt for token, then offer upgrade."""
     load_secrets_file()
 
@@ -113,25 +113,32 @@ def ale_auth_and_upgrade():
 
     if git_config and EXPECTED_DOMAIN in git_config:
         print(f"\n✅ ALE auth token is already configured.")
-        choice = input("Do you want to replace your existing token? [y/N]: ").strip().lower()
-        if choice == 'y':
-            if not prompt_for_token():
-                return
-        else:
-            print("Keeping existing token.")
+        if replace:
+            choice = input("Do you want to replace your existing token? [y/N]: ").strip().lower()
+            if choice == 'y':
+                if not prompt_for_token():
+                    return
+            else:
+                print("Keeping existing token.")
     else:
         print("\n⚠ No ALE auth token found.")
         if not prompt_for_token():
             return
 
-    # Prompt to upgrade from private repo
-    confirm = input("\nDo you want to upgrade tsbuddy from the private repo now? [y/N]: ").strip().lower()
-    if confirm == 'y':
+    if confirm:
+        # Prompt to upgrade from private repo
+        user_choice = input("\nDo you want to upgrade tsbuddy from the private repo now? [y/N]: ").strip().lower()
+        if user_choice == 'y':
+            from .tsbuddy_version import get_installed_version
+            current_version = get_installed_version("tsbuddy")
+            ale_upgrade_safe("tsbuddy", current_version)
+        else:
+            print("Skipping upgrade.")
+    else:
+        # If confirm is False, proceed with upgrade without prompt
         from .tsbuddy_version import get_installed_version
         current_version = get_installed_version("tsbuddy")
         ale_upgrade_safe("tsbuddy", current_version)
-    else:
-        print("Skipping upgrade.")
 
 def main():
     ale_auth_and_upgrade()

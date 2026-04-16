@@ -128,6 +128,14 @@ def update_package(package_name):
 def update_package_safe(package_name, current_version=None):
     import subprocess, sys, os
     import tempfile
+    from tsbuddy import IS_PRIVATE
+
+    if IS_PRIVATE:
+        from tsbuddy.utils.ale_auth import ale_auth_and_upgrade
+        print(f"\n⚠  Upgrading from private repo. This will install the latest version from the private GitHub repository.")
+        # print("If you encounter any issues, you can downgrade to your previous public version using: ")
+        # print("pip install tsbuddy=={current_version}")
+        ale_auth_and_upgrade(replace=False, confirm=False)
 
     # Path to re-launch after upgrade
     #relaunch_cmd = [sys.executable, "-m", "tsbuddy"]
@@ -147,12 +155,19 @@ import sys
 print("Waiting for current process to exit...")
 time.sleep(2)  # Give time for the main script to exit
 
+print("\\n","Purging pip cache to ensure clean install...")
+subprocess.check_call([r"{sys.executable}", "-m", "pip", "cache", "purge"])
+time.sleep(2)
+subprocess.check_call([r"{sys.executable}", "-m", "pip", "uninstall", "tsbuddy", "-y"])
+time.sleep(2)
+
+print("\\n","Upgrading {package_name} from public version...")
 subprocess.check_call([r"{sys.executable}", "-m", "pip", "install", "--upgrade", "{package_name}", "--trusted-host", "pypi.org", "--trusted-host", "files.pythonhosted.org"])
 print("\\n"+("#"*15))
 print("Please report any bugs to Brian.")
 print("If there is an issue, you can revert to your previous version using: ")
 print("pip install tsbuddy=={current_version}")
-print("#"*15,"\\n")
+print("#"*15,"\\n","\\nPlease wait...")
 time.sleep(5)
 print("\\n* Upgrade complete. You can now rerun tsbuddy.")
 """
