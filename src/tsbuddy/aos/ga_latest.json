@@ -53,5 +53,9 @@
   "dronagiri": {
     "models": ["6575"],
     "latest_version": "8.10.86.R04"
+  },
+  "horsley": {
+    "models": ["6370"],
+    "latest_version": "8.10.86.R04"
   }
 }

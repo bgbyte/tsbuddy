@@ -23,11 +23,13 @@ image_map = {
     "nandi": ["Nos.img"],
     "whitney_sim": ["Wossim.img"],
     "kailash": ["Kaos.img"],
-    "dronagiri": ["Dos.img"]
+    "dronagiri": ["Dos.img"],
+    "horsley": ["Hos.img"]
 }
 
 model_family_map = {
  '6360': 'aravalli',
+ '6370': 'horsley',
  '6465': 'vindhya',
  '6560': 'nandi',
  '6570M': 'whitney',
@@ -98,8 +100,12 @@ family_model_image_map = {
     "Img": "Kaos.img"
   },
   "dronagiri": {
-        "models": ["6575", "6575"],
-        "Img": "Dos.img"
+    "models": ["6575", "6575"],
+    "Img": "Dos.img"
+  },
+  "horsley": {
+    "models": ["6370", "6370"],
+    "Img": "Hos.img"
   }
 }
 
