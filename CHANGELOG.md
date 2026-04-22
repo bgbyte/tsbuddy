@@ -1,5 +1,8 @@
 # Changelog
 
+### 2026-04-30 [0.0.43]
+- Added AOS compatibility for dronagiri family of switches (OS6575)
+
 ### 2026-04-10 [0.0.40]
 - Added private version for ALE Employees (ask Brian for a token)
 - Improved UX menu of AOS utilities (aosga, aosup)
