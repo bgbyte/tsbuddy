@@ -28,7 +28,8 @@
 		"shasta_n": ".93",
 		"whitney": ".93",
 		"nandi": ".93",
-		"kailash": ".93"
+		"kailash": ".93",
+		"dronagiri": "N/S"
 	},
 	"8.10R02": {
 		"everest": ".105",
@@ -43,7 +44,8 @@
 		"shasta_n": ".105",
 		"whitney": ".105",
 		"nandi": ".105",
-		"kailash": ".105"
+		"kailash": ".105",
+		"dronagiri": "N/S"
 	},
 	"8.10R01": {
 		"everest": ".102",
@@ -58,7 +60,8 @@
 		"shasta_n": ".102",
 		"whitney": ".102",
 		"nandi": ".102",
-		"kailash": "N/S"
+		"kailash": "N/S",
+		"dronagiri": "N/S"
 	},
 	"8.9R04": {
 		"everest": ".94",
@@ -73,7 +76,8 @@
 		"shasta_n": ".94",
 		"whitney": ".94",
 		"nandi": ".94",
-		"kailash": "N/S"
+		"kailash": "N/S",
+		"dronagiri": "N/S"
 	},
 	"8.9R03": {
 		"everest": ".221",
@@ -88,7 +92,8 @@
 		"shasta_n": ".221",
 		"whitney": ".221",
 		"nandi": ".221",
-		"kailash": "N/S"
+		"kailash": "N/S",
+		"dronagiri": "N/S"
 	},
 	"8.9R02": {
 		"everest": ".107",
@@ -103,7 +108,8 @@
 		"shasta_n": ".107",
 		"whitney": ".107",
 		"nandi": ".107",
-		"kailash": "N/S"
+		"kailash": "N/S",
+		"dronagiri": "N/S"
 	},
 	"8.9R01": {
 		"everest": ".73",
@@ -118,7 +124,8 @@
 		"shasta_n": ".73",
 		"whitney": "N/S",
 		"nandi": ".73",
-		"kailash": "N/S"
+		"kailash": "N/S",
+		"dronagiri": "N/S"
 	},
 	"8.8R02": {
 		"everest": ".56",
@@ -133,7 +140,8 @@
 		"shasta_n": ".56",
 		"whitney": "N/S",
 		"nandi": ".56",
-		"kailash": "N/S"
+		"kailash": "N/S",
+		"dronagiri": "N/S"
 	},
 	"8.8R01": {
 		"everest": ".152",
@@ -148,7 +156,8 @@
 		"shasta_n": ".153",
 		"whitney": "N/S",
 		"nandi": ".152",
-		"kailash": "N/S"
+		"kailash": "N/S",
+		"dronagiri": "N/S"
 	},
 	"8.7R03": {
 		"everest": ".98",
@@ -163,7 +172,8 @@
 		"shasta_n": ".98",
 		"whitney": "N/S",
 		"nandi": ".98",
-		"kailash": "N/S"
+		"kailash": "N/S",
+		"dronagiri": "N/S"
 	},
 	"8.7R02": {
 		"everest": ".252",
@@ -178,7 +188,8 @@
 		"shasta_n": ".252",
 		"whitney": "N/S",
 		"nandi": ".252",
-		"kailash": "N/S"
+		"kailash": "N/S",
+		"dronagiri": "N/S"
 	},
 	"8.7R01": {
 		"everest": ".277",
@@ -193,7 +204,8 @@
 		"shasta_n": ".277",
 		"whitney": "N/S",
 		"nandi": ".354",
-		"kailash": "N/S"
+		"kailash": "N/S",
+		"dronagiri": "N/S"
 	},
 	"8.6R02": {
 		"everest": ".203",
@@ -208,7 +220,8 @@
 		"shasta_n": "UNK",
 		"whitney": "N/S",
 		"nandi": ".203",
-		"kailash": "N/S"
+		"kailash": "N/S",
+		"dronagiri": "N/S"
 	},
 	"8.6R01": {
 		"everest": ".289",
@@ -223,7 +236,8 @@
 		"shasta_n": "UNK",
 		"whitney": "N/S",
 		"nandi": ".289",
-		"kailash": "N/S"
+		"kailash": "N/S",
+		"dronagiri": "N/S"
 	},
 	"8.5R04": {
 		"everest": ".196",
@@ -238,7 +252,8 @@
 		"shasta_n": "UNK",
 		"whitney": "N/S",
 		"nandi": ".196",
-		"kailash": "N/S"
+		"kailash": "N/S",
+		"dronagiri": "N/S"
 	},
 	"8.5R02": {
 		"everest": ".255",
@@ -253,7 +268,8 @@
 		"shasta_n": "UNK",
 		"whitney": "N/S",
 		"nandi": "UNK",
-		"kailash": "N/S"
+		"kailash": "N/S",
+		"dronagiri": "N/S"
 	},
 	"8.5R01": {
 		"everest": ".164",
@@ -268,7 +284,8 @@
 		"shasta_n": "UNK",
 		"whitney": "N/S",
 		"nandi": ".164",
-		"kailash": "N/S"
+		"kailash": "N/S",
+		"dronagiri": "N/S"
 	},
 	"8.4.1R03": {
 		"everest": ".141",
@@ -283,7 +300,8 @@
 		"shasta_n": "UNK",
 		"whitney": "N/S",
 		"nandi": ".141",
-		"kailash": "N/S"
+		"kailash": "N/S",
+		"dronagiri": "N/S"
 	},
 	"8.4.1R02": {
 		"everest": ".229",
@@ -298,7 +316,8 @@
 		"shasta_n": "UNK",
 		"whitney": "N/S",
 		"nandi": ".229",
-		"kailash": "N/S"
+		"kailash": "N/S",
+		"dronagiri": "N/S"
 	},
 	"8.4.1R01": {
 		"everest": ".170",
@@ -313,7 +332,8 @@
 		"shasta_n": "UNK",
 		"whitney": "N/S",
 		"nandi": "UNK",
-		"kailash": "N/S"
+		"kailash": "N/S",
+		"dronagiri": "N/S"
 	},
 	"8.3.1R02": {
 		"everest": ".160",
@@ -328,7 +348,8 @@
 		"shasta_n": "UNK",
 		"whitney": "N/S",
 		"nandi": "UNK",
-		"kailash": "N/S"
+		"kailash": "N/S",
+		"dronagiri": "N/S"
 	},
 	"8.3.1R01": {
 		"everest": "UNK",
@@ -343,6 +364,7 @@
 		"shasta_n": "UNK",
 		"whitney": "UNK",
 		"nandi": "UNK",
-		"kailash": "N/S"
+		"kailash": "N/S",
+		"dronagiri": "N/S"
 	}
 }
