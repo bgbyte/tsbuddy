@@ -138,7 +138,7 @@ ga_latest_path = os.path.join(os.path.dirname(__file__), "ga_latest.json")
 with open(ga_latest_path, encoding='utf-8') as f:
     ga_latest = json.load(f)
 
-def wait_for_shell(shell, timeout=120):
+def wait_for_shell(shell, timeout=200):
     """Read output from shell until timeout or prompt returns."""
     shell.settimeout(2)
     output = ""

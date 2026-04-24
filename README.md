@@ -430,6 +430,7 @@ Please ensure your code adheres to any existing style guidelines and includes te
 
 ### 2026-04-30
 - Added AOS compatibility for dronagiri & horsley family of switches (OS6575 & OS6370)
+- Increased timeout for larger AOS images (8.10R04)
 
 ### 2026-04-10
 - Added private version for ALE Employees (ask Brian for a token)
