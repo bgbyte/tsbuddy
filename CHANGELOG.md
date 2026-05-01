@@ -1,8 +1,9 @@
 # Changelog
 
-### 2026-04-30 [0.0.43]
+### 2026-05-01 [0.0.43]
 - Added AOS compatibility for dronagiri & horsley family of switches (OS6575 & OS6370)
 - Increased timeout for larger AOS images (8.10R04)
+- Bug fix: HMON extraction no longer repeats on subsequent runs. Delete .extracted file to re-run. 
 
 ### 2026-04-10 [0.0.40]
 - Added private version for ALE Employees (ask Brian for a token)

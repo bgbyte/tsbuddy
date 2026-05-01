@@ -83,6 +83,9 @@ def extract_archives(base_path):
                 continue
             m = hmon_pattern.match(archive_path.name)
             if m:
+                if (archive_path.parent / '.extracted').exists():
+                    processed.add(archive_path)
+                    continue
                 hmon_archives.append((int(m.group(1)), archive_path))
             elif (archive_path.suffix == '.tar' or
                   archive_path.suffixes[-2:] == ['.tar', '.gz'] or
@@ -90,10 +93,14 @@ def extract_archives(base_path):
                   archive_path.suffix == '.gz'):
                 other_archives.append(archive_path)
         # Sort and extract HMON archives by number
+        hmon_parents = set()
         for _, archive_path in sorted(hmon_archives):
             extract_tar_archive(archive_path, archive_path.parent)
             processed.add(archive_path)
             archives_found = True
+            hmon_parents.add(archive_path.parent)
+        for parent in hmon_parents:
+            (parent / '.extracted').touch()
         # Extract other archives as before
         for archive_path in other_archives:
             if archive_path.suffix == '.tar':
