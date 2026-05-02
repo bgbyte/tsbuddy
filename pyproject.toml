@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tsbuddy"
-version = "0.0.43"
+version = "0.0.44"
 description = "Tech Support Buddy is a versatile Python module built to empower developers and IT professionals in resolving technical issues. It provides a suite of Python modules designed to efficiently diagnose and resolve technical issues while enabling automation and data-driven decision-making."
 readme = "README.md"
 requires-python = ">=3.7"

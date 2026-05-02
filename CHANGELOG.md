@@ -1,6 +1,7 @@
 # Changelog
 
 ### 2026-05-01 [0.0.43]
+- Added Web GUI to private repo (command: ts-gui)
 - Added AOS compatibility for dronagiri & horsley family of switches (OS6575 & OS6370)
 - Increased timeout for larger AOS images (8.10R04)
 - Bug fix: HMON extraction no longer repeats on subsequent runs. Delete .extracted file to re-run. 
