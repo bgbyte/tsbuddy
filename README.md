@@ -428,14 +428,26 @@ Please ensure your code adheres to any existing style guidelines and includes te
 
 ## Changelog
 
+> Entries tagged **[PRIVATE]** are features of the ALE employee-only version of
+> tsbuddy and are not part of this public release. ALE employees can ask Brian for
+> a token and use the "Employees Only" menu option to get them.
+
+### 2026-09-02
+- [PRIVATE] Added CMDS serial number lookup (command: ts-sn), also available from the tsbuddy menu
+  - Looks up one or more serial numbers and writes the manufacturing/test history to one Markdown file per serial
+  - Accepts serials typed in directly (space/comma separated) or a file with one serial per line
+  - Stdlib only (no requests/beautifulsoup4); requires network access to the CMDS host (corporate network or VPN)
+- [PRIVATE] Bug fix: ts-gui no longer crashes when run as a command (the URL now has a default)
+- [PRIVATE] Web GUI now opens on port 80; the old port 5000 no longer responds
+
 ### 2026-05-01
-- Added Web GUI to private repo (command: ts-gui)
+- [PRIVATE] Added Web GUI to private repo (command: ts-gui)
 - Added AOS compatibility for dronagiri & horsley family of switches (OS6575 & OS6370)
 - Increased timeout for larger AOS images (8.10R04)
 - Bug fix: HMON extraction no longer repeats on subsequent runs. Delete .extracted file to re-run. 
 
 ### 2026-04-10
-- Added private version for ALE Employees (ask Brian for a token)
+- [PRIVATE] Added private version for ALE Employees (ask Brian for a token)
 - Improved UX menu of AOS utilities (aosga, aosup)
 
 ### 2026-01-08
