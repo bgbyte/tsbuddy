@@ -120,6 +120,7 @@ COLUMN_DEFINITIONS = {
         "Release",
         "Size",
         "Description",
+        "Secure Boot",
     ],
     "show license-info": [
         "VC",
@@ -898,7 +899,14 @@ def parse_microcode(output: str, location: str) -> List[Dict[str, str]]:
             directory = line
             break
 
-    # Step 2: Parse actual data lines after separator
+    # Step 2: Detect whether this AOS build emits the trailing "Secure Boot"
+    # column. Its presence tracks the platform's secure-boot capability rather
+    # than the release string, so the header is the only reliable signal.
+    has_secure_boot = any(
+        re.search(r"Secure\s+Boot", line, re.IGNORECASE) for line in lines
+    )
+
+    # Step 3: Parse actual data lines after separator
     parsing = False
     for line in lines:
         line = line.strip()
@@ -913,19 +921,35 @@ def parse_microcode(output: str, location: str) -> List[Dict[str, str]]:
         if not parsing:
             continue
 
-        # Regex pattern to extract: Package, Release, Size, Description
-        match = re.match(r'^(\S+)\s+(\S+)\s+(\d+)\s+(.+)$', line)
-        if match:
+        secure_boot = ""
+        match = None
+
+        if has_secure_boot:
+            # Non-greedy description, with Yes/No pinned to end-of-line.
+            match = re.match(
+                r'^(\S+)\s+(\S+)\s+(\d+)\s+(.*?)\s+(Yes|No)$', line, re.IGNORECASE
+            )
+            if match:
+                package, release, size, description, secure_boot = match.groups()
+
+        if not match:
+            # No Secure Boot column, or the header advertised one but this row
+            # omitted it -- fall back to the original 4-field behaviour.
+            match = re.match(r'^(\S+)\s+(\S+)\s+(\d+)\s+(.+)$', line)
+            if not match:
+                continue
             package, release, size, description = match.groups()
-            row = {
-                "Location": location,
-                "Directory": f"=\"{directory}\"",  # Protect from Excel path parsing
-                "Package": package,
-                "Release": release,
-                "Size": size,
-                "Description": description
-            }
-            data.append(row)
+
+        row = {
+            "Location": location,
+            "Directory": f"=\"{directory}\"",  # Protect from Excel path parsing
+            "Package": package,
+            "Release": release,
+            "Size": size,
+            "Description": description.strip(),
+            "Secure Boot": secure_boot,
+        }
+        data.append(row)
 
     return data
 
