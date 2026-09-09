@@ -4,6 +4,9 @@
 > tsbuddy and are not part of this public release. ALE employees can ask Brian for
 > a token and use the "Employees Only" menu option to get them.
 
+### 2026-09-09 [0.0.46]
+- tslog2csv `show microcode` csv now has a column for "Secure Boot"
+
 ### 2026-09-02 [0.0.45]
 - [PRIVATE] Added CMDS serial number lookup (command: ts-sn), also available from the tsbuddy menu
   - Looks up one or more serial numbers and writes the manufacturing/test history to one Markdown file per serial
