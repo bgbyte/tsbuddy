@@ -1,8 +1,25 @@
 {
+	"8.11R01": {
+		"everest": ".162",
+		"medora_sim64": "",
+		"tor": "N/S",
+		"vindhya": ".162",
+		"medora": ".162",
+		"yukon": ".162",
+		"yukon_plus": ".162",
+		"shasta": ".162",
+		"aravalli": ".162",
+		"shasta_n": ".162",
+		"whitney": ".162",
+		"nandi": ".162",
+		"kailash": ".162",
+		"dronagiri": ".162",
+		"horsley": ".162"
+	},
 	"8.10R04": {
 		"everest": ".86",
 		"medora_sim64": "",
-		"tor": ".86",
+		"tor": "N/S",
 		"vindhya": ".86",
 		"medora": ".86",
 		"yukon": ".86",
