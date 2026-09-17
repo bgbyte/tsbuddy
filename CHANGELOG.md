@@ -4,6 +4,10 @@
 > tsbuddy and are not part of this public release. ALE employees can ask Brian for
 > a token and use the "Employees Only" menu option to get them.
 
+### 2026-09-17 [0.0.47]
+- Added AOS 8.11.162.R01 GA build data (aosga, aosup)
+- Corrected OS6900 Tor GA data: Tor is not supported on 8.10R04 and remains on 8.9.94.R04
+
 ### 2026-09-09 [0.0.46]
 - tslog2csv `show microcode` csv now has a column for "Secure Boot"
 
